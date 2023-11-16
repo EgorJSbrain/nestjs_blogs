@@ -1,15 +1,17 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
-import { User } from './users.schema';
+import { User, UserDocument } from './users.schema';
 import { CreateUserDto } from 'src/dtos/users/create-user.dto';
+import { UsersRequestParams } from 'src/types/users';
+import { ResponseBody } from 'src/types/request';
 
 @Controller('users')
 export class UsersController {
   constructor(private usersRepository: UsersRepository) {}
 
   @Get()
-  async getAll(): Promise<User[]> {
-    const users = await this.usersRepository.getAll()
+  async getAll(@Query() query: UsersRequestParams):Promise<ResponseBody<UserDocument> | []> {
+    const users = await this.usersRepository.getAll(query)
 
     return users
   }
@@ -18,13 +20,16 @@ export class UsersController {
   async getById(@Param()  params: { id: string }): Promise<User> {
     const user = await this.usersRepository.getById(params.id)
 
-    return user as any
+    return user
   }
 
   @Post()
-  async creatUser(@Body() data: CreateUserDto): Promise<string> {
-    console.log("----", data)
+  async creatUser(@Body() data: CreateUserDto): Promise<any> {
+    return this.usersRepository.createUser(data)
+  }
 
-    return ''
+  @Delete(':id')
+  async deleteUser(@Param()  params: { id: string }): Promise<any> {
+    return this.usersRepository.deleteUser(params.id)
   }
 }
