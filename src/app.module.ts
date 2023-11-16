@@ -5,7 +5,8 @@ import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ envFilePath: `${process.env.NODE_ENV}.env` }),
+    // ConfigModule.forRoot({ envFilePath: `${process.env.NODE_ENV}.env` }),
+    ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.DATABASE_URL),
     UsersModule,
   ],
