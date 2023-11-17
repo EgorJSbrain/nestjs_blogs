@@ -28,7 +28,7 @@ export class BlogsController {
   }
 
   @Get(':id')
-  async getById(@Param() params: { id: string }): Promise<Blog | null> {
+  async getBlogById(@Param() params: { id: string }): Promise<Blog | null> {
     const blog = await this.blogsRepository.getById(params.id)
 
     return blog
