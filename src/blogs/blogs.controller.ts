@@ -12,7 +12,7 @@ import { BlogsRepository } from './blogs.repository'
 import { Blog, BlogDocument } from './blogs.schema'
 import { CreateBlogDto } from 'src/dtos/blogs/create-blog.dto'
 import { BlogsRequestParams } from 'src/types/blogs'
-import { ResponseBody } from 'src/types/request'
+import { ResponseBody } from '../../src/types/request'
 
 @Controller('blogs')
 export class BlogsController {
