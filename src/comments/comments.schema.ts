@@ -25,8 +25,8 @@ export class Comment {
   createdAt: string;
 
   // TODO likes info type
-  @Prop()
-  likesInfo: any
+  // @Prop()
+  // likesInfo: any
 
   async setDateOfCreatedAt() {
     this.createdAt = new Date().toISOString()
