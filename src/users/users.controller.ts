@@ -17,7 +17,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  async getById(@Param()  params: { id: string }): Promise<User> {
+  async getById(@Param()  params: { id: string }): Promise<User | null> {
     const user = await this.usersRepository.getById(params.id)
 
     return user
