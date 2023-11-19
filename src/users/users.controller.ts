@@ -2,8 +2,8 @@ import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/commo
 import { UsersRepository } from './users.repository';
 import { User, UserDocument } from './users.schema';
 import { CreateUserDto } from 'src/dtos/users/create-user.dto';
-import { UsersRequestParams } from 'src/typing/users';
-import { ResponseBody } from 'src/typing/request';
+import { UsersRequestParams } from '../types/users';
+import { ResponseBody } from '../types/request';
 
 @Controller('users')
 export class UsersController {

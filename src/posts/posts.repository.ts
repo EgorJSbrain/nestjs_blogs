@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { Post, PostDocument } from './posts.schema';
 import { CreatePostDto } from 'src/dtos/posts/create-post.dto';
-import { RequestParams, ResponseBody, SortDirections } from 'src/typing/request';
+import { RequestParams, ResponseBody, SortDirections } from '../types/request';
 
 @Injectable()
 export class PostsRepository {
