@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -12,6 +14,7 @@ import { PostsRepository } from './posts.repository'
 import { Post as PostSchema, PostDocument } from './posts.schema'
 import { CreatePostDto } from 'src/dtos/posts/create-post.dto'
 import { ResponseBody, RequestParams } from '../types/request'
+import { IPost } from './types/post'
 
 @Controller('posts')
 export class PostsController {
@@ -36,8 +39,12 @@ export class PostsController {
   }
 
   @Get(':id')
-  async getPostById(@Param() params: { id: string }): Promise<PostSchema | null> {
+  async getPostById(@Param() params: { id: string }): Promise<IPost | null> {
     const post = await this.postsRepository.getById(params.id)
+
+    if (!post) {
+      throw new HttpException({ message: "Post doesn't exist" }, HttpStatus.NOT_FOUND)
+    }
 
     return post
   }
@@ -63,7 +70,7 @@ export class PostsController {
   ): Promise<PostSchema | null> {
     const post = await this.postsRepository.getById(params.id)
 
-    return post
+    return null
   }
 
   @Post()
