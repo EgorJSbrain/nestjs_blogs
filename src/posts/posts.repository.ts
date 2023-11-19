@@ -11,7 +11,7 @@ import { IPost } from './types/post';
 export class PostsRepository {
   constructor(@InjectModel(Post.name) private postsModel: Model<PostDocument>) {}
 
-  async getAll(params: RequestParams): Promise<ResponseBody<PostDocument> | []>  {
+  async getAll(params: RequestParams, blogId?: string): Promise<ResponseBody<IPost> | []>  {
     try {
       const {
         sortBy = 'createdAt',
@@ -20,8 +20,12 @@ export class PostsRepository {
         pageSize = 10,
       } = params
   
-      const filter: FilterQuery<PostDocument> = {}
+      let filter: FilterQuery<PostDocument> = {}
       const sort: Record<string, SortOrder> = {}
+
+      if (blogId) {
+        filter = { blogId }
+      }
 
       if (sortBy && sortDirection) {
         sort[sortBy] = sortDirection === SortDirections.asc ? 1 : -1
@@ -38,14 +42,30 @@ export class PostsRepository {
         .skip(skip)
         .limit(pageSizeNumber)
         .sort(sort)
-        .exec()
+        .lean()
+
+      const postsWithLikeinfo = posts.map((post) => ({
+        id: post.id,
+        title: post.title,
+        shortDescription: post.shortDescription,
+        content: post.content,
+        blogId: post.blogId,
+        blogName: post.blogName,
+        createdAt: post.createdAt,
+        extendedLikesInfo: {
+          likesCount: 0,
+          dislikesCount: 0,
+          myStatus: 'None',
+          newestLikes: []
+        }
+      }))
       
       return {
         pagesCount,
         page: pageNumberNum,
         pageSize: pageSizeNumber,
         totalCount: count,
-        items: posts
+        items: postsWithLikeinfo
       }
     } catch {
       return []

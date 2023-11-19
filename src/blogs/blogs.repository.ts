@@ -7,6 +7,7 @@ import { CreateBlogDto } from 'src/dtos/blogs/create-blog.dto';
 import { ResponseBody, SortDirections } from '../types/request';
 import { BlogsRequestParams } from '../types/blogs';
 import { IBlog } from './types/blog';
+import { UpdateBlogDto } from 'src/dtos/blogs/update-blog.dto';
 
 @Injectable()
 export class BlogsRepository {
@@ -92,8 +93,24 @@ export class BlogsRepository {
     }
   }
 
-  deleteBlog(id: string) {
-    return this.blogsModel.deleteOne({ id })
+  async updateBlog(id: string, data: UpdateBlogDto): Promise<any> {
+    const blog = await this.blogsModel.findOne({ id })
+
+    if (!blog) {
+      return null
+    }
+
+    blog.name = data.name ?? blog.name
+    blog.description = data.description ?? blog.description
+    blog.websiteUrl = data.websiteUrl ?? blog.websiteUrl
+
+    blog.save()
+
+    return true
+  }
+
+  async deleteBlog(id: string) {
+    return await this.blogsModel.deleteOne({ id })
   }
 
   save(blog: BlogDocument) {
