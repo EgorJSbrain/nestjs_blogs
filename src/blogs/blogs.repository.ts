@@ -4,8 +4,8 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { Blog, BlogDocument } from './blogs.schema';
 import { CreateBlogDto } from 'src/dtos/blogs/create-blog.dto';
-import { RequestParams, ResponseBody, SortDirections } from 'src/types/request';
-import { BlogsRequestParams } from 'src/types/blogs';
+import { RequestParams, ResponseBody, SortDirections } from 'src/typing/request';
+import { BlogsRequestParams } from 'src/typing/blogs';
 
 @Injectable()
 export class BlogsRepository {
