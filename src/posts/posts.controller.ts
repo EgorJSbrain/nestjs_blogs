@@ -23,7 +23,7 @@ export class PostsController {
   @Get()
   async getAll(
     @Query() query: RequestParams
-  ): Promise<ResponseBody<PostDocument> | []> {
+  ): Promise<ResponseBody<IPost> | []> {
     const posts = await this.postsRepository.getAll(query)
 
     return posts
@@ -32,7 +32,7 @@ export class PostsController {
   @Get(':postId/comments')
   async getCommentsByPostId(
     @Query() query: RequestParams
-  ): Promise<ResponseBody<PostDocument> | []> {
+  ): Promise<ResponseBody<IPost> | []> {
     const comments = await this.postsRepository.getAll(query)
 
     return comments

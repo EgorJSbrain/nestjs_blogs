@@ -14,10 +14,13 @@ import { BlogsRepository } from './blogs.repository'
 import { Blog, BlogDocument } from './blogs.schema'
 import { CreateBlogDto } from 'src/dtos/blogs/create-blog.dto'
 import { BlogsRequestParams } from '../types/blogs'
-import { ResponseBody } from '../types/request'
+import { RequestParams, ResponseBody } from '../types/request'
 import { CreatePostDto } from 'src/dtos/posts/create-post.dto'
 import { IBlog } from './types/blog'
 import { PostsRepository } from 'src/posts/posts.repository'
+import { IPost } from 'src/posts/types/post'
+import { PostDocument } from 'src/posts/posts.schema'
+import { UpdateBlogDto } from 'src/dtos/blogs/update-blog.dto'
 
 @Controller('blogs')
 export class BlogsController {
@@ -39,6 +42,10 @@ export class BlogsController {
   async getBlogById(@Param() params: { id: string }): Promise<IBlog | null> {
     const blog = await this.blogsRepository.getById(params.id)
 
+    if (!blog) {
+      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+    }
+
     return blog
   }
 
@@ -47,24 +54,51 @@ export class BlogsController {
     return this.blogsRepository.createBlog(data)
   }
 
-  @Put()
-  async updateBlog(@Body() data: CreateBlogDto): Promise<any> {
-    return this.blogsRepository.createBlog(data)
+  @Put(':id')
+  async updateBlog(
+    @Param() params: { id: string },
+    @Body() data: UpdateBlogDto
+  ): Promise<any> {
+    if (!params.id) {
+      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+    }
+
+    const updatedBlog = await this.blogsRepository.updateBlog(params.id, data)
+
+    if (!updatedBlog) {
+      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+    }
+
+    throw new HttpException({ message: "Blog was updated" }, HttpStatus.NO_CONTENT) 
   }
 
   @Delete(':id')
   async deleteBlog(@Param() params: { id: string }): Promise<any> {
-    return this.blogsRepository.deleteBlog(params.id)
-  }
-
-  // TODO rewrite logic
-  @Get(':id/posts')
-  async getPostsByBlogId(
-    @Param() params: { id: string }
-  ): Promise<IBlog | null> {
     const blog = await this.blogsRepository.getById(params.id)
 
-    return blog
+    if (!blog) {
+      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+    }
+
+    await this.blogsRepository.deleteBlog(params.id)
+
+    throw new HttpException({ message: "Blog was deleted" }, HttpStatus.NO_CONTENT) 
+  }
+
+  @Get(':blogId/posts')
+  async getPostsByBlogId(
+    @Query() query: RequestParams,
+    @Param() params: { blogId: string }
+  ): Promise<ResponseBody<IPost> | []> {
+    const blog = await this.blogsRepository.getById(params.blogId)
+
+    if (!blog) {
+      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+    }
+
+    const posts = await this.postsRepository.getAll(query, blog.id)
+
+    return posts
   }
 
   @Post(':blogId/posts')
