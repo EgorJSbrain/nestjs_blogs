@@ -3,7 +3,7 @@ import { UsersRepository } from './users.repository';
 import { User, UserDocument } from './users.schema';
 import { CreateUserDto } from 'src/dtos/users/create-user.dto';
 import { UsersRequestParams } from 'src/types/users';
-import { ResponseBody } from '../../src/types/request';
+import { ResponseBody } from 'src/types/request';
 
 @Controller('users')
 export class UsersController {

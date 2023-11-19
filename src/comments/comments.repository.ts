@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { Comment, CommentDocument } from './comments.schema';
 import { CreateCommentDto } from 'src/dtos/comments/create-comment.dto';
-import { RequestParams, ResponseBody, SortDirections } from '../../src/types/request';
+import { RequestParams, ResponseBody, SortDirections } from 'src/types/request';
 
 @Injectable()
 export class CommentsRepository {
