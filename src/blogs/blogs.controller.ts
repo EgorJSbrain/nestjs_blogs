@@ -11,8 +11,8 @@ import {
 import { BlogsRepository } from './blogs.repository'
 import { Blog, BlogDocument } from './blogs.schema'
 import { CreateBlogDto } from 'src/dtos/blogs/create-blog.dto'
-import { BlogsRequestParams } from 'src/typing/blogs'
-import { ResponseBody } from 'src/typing/request'
+import { BlogsRequestParams } from '../types/blogs'
+import { ResponseBody } from '../types/request'
 
 @Controller('blogs')
 export class BlogsController {

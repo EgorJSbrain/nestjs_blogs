@@ -4,8 +4,8 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { User, UserDocument } from './users.schema';
 import { CreateUserDto } from 'src/dtos/users/create-user.dto';
-import { RequestParams, ResponseBody, SortDirections } from 'src/typing/request';
-import { UsersRequestParams } from 'src/typing/users';
+import { ResponseBody, SortDirections } from '../types/request';
+import { UsersRequestParams } from '../types/users';
 
 @Injectable()
 export class UsersRepository {
