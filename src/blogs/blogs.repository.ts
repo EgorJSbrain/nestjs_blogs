@@ -58,7 +58,7 @@ export class BlogsRepository {
   }
 
   getById(id: string) {
-    return this.blogsModel.findById(id)
+    return this.blogsModel.findById(id, { _id: 0, __v: 0 })
   }
 
   createBlog(data: CreateBlogDto) {
