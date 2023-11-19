@@ -12,7 +12,7 @@ import { PostsRepository } from './posts.repository'
 import { Post as PostSchema, PostDocument } from './posts.schema'
 import { CreatePostDto } from 'src/dtos/posts/create-post.dto'
 import { RequestParams } from 'src/types/request'
-import { ResponseBody } from '../../src/types/request'
+import { ResponseBody } from 'src/types/request'
 
 @Controller('posts')
 export class PostsController {
