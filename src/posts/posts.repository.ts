@@ -52,8 +52,28 @@ export class PostsRepository {
     }
   }
 
-  getById(id: string) {
-    return this.postsModel.findById(id)
+  async getById(id: string): Promise<IPost | null> {
+    const post = await this.postsModel.findOne({ id }, { _id: 0, __v: 0 })
+    
+    if (!post) {
+      return null
+    }
+    
+    return {
+      id: post.id,
+      title: post.title,
+      shortDescription: post.shortDescription,
+      content: post.content,
+      blogId: post.blogId,
+      blogName: post.blogName,
+      createdAt: post.createdAt,
+      extendedLikesInfo: {
+        likesCount: 0,
+        dislikesCount: 0,
+        myStatus: 'None',
+        newestLikes: [],
+      }
+    }
   }
 
   async createPost(data: CreatePostDto): Promise<IPost | null> {

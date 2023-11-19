@@ -75,7 +75,7 @@ export class BlogsController {
     const blog = await this.blogsRepository.getById(params.blogId)
 
     if (!blog) {
-      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.FOUND)
+      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
     }
 
     const creatingData = {
