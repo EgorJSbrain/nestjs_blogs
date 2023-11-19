@@ -18,7 +18,7 @@ export class Blog {
   @Prop()
   websiteUrl: string;
 
-  @Prop({ default: true })
+  @Prop({ default: false })
   isMembership: boolean;
 
   async setDateOfCreatedAt() {
