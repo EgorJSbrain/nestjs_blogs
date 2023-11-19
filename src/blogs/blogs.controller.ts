@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -13,10 +15,16 @@ import { Blog, BlogDocument } from './blogs.schema'
 import { CreateBlogDto } from 'src/dtos/blogs/create-blog.dto'
 import { BlogsRequestParams } from '../types/blogs'
 import { ResponseBody } from '../types/request'
+import { CreatePostDto } from 'src/dtos/posts/create-post.dto'
+import { IBlog } from './types/blog'
+import { PostsRepository } from 'src/posts/posts.repository'
 
 @Controller('blogs')
 export class BlogsController {
-  constructor(private blogsRepository: BlogsRepository) {}
+  constructor(
+    private blogsRepository: BlogsRepository,
+    private postsRepository: PostsRepository
+  ) {}
 
   @Get()
   async getAll(
@@ -28,14 +36,14 @@ export class BlogsController {
   }
 
   @Get(':id')
-  async getBlogById(@Param() params: { id: string }): Promise<Blog | null> {
+  async getBlogById(@Param() params: { id: string }): Promise<IBlog | null> {
     const blog = await this.blogsRepository.getById(params.id)
 
     return blog
   }
 
   @Post()
-  async creatBlog(@Body() data: CreateBlogDto): Promise<any> {
+  async creatBlog(@Body() data: CreateBlogDto): Promise<IBlog> {
     return this.blogsRepository.createBlog(data)
   }
 
@@ -49,17 +57,33 @@ export class BlogsController {
     return this.blogsRepository.deleteBlog(params.id)
   }
 
+  // TODO rewrite logic
   @Get(':id/posts')
   async getPostsByBlogId(
     @Param() params: { id: string }
-  ): Promise<Blog | null> {
+  ): Promise<IBlog | null> {
     const blog = await this.blogsRepository.getById(params.id)
 
     return blog
   }
 
-  @Post()
-  async creatPostByBlogId(@Body() data: CreateBlogDto): Promise<any> {
-    return this.blogsRepository.createBlog(data)
+  @Post(':blogId/posts')
+  async creatPostByBlogId(
+    @Param() params: { blogId: string },
+    @Body() data: CreatePostDto
+  ): Promise<any> {
+    const blog = await this.blogsRepository.getById(params.blogId)
+
+    if (!blog) {
+      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.FOUND)
+    }
+
+    const creatingData = {
+      ...data,
+      blogId: blog.id,
+      blogName: blog.name
+    }
+  
+    return this.postsRepository.createPost(creatingData)
   }
 }

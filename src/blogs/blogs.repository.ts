@@ -4,8 +4,9 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { Blog, BlogDocument } from './blogs.schema';
 import { CreateBlogDto } from 'src/dtos/blogs/create-blog.dto';
-import { RequestParams, ResponseBody, SortDirections } from '../types/request';
+import { ResponseBody, SortDirections } from '../types/request';
 import { BlogsRequestParams } from '../types/blogs';
+import { IBlog } from './types/blog';
 
 @Injectable()
 export class BlogsRepository {
@@ -57,16 +58,38 @@ export class BlogsRepository {
     }
   }
 
-  getById(id: string) {
-    return this.blogsModel.findById(id, { _id: 0, __v: 0 })
+  async getById(id: string): Promise<IBlog | null> {
+    const blog = await this.blogsModel.findOne({ id }, { _id: 0, __v: 0 })
+
+    if (!blog) {
+      return null
+    }
+
+    return {
+      id: blog.id,
+      name: blog.name,
+      description: blog.description,
+      websiteUrl: blog.websiteUrl,
+      isMembership: blog.isMembership,
+      createdAt: blog.createdAt,
+    }
   }
 
-  createBlog(data: CreateBlogDto) {
+  async createBlog(data: CreateBlogDto): Promise<IBlog> {
     const newBlog = new this.blogsModel(data)
     newBlog.setDateOfCreatedAt()
     newBlog.setId()
 
-    return newBlog.save()
+    const createdBlog = await newBlog.save()
+
+    return {
+      id: createdBlog.id,
+      name: createdBlog.name,
+      description: createdBlog.description,
+      websiteUrl: createdBlog.websiteUrl,
+      isMembership: createdBlog.isMembership,
+      createdAt: createdBlog.createdAt,
+    }
   }
 
   deleteBlog(id: string) {

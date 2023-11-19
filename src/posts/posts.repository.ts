@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Post, PostDocument } from './posts.schema';
 import { CreatePostDto } from 'src/dtos/posts/create-post.dto';
 import { RequestParams, ResponseBody, SortDirections } from '../types/request';
+import { IPost } from './types/post';
 
 @Injectable()
 export class PostsRepository {
@@ -55,12 +56,32 @@ export class PostsRepository {
     return this.postsModel.findById(id)
   }
 
-  createPost(data: CreatePostDto) {
+  async createPost(data: CreatePostDto): Promise<IPost | null> {
     const newPost = new this.postsModel(data)
     newPost.setDateOfCreatedAt()
     newPost.setId()
 
-    return newPost.save()
+    const createdPost = await newPost.save()
+
+    if (!createdPost) {
+      return null
+    }
+
+    return {
+      id: createdPost.id,
+      title: createdPost.title,
+      shortDescription: createdPost.shortDescription,
+      content: createdPost.content,
+      blogId: createdPost.blogId,
+      blogName: createdPost.blogName,
+      createdAt: createdPost.createdAt,
+      extendedLikesInfo: {
+        likesCount: 0,
+        dislikesCount: 0,
+        myStatus: 'None',
+        newestLikes: [],
+      }
+    }
   }
 
   deletePost(id: string) {
