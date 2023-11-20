@@ -18,7 +18,6 @@ export class Post {
   @Prop()
   blogId: string;
 
-
   @Prop()
   blogName: string;
 

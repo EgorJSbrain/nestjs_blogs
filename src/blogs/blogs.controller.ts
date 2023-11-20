@@ -11,7 +11,7 @@ import {
   Query
 } from '@nestjs/common'
 import { BlogsRepository } from './blogs.repository'
-import { Blog, BlogDocument } from './blogs.schema'
+import { BlogDocument } from './blogs.schema'
 import { CreateBlogDto } from 'src/dtos/blogs/create-blog.dto'
 import { BlogsRequestParams } from '../types/blogs'
 import { RequestParams, ResponseBody } from '../types/request'
@@ -19,7 +19,6 @@ import { CreatePostDto } from 'src/dtos/posts/create-post.dto'
 import { IBlog } from './types/blog'
 import { PostsRepository } from 'src/posts/posts.repository'
 import { IPost } from 'src/posts/types/post'
-import { PostDocument } from 'src/posts/posts.schema'
 import { UpdateBlogDto } from 'src/dtos/blogs/update-blog.dto'
 
 @Controller('blogs')
@@ -60,6 +59,12 @@ export class BlogsController {
     @Body() data: UpdateBlogDto
   ): Promise<any> {
     if (!params.id) {
+      throw new HttpException({ message: "Blog id is required field" }, HttpStatus.NOT_FOUND)
+    }
+
+    const blog = await this.blogsRepository.getById(params.id)
+
+    if (!blog) {
       throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
     }
 
@@ -105,7 +110,7 @@ export class BlogsController {
   async creatPostByBlogId(
     @Param() params: { blogId: string },
     @Body() data: CreatePostDto
-  ): Promise<any> {
+  ): Promise<IPost | null> {
     const blog = await this.blogsRepository.getById(params.blogId)
 
     if (!blog) {
