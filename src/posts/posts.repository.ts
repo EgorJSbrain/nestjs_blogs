@@ -6,6 +6,7 @@ import { Post, PostDocument } from './posts.schema';
 import { CreatePostDto } from 'src/dtos/posts/create-post.dto';
 import { RequestParams, ResponseBody, SortDirections } from '../types/request';
 import { IPost } from './types/post';
+import { UpdatePostDto } from 'src/dtos/posts/update-post.dto';
 
 @Injectable()
 export class PostsRepository {
@@ -122,6 +123,22 @@ export class PostsRepository {
         newestLikes: [],
       }
     }
+  }
+
+  async updatePost(id: string, data: UpdatePostDto): Promise<any> {
+    const post = await this.postsModel.findOne({ id })
+
+    if (!post) {
+      return null
+    }
+
+    post.title = data.title ?? post.title
+    post.content = data.content ?? post.content
+    post.shortDescription = data.shortDescription ?? post.shortDescription
+
+    post.save()
+
+    return true
   }
 
   deletePost(id: string) {

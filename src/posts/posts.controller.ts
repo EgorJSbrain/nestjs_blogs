@@ -15,10 +15,15 @@ import { Post as PostSchema, PostDocument } from './posts.schema'
 import { CreatePostDto } from 'src/dtos/posts/create-post.dto'
 import { ResponseBody, RequestParams } from '../types/request'
 import { IPost } from './types/post'
+import { BlogsRepository } from 'src/blogs/blogs.repository'
+import { UpdatePostDto } from 'src/dtos/posts/update-post.dto'
 
 @Controller('posts')
 export class PostsController {
-  constructor(private postsRepository: PostsRepository) {}
+  constructor(
+    private postsRepository: PostsRepository,
+    private blogsRepository: BlogsRepository
+  ) {}
 
   @Get()
   async getAll(
@@ -51,17 +56,60 @@ export class PostsController {
 
   @Post()
   async creatPost(@Body() data: CreatePostDto): Promise<any> {
-    return this.postsRepository.createPost(data)
+    if (!data.blogId) {
+      throw new HttpException({ message: "Blog id is requiered field" }, HttpStatus.BAD_REQUEST)
+    }
+
+    const blog = await this.blogsRepository.getById(data.blogId)
+
+    if (!blog) {
+      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+    }
+
+    const creatingData = {
+      ...data,
+      blogId: blog.id,
+      blogName: blog.name
+    }
+
+    return this.postsRepository.createPost(creatingData)
   }
 
-  @Put()
-  async updatePost(@Body() data: CreatePostDto): Promise<any> {
-    return this.postsRepository.createPost(data)
+  @Put(':id')
+  async updatePost(
+    @Param() params: { id: string },
+    @Body() data: UpdatePostDto
+  ): Promise<any> {
+    if (!params.id) {
+      throw new HttpException({ message: "Post id is required field" }, HttpStatus.NOT_FOUND)
+    }
+
+    const post = await this.postsRepository.getById(params.id)
+
+    if (!post) {
+      throw new HttpException({ message: "Post doesn't exist" }, HttpStatus.NOT_FOUND)
+    }
+
+    const updatedPost = await this.postsRepository.updatePost(params.id, data)
+
+    if (!updatedPost) {
+      throw new HttpException({ message: "Post doesn't exist" }, HttpStatus.NOT_FOUND)
+    }
+
+    throw new HttpException({ message: "Post was updated" }, HttpStatus.NO_CONTENT) 
   }
 
   @Delete(':id')
   async deletePost(@Param() params: { id: string }): Promise<any> {
-    return this.postsRepository.deletePost(params.id)
+    const post = await this.postsRepository.getById(params.id)
+
+    if (!post) {
+      throw new HttpException({ message: "Post doesn't exist" }, HttpStatus.NOT_FOUND)
+    }
+
+    await this.postsRepository.deletePost(params.id)
+
+    throw new HttpException({ message: "Post was deleted" }, HttpStatus.NO_CONTENT) 
   }
 
   @Get(':id/posts')
