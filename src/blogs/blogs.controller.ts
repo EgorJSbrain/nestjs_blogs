@@ -8,7 +8,8 @@ import {
   Param,
   Post,
   Put,
-  Query
+  Query,
+  HttpCode
 } from '@nestjs/common'
 import { BlogsRepository } from './blogs.repository'
 import { BlogDocument } from './blogs.schema'
@@ -54,6 +55,7 @@ export class BlogsController {
   }
 
   @Put(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async updateBlog(
     @Param() params: { id: string },
     @Body() data: UpdateBlogDto
@@ -73,11 +75,10 @@ export class BlogsController {
     if (!updatedBlog) {
       throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
     }
-
-    throw new HttpException({ message: "Blog was updated" }, HttpStatus.NO_CONTENT) 
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBlog(@Param() params: { id: string }): Promise<any> {
     const blog = await this.blogsRepository.getById(params.id)
 
@@ -86,8 +87,6 @@ export class BlogsController {
     }
 
     await this.blogsRepository.deleteBlog(params.id)
-
-    throw new HttpException({ message: "Blog was deleted" }, HttpStatus.NO_CONTENT) 
   }
 
   @Get(':blogId/posts')

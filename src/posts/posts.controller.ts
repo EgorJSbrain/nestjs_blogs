@@ -8,7 +8,8 @@ import {
   Param,
   Post,
   Put,
-  Query
+  Query,
+  HttpCode
 } from '@nestjs/common'
 import { PostsRepository } from './posts.repository'
 import { Post as PostSchema, PostDocument } from './posts.schema'
@@ -76,10 +77,11 @@ export class PostsController {
   }
 
   @Put(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async updatePost(
     @Param() params: { id: string },
     @Body() data: UpdatePostDto
-  ): Promise<any> {
+  ): Promise<undefined> {
     if (!params.id) {
       throw new HttpException({ message: "Post id is required field" }, HttpStatus.NOT_FOUND)
     }
@@ -95,11 +97,10 @@ export class PostsController {
     if (!updatedPost) {
       throw new HttpException({ message: "Post doesn't exist" }, HttpStatus.NOT_FOUND)
     }
-
-    throw new HttpException({ message: "Post was updated" }, HttpStatus.NO_CONTENT) 
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deletePost(@Param() params: { id: string }): Promise<any> {
     const post = await this.postsRepository.getById(params.id)
 
@@ -108,8 +109,6 @@ export class PostsController {
     }
 
     await this.postsRepository.deletePost(params.id)
-
-    throw new HttpException({ message: "Post was deleted" }, HttpStatus.NO_CONTENT) 
   }
 
   @Get(':id/posts')
