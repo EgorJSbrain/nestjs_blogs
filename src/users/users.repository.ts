@@ -6,6 +6,7 @@ import { User, UserDocument } from './users.schema';
 import { CreateUserDto } from 'src/dtos/users/create-user.dto';
 import { ResponseBody, SortDirections } from '../types/request';
 import { UsersRequestParams } from '../types/users';
+import { IUser } from './types/user';
 
 @Injectable()
 export class UsersRepository {
@@ -68,16 +69,33 @@ export class UsersRepository {
     }
   }
 
-  getById(id: string) {
-    return this.usersModel.findById(id)
+  async getById(id: string): Promise<IUser | null> {
+    const user = await this.usersModel.findOne({ id })
+
+    if (!user) {
+      return null
+    }
+    return {
+      id: user.id,
+      login: user.login,
+      email: user.email,
+      createdAt: user.createdAt,
+    }
   }
 
-  createUser(data: CreateUserDto) {
+  async createUser(data: CreateUserDto): Promise<IUser> {
     const newUser = new this.usersModel(data)
     newUser.setDateOfCreatedAt()
     newUser.setId()
 
-    return newUser.save()
+    const createdUser = await newUser.save()
+
+    return {
+      id: createdUser.id,
+      login: createdUser.login,
+      email: createdUser.email,
+      createdAt: createdUser.createdAt,
+    }
   }
 
   deleteUser(id: string) {
