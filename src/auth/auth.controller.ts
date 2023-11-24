@@ -11,10 +11,13 @@ import {
 } from '@nestjs/common'
 import { CreateUserDto } from 'src/dtos/users/create-user.dto'
 import { UsersRepository } from 'src/users/users.repository'
+import { AuthRepository } from './auth.repository'
 
 @Controller('auth')
 export class AuthController {
-  constructor(private usersRepository: UsersRepository) {}
+  constructor(
+    private authRepository: AuthRepository
+  ) {}
 
   @Get('me')
   async getMe(): Promise<any> {
@@ -25,7 +28,6 @@ export class AuthController {
   async login(@Req() request: Request, @Ip() ip): Promise<any> {
     const userIp = ip
     const deviceTitle = request.headers['user-agent']
-
     return '-1-'
   }
 
@@ -37,7 +39,9 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registration(@Body() data: CreateUserDto): Promise<any> {
-    const user = this.usersRepository.createUser(data)
+    // const user = this.usersRepository.createUser(data)
+    const user = this.authRepository.register(data)
+    console.log("🚀 ~ file: auth.controller.ts:44 ~ AuthController ~ registration ~ user:", user)
 
     if (!user) {
       throw new HttpException({ message: "Something wrong" }, HttpStatus.NOT_FOUND) 
