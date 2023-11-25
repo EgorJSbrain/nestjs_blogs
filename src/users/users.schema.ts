@@ -15,6 +15,12 @@ export class User {
   @Prop()
   createdAt: string;
 
+  @Prop()
+  passwordHash: string;
+
+  @Prop()
+  passwordSalt: string;
+
   async setDateOfCreatedAt() {
     this.createdAt = new Date().toISOString()
   }
