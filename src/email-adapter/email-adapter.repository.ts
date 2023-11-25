@@ -23,7 +23,7 @@ export class MailAdapterRepository {
 
   async sendActivationMail(to: string, subject: string, mailBody: string): Promise<undefined> {
     await this.transporter.sendMail({
-      from: process.env.SMTP_USER ?? '  ',
+      from: process.env.SMTP_USER ?? '',
       to,
       subject,
       html: mailBody
