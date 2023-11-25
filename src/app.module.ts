@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
+import { JwtModule, JwtService as NestJwtService } from '@nestjs/jwt';
 
 import { UsersModule } from './users/users.module';
 import { BlogsModule } from './blogs/blogs.module';
@@ -11,6 +12,8 @@ import { AuthModule } from './auth/auth.module';
 import { EmailAdapterModule } from './email-adapter/email-adapter.module';
 import { EmailsModule } from './emails/emails.module';
 import { EmailManagerModule } from './email-manager/email-manager.module';
+import { JWTModule } from './jwt/jwt.module';
+
 
 @Module({
   imports: [
@@ -24,7 +27,10 @@ import { EmailManagerModule } from './email-manager/email-manager.module';
     AuthModule,
     EmailAdapterModule,
     EmailsModule,
-    EmailManagerModule
+    EmailManagerModule,
+    JWTModule,
+    // NestJwtService,
+    JWTModule,
   ],
   controllers: [],
   providers: [],
