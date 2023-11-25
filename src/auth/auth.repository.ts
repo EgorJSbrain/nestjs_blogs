@@ -1,5 +1,4 @@
 import { FilterQuery, Model, SortOrder } from 'mongoose';
-import bcrypt from 'bcrypt'
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
@@ -8,27 +7,28 @@ import { User, UserDocument } from 'src/users/users.schema';
 import { EmailsRepository } from 'src/emails/emails.repository';
 import { CreateUserDto } from 'src/dtos/users/create-user.dto';
 import { JwtRepository } from 'src/jwt/jwt.repository';
+import { UsersRepository } from 'src/users/users.repository';
 
 @Injectable()
 export class AuthRepository {
   constructor(
     @InjectModel(User.name) private usersModel: Model<UserDocument>,
     private emailsRepository: EmailsRepository,
-    private jwtRepository: JwtRepository
+    private jwtRepository: JwtRepository,
+    private usersRepository: UsersRepository,
   ) {}
 
   async login(): Promise<any | null> {}
 
   async register(data: CreateUserDto): Promise<any | null> {
-    const user = await this.usersModel.create(data)
-    const { passwordSalt, passwordHash } = await this.generateHash(
-      data.password
-    )
-    user.passwordHash = passwordHash
-    user.passwordSalt = passwordSalt
-    user.save()
+    // const user = await this.usersModel.create(data)
+    const user = await this.usersRepository.createUser(data)
+    console.log("!!!!!!register ~ user:", user)
 
-    await this.emailsRepository.sendRegistrationConfirmationMail(user)
+    await this.emailsRepository.sendRegistrationConfirmationMail(
+      user.email,
+      user.confirmationCode
+    )
   }
 
   private generateAccess(password: string): string {
@@ -37,18 +37,6 @@ export class AuthRepository {
 
   private generateRefreshToken(password: string): string {
     return this.jwtRepository.generateRefreshToken(password)
-  }
-
-  private async generateHash(
-    password: string
-  ): Promise<{ passwordSalt: string; passwordHash: string }> {
-    const passwordSalt = await bcrypt.genSalt(10)
-    const passwordHash = await bcrypt.hash(password, passwordSalt)
-
-    return {
-      passwordSalt,
-      passwordHash
-    }
   }
 
   save(user: UserDocument) {

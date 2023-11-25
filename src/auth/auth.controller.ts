@@ -16,7 +16,8 @@ import { AuthRepository } from './auth.repository'
 @Controller('auth')
 export class AuthController {
   constructor(
-    private authRepository: AuthRepository
+    private authRepository: AuthRepository,
+    private usersRepository: UsersRepository
   ) {}
 
   @Get('me')
@@ -44,7 +45,6 @@ export class AuthController {
     if (!user) {
       throw new HttpException({ message: "Something wrong" }, HttpStatus.NOT_FOUND)
     }
-   
   }
 
   // @Post('registration-confirmation')
