@@ -7,7 +7,6 @@ import { IUser } from 'src/users/types/user'
 export class EmailManagerRepository {
   constructor(private mailAdapter: MailAdapterRepository,){}
   async sendMailRegistrationConfirmation(user: IUser) {
-    console.log('----2---')
     try {
       const message = `
         <h1>Thank for your registration</h1>

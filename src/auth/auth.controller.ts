@@ -31,36 +31,34 @@ export class AuthController {
     return '-1-'
   }
 
-  @Post('refresh-token')
-  async refreshToken(@Body() data: any): Promise<any> {
+  // @Post('refresh-token')
+  // async refreshToken(@Body() data: any): Promise<any> {
    
-  }
+  // }
 
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registration(@Body() data: CreateUserDto): Promise<any> {
-    // const user = this.usersRepository.createUser(data)
     const user = this.authRepository.register(data)
-    console.log("🚀 ~ file: auth.controller.ts:44 ~ AuthController ~ registration ~ user:", user)
 
     if (!user) {
-      throw new HttpException({ message: "Something wrong" }, HttpStatus.NOT_FOUND) 
+      throw new HttpException({ message: "Something wrong" }, HttpStatus.NOT_FOUND)
     }
    
   }
 
-  @Post('registration-confirmation')
-  async registrationConfirmation(@Body() data: any): Promise<any> {
+  // @Post('registration-confirmation')
+  // async registrationConfirmation(@Body() data: any): Promise<any> {
    
-  }
+  // }
 
-  @Post('registration-email-resending')
-  async registrationEmailResending(@Body() data: any): Promise<any> {
+  // @Post('registration-email-resending')
+  // async registrationEmailResending(@Body() data: any): Promise<any> {
    
-  }
+  // }
 
-  @Post('logout')
-  async logout() {
+  // @Post('logout')
+  // async logout() {
    
-  }
+  // }
 }

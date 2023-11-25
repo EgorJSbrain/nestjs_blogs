@@ -7,7 +7,6 @@ import { IUser } from 'src/users/types/user';
 export class EmailsRepository {
   constructor(private emailManager: EmailManagerRepository) {}
   async sendRegistrationConfirmationMail(user: IUser): Promise<boolean> {
-    console.log('----1---')
     const response = await this.emailManager.sendMailRegistrationConfirmation(user)
 
     if (!response) return false
