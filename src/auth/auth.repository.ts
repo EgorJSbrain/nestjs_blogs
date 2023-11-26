@@ -40,9 +40,13 @@ export class AuthRepository {
   }
 
   async register(data: CreateUserDto): Promise<any | null> {
-    // const user = await this.usersModel.create(data)
-    const user = await this.usersRepository.createUser(data)
-    console.log("!!!!!!register ~ user:", user)
+    const user = await this.usersModel.create(data)
+    const { passwordSalt, passwordHash } = await this.generateHash(
+      data.password
+    )
+    user.passwordHash = passwordHash
+    user.passwordSalt = passwordSalt
+    user.save()
 
     await this.emailsRepository.sendRegistrationConfirmationMail(
       user.email,

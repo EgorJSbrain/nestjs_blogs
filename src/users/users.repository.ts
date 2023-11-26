@@ -93,7 +93,7 @@ export class UsersRepository {
     }
   }
 
-  async createUser(data: CreateUserDto): Promise<IUser> {
+  async createUser(data: CreateUserDto): Promise<UserDocument> {
     const newUser = new this.usersModel(data)
     newUser.setDateOfCreatedAt()
     newUser.setId()
