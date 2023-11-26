@@ -8,10 +8,13 @@ import {
   Ip,
   Post,
   Req,
+  Res,
 } from '@nestjs/common'
+import { Response, Request } from 'express'
 import { CreateUserDto } from 'src/dtos/users/create-user.dto'
 import { UsersRepository } from 'src/users/users.repository'
 import { AuthRepository } from './auth.repository'
+import { LoginDto } from 'src/dtos/auth/login.dto'
 
 @Controller('auth')
 export class AuthController {
@@ -26,10 +29,18 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Req() request: Request, @Ip() ip): Promise<any> {
+  async login(@Res({ passthrough: true }) response: Response, @Req() request: Request, @Ip() ip: string, @Body() data: LoginDto): Promise<any> {
     const userIp = ip
     const deviceTitle = request.headers['user-agent']
-    return '-1-'
+
+    const tokens = await this.authRepository.login(data)
+
+    if (!tokens) {
+      throw new HttpException({ message: "Something wrong" }, HttpStatus.NOT_FOUND)
+    }
+
+    response.cookie('refreshToken', tokens.refreshToken, { httpOnly: true, secure: true })
+    return { accessToken: tokens?.accessToken }
   }
 
   // @Post('refresh-token')

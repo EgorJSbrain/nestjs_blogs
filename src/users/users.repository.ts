@@ -70,19 +70,6 @@ export class UsersRepository {
     }
   }
 
-  async getUserByLoginOrEmail(email: string, login: string): Promise<UserDocument | null> {
-    try {
-      const user = await this.usersModel.findOne(
-        { $or: [{ 'accountData.email': email }, { 'accountData.login': login }] },
-        { projection: { _id: 0 } }
-      )
-
-      return user
-    } catch {
-      return null
-    }
-  }
-
   async getById(id: string): Promise<UserDocument | null> {
     const user = await this.usersModel.findOne({ id })
 
@@ -91,6 +78,19 @@ export class UsersRepository {
     }
 
     return user
+  }
+
+  async getUserByLoginOrEmail(email: string, login: string): Promise<UserDocument | null> {
+    try {
+      const user = await this.usersModel.findOne(
+        { $or: [{ email }, { login }] },
+        { projection: { _id: 0 } }
+      )
+
+      return user
+    } catch {
+      return null
+    }
   }
 
   async createUser(data: CreateUserDto): Promise<UserDocument> {
