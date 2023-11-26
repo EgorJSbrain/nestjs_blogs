@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import add from 'date-fns/add'
 import { v4 } from 'uuid'
+import add from 'date-fns/add'
 
 @Schema()
 export class User {
