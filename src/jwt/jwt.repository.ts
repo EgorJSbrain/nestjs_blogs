@@ -6,11 +6,9 @@ export class JwtRepository {
   constructor(private readonly jwtService: NestJwtService) {}
 
   generateAcessToken(payload: string): string {
-    console.log('--acc--', process.env.ACCESS_SECRET_KEY)
     return this.jwtService.sign(payload, { secret: process.env.ACCESS_SECRET_KEY });
   }
   generateRefreshToken(payload: string): string {
-    console.log('--ref--', process.env.REFRESH_SECRET_KEY)
     return this.jwtService.sign(payload, { secret: process.env.REFRESH_SECRET_KEY });
   }
 
