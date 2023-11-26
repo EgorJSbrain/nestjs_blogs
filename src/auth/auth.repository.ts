@@ -1,9 +1,8 @@
-import { FilterQuery, Model, SortOrder } from 'mongoose';
+import { Model } from 'mongoose';
 import bcrypt from 'bcrypt'
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
-import { ResponseBody, SortDirections } from '../types/request';
 import { User, UserDocument } from 'src/users/users.schema';
 import { EmailsRepository } from 'src/emails/emails.repository';
 import { CreateUserDto } from 'src/dtos/users/create-user.dto';
