@@ -28,7 +28,7 @@ export class EmailManagerRepository {
     }
   }
 
-  async sendMailRecoveryPassword(email: string, code?: string) {
+  async sendMailRecoveryPassword(email: string, code: string) {
     try {
       const message = `
         <h1>Password recovery</h1>
@@ -38,7 +38,7 @@ export class EmailManagerRepository {
       `
       await this.mailAdapter.sendActivationMail(
         email,
-        'Confirm registration',
+        'Password recovery',
         message
       )
 

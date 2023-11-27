@@ -7,7 +7,6 @@ import { User, UserDocument } from './users.schema';
 import { CreateUserDto } from 'src/dtos/users/create-user.dto';
 import { ResponseBody, SortDirections } from '../types/request';
 import { UsersRequestParams } from '../types/users';
-import { IUser } from './types/user';
 
 @Injectable()
 export class UsersRepository {
@@ -93,7 +92,39 @@ export class UsersRepository {
     }
   }
 
-  async createUser(data: CreateUserDto): Promise<UserDocument> {
+  async getUserByEmail(email: string): Promise<UserDocument | null> {
+    try {
+      const user =  await this.usersModel.findOne(
+        { email },
+        { projection: { _id: 0 } }
+      )
+
+      return user
+    } catch {
+      return null
+    }
+  }
+
+  async getUserByVerificationCode(code: string): Promise<UserDocument | null> {
+    try {
+      const user = await this.usersModel.findOne(
+        { confirmationCode: code },
+        {
+          projection: {
+            _id: 0,
+            passwordHash: 0,
+            passwordSolt: 0
+          }
+        }
+      )
+
+      return user
+    } catch {
+      return null
+    }
+  }
+
+  async createUser(data: CreateUserDto, isConfirmed?: boolean): Promise<UserDocument> {
     const newUser = new this.usersModel(data)
     newUser.setDateOfCreatedAt()
     newUser.setId()
@@ -104,6 +135,7 @@ export class UsersRepository {
     )
     newUser.passwordHash = passwordHash
     newUser.passwordSalt = passwordSalt
+    newUser.isConfirmed = !!isConfirmed
 
     const createdUser = await newUser.save()
 
@@ -114,7 +146,7 @@ export class UsersRepository {
     return this.usersModel.deleteOne({ id })
   }
 
-  private async generateHash(
+  async generateHash(
     password: string
   ): Promise<{ passwordSalt: string; passwordHash: string }> {
     const passwordSalt = await bcrypt.genSalt(10)
