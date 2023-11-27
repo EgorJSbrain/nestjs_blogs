@@ -53,8 +53,6 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-// export const AccountDataSchema = SchemaFactory.createForClass(AccountData);
-// export const ConfirmDataSchema = SchemaFactory.createForClass(ConfirmData);
 
 UserSchema.methods = {
   setDateOfCreatedAt: User.prototype.setDateOfCreatedAt,
