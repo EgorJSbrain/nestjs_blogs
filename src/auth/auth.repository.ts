@@ -42,10 +42,10 @@ export class AuthRepository {
     }
   }
 
-  async register(data: CreateUserDto): Promise<any | null> {
+  async register(data: CreateUserDto): Promise<boolean> {
     const user = await this.usersRepository.createUser(data)
 
-    await this.emailsRepository.sendRegistrationConfirmationMail(
+    return await this.emailsRepository.sendRegistrationConfirmationMail(
       user.email,
       user.confirmationCode
     )
@@ -74,9 +74,7 @@ export class AuthRepository {
     user.confirmationCode = v4()
     user.save()
 
-    await this.emailsRepository.sendRecoveryPasswordMail(user.email, user.confirmationCode)
-
-    return true
+    return await this.emailsRepository.sendRecoveryPasswordMail(user.email, user.confirmationCode)
   }
 
   async newPassword(newPassword: string, recoveryCode: string): Promise<boolean> {
@@ -92,6 +90,55 @@ export class AuthRepository {
     user.save()
 
     return true
+  }
+
+  async refreshToken(userId: string, password: string): Promise<any> {
+    const user = await this.usersRepository.getById(userId)
+
+    if (!user) {
+      return null
+    }
+
+    const checkedPassword = await this.checkPassword(password, user.passwordHash)
+
+    if (!checkedPassword) {
+      return null
+    }
+
+    const accessToken = this.generateAccessToken(user.id, password)
+    const refreshToken = this.generateRefreshToken(user.id, password)
+
+    return { accessToken, refreshToken }
+  }
+
+  async getMe(userId: string): Promise<any> {
+    const user = await this.usersRepository.getById(userId)
+
+    if (!user) {
+      return null
+    }
+
+    return {
+      userId: user.id,
+      email: user.email,
+      login: user.login
+    }
+  }
+
+  async resendConfirmationEmail(email: string, ): Promise<any> {
+    const user = await this.usersRepository.getUserByEmail(email)
+
+    if (!user) {
+      return null
+    }
+
+    user.confirmationCode = v4()
+    user.save()
+
+    return await this.emailsRepository.sendRegistrationConfirmationMail(
+      user.email,
+      user.confirmationCode
+    )
   }
 
   private generateAccessToken(userId: string, password: string): string {
