@@ -31,7 +31,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  async getById(@Param() params: { id: string }): Promise<IUser | null> {
+  async getById(@Param() params: { id: string }): Promise<UserDocument | null> {
     const user = await this.usersRepository.getById(params.id)
 
     if (!user) {
@@ -42,7 +42,7 @@ export class UsersController {
   }
 
   @Post()
-  async creatUser(@Body() data: CreateUserDto): Promise<IUser> {
+  async creatUser(@Body() data: CreateUserDto): Promise<UserDocument> {
     return this.usersRepository.createUser(data)
   }
 

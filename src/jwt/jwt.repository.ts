@@ -5,21 +5,23 @@ import { JwtService as NestJwtService } from '@nestjs/jwt';
 export class JwtRepository {
   constructor(private readonly jwtService: NestJwtService) {}
 
-  generateAcessToken(payload: string): string {
-    console.log('--acc--', process.env.ACCESS_SECRET_KEY)
-    return this.jwtService.sign(payload, { secret: process.env.ACCESS_SECRET_KEY });
-  }
-  generateRefreshToken(payload: string): string {
-    console.log('--ref--', process.env.REFRESH_SECRET_KEY)
-    return this.jwtService.sign(payload, { secret: process.env.REFRESH_SECRET_KEY });
+  generateAcessToken(userId: string, password: string): string {
+    return this.jwtService.sign({ userId, password }, { secret: process.env.ACCESS_SECRET_KEY });
   }
 
-  verifyToken(token: string): any {
-    try {
-      return this.jwtService.verify(token);
-    } catch (error) {
-      // Handle token verification errors (e.g., token expired)
-      throw new Error('Invalid token');
-    }
+  generateRefreshToken(userId: string, password: string): string {
+    return this.jwtService.sign({ userId, password }, { secret: process.env.REFRESH_SECRET_KEY });
+  }
+
+  async verifyRefreshToken(token: string): Promise<{ userId?: string, password?: string }> {
+    return await this.jwtService.verifyAsync<{ userId: string, password: string }>(token, {
+      secret: process.env.REFRESH_SECRET_KEY
+    })
+  }
+
+  verifyAccessToken(token: string): { userId?: string, password?: string } {
+    return this.jwtService.verify<{ userId: string, password: string }>(token, {
+      secret: process.env.ACCESS_SECRET_KEY
+    })
   }
 }

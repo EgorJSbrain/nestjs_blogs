@@ -29,8 +29,6 @@ import { JWTModule } from './jwt/jwt.module';
     EmailsModule,
     EmailManagerModule,
     JWTModule,
-    // NestJwtService,
-    JWTModule,
   ],
   controllers: [],
   providers: [],

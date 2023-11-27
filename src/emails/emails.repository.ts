@@ -6,18 +6,18 @@ import { IUser } from 'src/users/types/user';
 @Injectable()
 export class EmailsRepository {
   constructor(private emailManager: EmailManagerRepository) {}
-  async sendRegistrationConfirmationMail(user: IUser): Promise<boolean> {
-    const response = await this.emailManager.sendMailRegistrationConfirmation(user)
+  async sendRegistrationConfirmationMail(email: string, code: string): Promise<boolean> {
+    const response = await this.emailManager.sendMailRegistrationConfirmation(email, code)
 
     if (!response) return false
 
     return true
   }
 
-  async sendRecoveryPasswordMail(user: IUser): Promise<boolean> {
-    // const response = await emailManager.sendMailRecoveryPassword(user)
+  async sendRecoveryPasswordMail(email: string, code: string): Promise<boolean> {
+    const response = await this.emailManager.sendMailRecoveryPassword(email, code)
 
-    // if (!response) return false
+    if (!response) return false
 
     return true
   }

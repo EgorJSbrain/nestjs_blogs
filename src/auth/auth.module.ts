@@ -11,7 +11,6 @@ import { EmailManagerRepository } from 'src/email-manager/email-manager.reposito
 import { MailAdapterRepository } from 'src/email-adapter/email-adapter.repository';
 import { JwtRepository } from 'src/jwt/jwt.repository';
 import { JwtModule } from '@nestjs/jwt';
-// import { MailService } from 'src/mail/mail.repository';
 
 @Module({
   imports: [
