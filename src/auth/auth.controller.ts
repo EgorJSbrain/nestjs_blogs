@@ -22,7 +22,7 @@ import { JwtRepository } from 'src/jwt/jwt.repository'
 export class AuthController {
   constructor(
     private authRepository: AuthRepository,
-    private jwtRepository: JwtRepository
+    private jwtRepository: JwtRepository,
   ) {}
 
   @Post('login')
@@ -39,7 +39,7 @@ export class AuthController {
 
     if (!tokens) {
       throw new HttpException(
-        { message: 'Something wrong' },
+        { message: 'Email or password aren\'t correct' },
         HttpStatus.NOT_FOUND
       )
     }
@@ -48,6 +48,7 @@ export class AuthController {
       httpOnly: true,
       secure: true
     })
+
     return { accessToken: tokens?.accessToken }
   }
 
@@ -108,32 +109,103 @@ export class AuthController {
 
   @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Req() request: Request) {
+  async refreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response,) {
     const token = request.cookies.refreshToken
 
     if (!token) {
       throw new UnauthorizedException()
     }
 
-    if (!request.headers) {
+    const { userId, password } = await this.jwtRepository.verifyRefreshToken(token)
+
+    if (!userId || !password) {
       throw new UnauthorizedException()
     }
-    const userId = await this.jwtRepository.verifyToken(token)
-    console.log("----!!!!---userId:", userId)
+
+    const { accessToken, refreshToken } =
+      await this.authRepository.refreshToken(userId, password)
+
+    response.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true
+    })
+
+    return { accessToken }
   }
 
-  // @Post('registration-email-resending')
-  // async registrationEmailResending(@Body() data: any) {
+  @Post('registration-email-resending')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async registrationEmailResending(@Body() data: { email: string }) {
+    if (!data.email) {
+      throw new HttpException(
+        { message: 'Email is required field' },
+        HttpStatus.NOT_FOUND
+      )
+    }
 
-  // }
+    const result = await this.authRepository.resendConfirmationEmail(data.email)
 
-  // @Get('me')
-  // async getMe() {
-  //   return '-Me-'
-  // }
+    if (!result) {
+      throw new HttpException(
+        { message: 'Something wrong' },
+        HttpStatus.NOT_FOUND
+      )
+    }
+  }
+
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  async getMe(@Req() request: Request) {
+    if (!request.headers.authorization) {
+      throw new UnauthorizedException()
+    }
+
+    const token = request.headers.authorization?.split(' ')[1]
+    const bearer = request.headers.authorization?.split(' ')[0]
+
+    if (bearer !== 'Bearer') {
+      throw new UnauthorizedException()
+    }
+
+    if (!token) {
+      throw new UnauthorizedException()
+    }
+
+    const { userId } = this.jwtRepository.verifyAccessToken(token)
+
+    if (!userId) {
+      throw new UnauthorizedException()
+    }
+
+    const user = await this.authRepository.getMe(userId)
+
+    if (!user) {
+      throw new HttpException(
+        { message: 'User doesn\'t found' },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    return user
+  }
 
   // @Post('logout')
-  // async logout() {
+  // @HttpCode(HttpStatus.NO_CONTENT)
+  // async logout(@Req() request: Request, @Res() response: Response) {
+  //   const token = request.cookies.refreshToken
 
+  //   if (!token) {
+  //     throw new UnauthorizedException()
+  //   }
+
+  //   const { userId } = await this.jwtRepository.verifyRefreshToken(token)
+  //   console.log("userId:", userId)
+
+  //   // if (!userId) {
+  //   //   throw new UnauthorizedException()
+  //   // }
+
+  //   // response.clearCookie('refreshToken')
+  //   return {}
   // }
 }
