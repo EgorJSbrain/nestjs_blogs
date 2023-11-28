@@ -42,8 +42,15 @@ export class UsersController {
   }
 
   @Post()
-  async creatUser(@Body() data: CreateUserDto): Promise<UserDocument> {
-    return this.usersRepository.createUser(data)
+  async creatUser(@Body() data: CreateUserDto): Promise<IUser> {
+    const user = await this.usersRepository.createUser(data)
+
+    return {
+      id: user.id,
+      login: user.login,
+      email: user.email,
+      createdAt: user.createdAt
+    }
   }
 
   @Delete(':id')
