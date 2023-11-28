@@ -26,20 +26,20 @@ export class AuthRepository {
       data.loginOrEmail
     )
 
-    if (user) {
-      const checkedPassword = await this.checkPassword(data.password, user.passwordHash)
-
-      if (checkedPassword) {
-        const accessToken = this.generateAccessToken(user.id, data.password)
-        const refreshToken = this.generateRefreshToken(user.id, data.password)
-
-        return { accessToken, refreshToken }
-      } else {
-        return null
-      }
-    } else {
+    if (!user) {
       return null
     }
+
+    const checkedPassword = await this.checkPassword(data.password, user.passwordHash)
+
+    if (!checkedPassword) {
+      return null
+    }
+
+    const accessToken = this.generateAccessToken(user.id, data.password)
+    const refreshToken = this.generateRefreshToken(user.id, data.password)
+
+    return { accessToken, refreshToken }
   }
 
   async register(data: CreateUserDto): Promise<boolean> {
@@ -129,6 +129,10 @@ export class AuthRepository {
     const user = await this.usersRepository.getUserByEmail(email)
 
     if (!user) {
+      return null
+    }
+
+    if (user.isConfirmed) {
       return null
     }
 
