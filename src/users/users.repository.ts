@@ -51,7 +51,15 @@ export class UsersRepository {
       const pagesCount = Math.ceil(count / pageSizeNumber)
 
       const users = await this.usersModel
-        .find(filter, { _id: 0, __v: 0 })
+        .find(filter, {
+          _id: 0,
+          __v: 0,
+          confirmationCode: 0,
+          expirationDate: 0,
+          passwordHash: 0,
+          passwordSalt: 0,
+          isConfirmed: 0,
+        })
         .skip(skip)
         .limit(pageSizeNumber)
         .sort(sort)
