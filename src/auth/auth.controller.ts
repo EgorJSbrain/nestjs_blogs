@@ -39,10 +39,7 @@ export class AuthController {
     const tokens = await this.authRepository.login(data)
 
     if (!tokens) {
-      throw new HttpException(
-        { message: 'Email or password aren\'t correct' },
-        HttpStatus.NOT_FOUND
-      )
+      throw new UnauthorizedException({ message: 'Email or password aren\'t correct' })
     }
 
     response.cookie('refreshToken', tokens.refreshToken, {
@@ -74,7 +71,7 @@ export class AuthController {
     if (!isConfirmed) {
       throw new HttpException(
         { message: 'Something wrong' },
-        HttpStatus.NOT_FOUND
+        HttpStatus.BAD_REQUEST
       )
     }
   }
