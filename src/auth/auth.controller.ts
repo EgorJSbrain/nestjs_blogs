@@ -10,13 +10,16 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  UseGuards,
+  Request
 } from '@nestjs/common'
-import { Response, Request } from 'express'
+import { Response } from 'express'
 import { CreateUserDto } from 'src/dtos/users/create-user.dto'
 import { UsersRepository } from 'src/users/users.repository'
 import { AuthRepository } from './auth.repository'
 import { LoginDto } from 'src/dtos/auth/login.dto'
 import { JwtRepository } from 'src/jwt/jwt.repository'
+import { LocalGuard } from './guards/local-auth.guard'
 
 @Controller('auth')
 export class AuthController {
@@ -27,16 +30,17 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(LocalGuard)
   async login(
     @Res({ passthrough: true }) response: Response,
-    @Req() request: Request,
+    @Request() req,
     @Ip() ip: string,
     @Body() data: LoginDto
   ) {
     const userIp = ip
-    const deviceTitle = request.headers['user-agent']
+    const deviceTitle = req.headers['user-agent']
 
-    const tokens = await this.authRepository.login(data)
+    const tokens = await this.authRepository.login(req.user.id, data.password)
 
     if (!tokens) {
       throw new UnauthorizedException({ message: 'Email or password aren\'t correct' })
@@ -107,7 +111,7 @@ export class AuthController {
 
   @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response,) {
+  async refreshToken(@Request() request, @Res({ passthrough: true }) response: Response,) {
     const token = request.cookies.refreshToken
 
     if (!token) {
@@ -153,7 +157,7 @@ export class AuthController {
 
   @Get('me')
   @HttpCode(HttpStatus.OK)
-  async getMe(@Req() request: Request) {
+  async getMe(@Request() request) {
     if (!request.headers.authorization) {
       throw new UnauthorizedException()
     }

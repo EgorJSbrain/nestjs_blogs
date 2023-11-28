@@ -20,7 +20,7 @@ export class AuthRepository {
     private usersRepository: UsersRepository
   ) {}
 
-  async login(data: LoginDto): Promise<{ accessToken: string, refreshToken: string } | null> {
+  async verifyUser(data: LoginDto): Promise<UserDocument | null> {
     const user = await this.usersRepository.getUserByLoginOrEmail(
       data.loginOrEmail,
       data.loginOrEmail
@@ -30,14 +30,24 @@ export class AuthRepository {
       return null
     }
 
-    const checkedPassword = await this.checkPassword(data.password, user.passwordHash)
+    const checkedPassword = await this.checkPassword(
+      data.password,
+      user.passwordHash
+    )
 
     if (!checkedPassword) {
       return null
     }
 
-    const accessToken = this.generateAccessToken(user.id, data.password)
-    const refreshToken = this.generateRefreshToken(user.id, data.password)
+    return user
+  }
+
+  async login(
+    userId: string,
+    password: string
+  ): Promise<{ accessToken: string; refreshToken: string } | null> {
+    const accessToken = this.generateAccessToken(userId, password)
+    const refreshToken = this.generateRefreshToken(userId, password)
 
     return { accessToken, refreshToken }
   }
@@ -74,12 +84,20 @@ export class AuthRepository {
     user.confirmationCode = v4()
     user.save()
 
-    return await this.emailsRepository.sendRecoveryPasswordMail(user.email, user.confirmationCode)
+    return await this.emailsRepository.sendRecoveryPasswordMail(
+      user.email,
+      user.confirmationCode
+    )
   }
 
-  async newPassword(newPassword: string, recoveryCode: string): Promise<boolean> {
-    const user = await this.usersRepository.getUserByVerificationCode(recoveryCode)
-    const { passwordSalt, passwordHash } = await this.usersRepository.generateHash(newPassword)
+  async newPassword(
+    newPassword: string,
+    recoveryCode: string
+  ): Promise<boolean> {
+    const user =
+      await this.usersRepository.getUserByVerificationCode(recoveryCode)
+    const { passwordSalt, passwordHash } =
+      await this.usersRepository.generateHash(newPassword)
 
     if (!user) {
       return false
@@ -99,7 +117,10 @@ export class AuthRepository {
       return null
     }
 
-    const checkedPassword = await this.checkPassword(password, user.passwordHash)
+    const checkedPassword = await this.checkPassword(
+      password,
+      user.passwordHash
+    )
 
     if (!checkedPassword) {
       return null
@@ -125,7 +146,7 @@ export class AuthRepository {
     }
   }
 
-  async resendConfirmationEmail(email: string, ): Promise<any> {
+  async resendConfirmationEmail(email: string): Promise<any> {
     const user = await this.usersRepository.getUserByEmail(email)
 
     if (!user) {
