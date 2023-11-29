@@ -13,7 +13,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(loginOrEmail: string, password: string): Promise<IUser> {
+  async validate(loginOrEmail: string, password: string): Promise<{ userId: string }> {
     const user = await this.authRepository.verifyUser({ loginOrEmail, password })
 
     if (!user) {
@@ -21,10 +21,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     }
 
     return {
-      id: user.id,
-      login: user.login,
-      email: user.email,
-      createdAt: user.createdAt
+      userId: user.id,
     };
   }
 }

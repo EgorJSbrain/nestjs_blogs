@@ -11,15 +11,16 @@ import {
   Res,
   UnauthorizedException,
   UseGuards,
-  Request
 } from '@nestjs/common'
-import { Response } from 'express'
+import { Request, Response } from 'express'
 import { CreateUserDto } from 'src/dtos/users/create-user.dto'
 import { UsersRepository } from 'src/users/users.repository'
 import { AuthRepository } from './auth.repository'
 import { LoginDto } from 'src/dtos/auth/login.dto'
 import { JwtRepository } from 'src/jwt/jwt.repository'
 import { LocalGuard } from './guards/local-auth.guard'
+import { JWTAuthGuard } from './guards/jwt-auth.guard'
+import { CurrentUserId } from './current-user-id.param.decorator'
 
 @Controller('auth')
 export class AuthController {
@@ -33,14 +34,14 @@ export class AuthController {
   @UseGuards(LocalGuard)
   async login(
     @Res({ passthrough: true }) response: Response,
-    @Request() req,
+    @Req() req: Request,
     @Ip() ip: string,
     @Body() data: LoginDto
   ) {
     const userIp = ip
     const deviceTitle = req.headers['user-agent']
 
-    const tokens = await this.authRepository.login(req.user.id, data.password)
+    const tokens = await this.authRepository.login(req.user?.userId, data.password)
 
     if (!tokens) {
       throw new UnauthorizedException({ message: 'Email or password aren\'t correct' })
@@ -111,7 +112,7 @@ export class AuthController {
 
   @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Request() request, @Res({ passthrough: true }) response: Response,) {
+  async refreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response,) {
     const token = request.cookies.refreshToken
 
     if (!token) {
@@ -157,29 +158,9 @@ export class AuthController {
 
   @Get('me')
   @HttpCode(HttpStatus.OK)
-  async getMe(@Request() request) {
-    if (!request.headers.authorization) {
-      throw new UnauthorizedException()
-    }
-
-    const token = request.headers.authorization?.split(' ')[1]
-    const bearer = request.headers.authorization?.split(' ')[0]
-
-    if (bearer !== 'Bearer') {
-      throw new UnauthorizedException()
-    }
-
-    if (!token) {
-      throw new UnauthorizedException()
-    }
-
-    const { userId } = this.jwtRepository.verifyAccessToken(token)
-
-    if (!userId) {
-      throw new UnauthorizedException()
-    }
-
-    const user = await this.authRepository.getMe(userId)
+  @UseGuards(JWTAuthGuard)
+  async getMe(@CurrentUserId() currentUseruserId: string) {
+    const user = await this.authRepository.getMe(currentUseruserId)
 
     if (!user) {
       throw new HttpException(
