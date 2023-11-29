@@ -7,6 +7,7 @@ import { JwtRepository } from './jwt.repository';
 @Module({
   imports: [
     JwtModule.register({
+      secret: process.env.ACCESS_SECRET_KEY,
       signOptions: { expiresIn: '5m' } // Set the expiration time for the token
     })
   ],
