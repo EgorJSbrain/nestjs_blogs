@@ -8,7 +8,8 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  HttpException
+  HttpException,
+  UseGuards
 } from '@nestjs/common'
 import { UsersRepository } from './users.repository'
 import { User, UserDocument } from './users.schema'
@@ -16,6 +17,7 @@ import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { UsersRequestParams } from '../types/users'
 import { ResponseBody } from '../types/request'
 import { IUser } from './types/user'
+import { JWTAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 
 @Controller('users')
 export class UsersController {
@@ -42,6 +44,7 @@ export class UsersController {
   }
 
   @Post()
+  @UseGuards(JWTAuthGuard)
   async creatUser(@Body() data: CreateUserDto): Promise<IUser> {
     const user = await this.usersRepository.createUser(data)
 
