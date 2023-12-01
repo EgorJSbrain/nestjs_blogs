@@ -44,7 +44,7 @@ export class UsersController {
   }
 
   @Post()
-  @UseGuards(JWTAuthGuard)
+  // @UseGuards(JWTAuthGuard)
   async creatUser(@Body() data: CreateUserDto): Promise<IUser> {
     const user = await this.usersRepository.createUser(data)
 
