@@ -6,6 +6,7 @@ export const generateResponseError = (errors: ValidationError[]) => {
 
   errors.forEach(err => {
     const constraintsKeys = Object.keys(err.constraints ?? {})
+
     constraintsKeys.forEach(constraintsKey => {
       errorsForResponse.push({
         message: err.constraints ? err.constraints[constraintsKey] : '',
