@@ -13,7 +13,7 @@ import { EmailAdapterModule } from './email-adapter/email-adapter.module';
 import { EmailsModule } from './emails/emails.module';
 import { EmailManagerModule } from './email-manager/email-manager.module';
 import { JWTModule } from './jwt/jwt.module';
-import configuration from 'config/configuration';
+import configuration from '../config/configuration';
 
 
 @Module({
