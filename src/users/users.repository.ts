@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import bcrypt from 'bcrypt'
 
 import { User, UserDocument } from './users.schema';
-import { CreateUserDto } from 'src/dtos/users/create-user.dto';
+import { CreateUserDto } from '../dtos/users/create-user.dto';
 import { ResponseBody, SortDirections } from '../types/request';
 import { UsersRequestParams } from '../types/users';
 
