@@ -1,19 +1,23 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { JwtModule as JwtModule, JwtService as NestJwtService } from '@nestjs/jwt';
+import { Module } from '@nestjs/common';
+import { JwtModule as JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 import { JwtRepository } from './jwt.repository';
 
-
 @Module({
   imports: [
-    JwtModule.register({
-      secret: process.env.ACCESS_SECRET_KEY,
-      signOptions: { expiresIn: '5m' } // Set the expiration time for the token
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('ACCESS_SECRET_KEY'),
+        signOptions: { expiresIn: '60s' }
+      }),
     })
   ],
   controllers: [],
   providers: [
     JwtRepository,
+    ConfigService
   ]
 })
 export class JWTModule {}

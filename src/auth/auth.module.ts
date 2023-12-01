@@ -12,7 +12,6 @@ import { MailAdapterRepository } from 'src/email-adapter/email-adapter.repositor
 import { JwtRepository } from 'src/jwt/jwt.repository';
 import { JwtModule } from '@nestjs/jwt';
 import { LocalStrategy } from './strategies/local.strategy';
-import { JWTAuthGuard } from './guards/jwt-auth.guard';
 import { JWTStrategy } from './strategies/jwt.strategy';
 
 @Module({

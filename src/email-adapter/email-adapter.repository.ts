@@ -1,29 +1,26 @@
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config';
 import nodemailer from 'nodemailer'
 
 @Injectable()
 export class MailAdapterRepository {
   private transporter;
 
-  constructor() {
+  constructor(
+    private readonly configService: ConfigService
+  ) {
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD
+        user: this.configService.get<string>('SMTP_USER'),
+        pass: this.configService.get<string>('SMTP_PASSWORD')
       }
     })
-
-    // this.init()
   }
-
-  // init() {
-  //   console.log('---', this.transporter)
-  // }
 
   async sendActivationMail(to: string, subject: string, mailBody: string): Promise<undefined> {
     await this.transporter.sendMail({
-      from: process.env.SMTP_USER ?? '',
+      from: this.configService.get<string>('SMTP_USER') ?? '',
       to,
       subject,
       html: mailBody
