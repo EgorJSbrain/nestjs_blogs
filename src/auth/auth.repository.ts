@@ -6,7 +6,7 @@ import { v4 } from 'uuid'
 
 import { User, UserDocument } from 'src/users/users.schema';
 import { EmailsRepository } from 'src/emails/emails.repository';
-import { CreateUserDto } from 'src/dtos/users/create-user.dto';
+import { CreateUserDto } from '../dtos/users/create-user.dto';
 import { JwtRepository } from 'src/jwt/jwt.repository';
 import { UsersRepository } from 'src/users/users.repository';
 import { LoginDto } from 'src/dtos/auth/login.dto';

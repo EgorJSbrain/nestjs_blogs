@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common'
 import { UsersRepository } from './users.repository'
 import { User, UserDocument } from './users.schema'
-import { CreateUserDto } from 'src/dtos/users/create-user.dto'
+import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { UsersRequestParams } from '../types/users'
 import { ResponseBody } from '../types/request'
 import { IUser } from './types/user'

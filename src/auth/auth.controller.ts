@@ -13,8 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { Request, Response } from 'express'
-import { CreateUserDto } from 'src/dtos/users/create-user.dto'
-import { UsersRepository } from 'src/users/users.repository'
+import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { AuthRepository } from './auth.repository'
 import { LoginDto } from 'src/dtos/auth/login.dto'
 import { JwtRepository } from 'src/jwt/jwt.repository'
