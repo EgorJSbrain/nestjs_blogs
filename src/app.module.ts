@@ -13,11 +13,16 @@ import { EmailAdapterModule } from './email-adapter/email-adapter.module';
 import { EmailsModule } from './emails/emails.module';
 import { EmailManagerModule } from './email-manager/email-manager.module';
 import { JWTModule } from './jwt/jwt.module';
+import configuration from 'config/configuration';
 
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ envFilePath: `${process.env.NODE_ENV}.env` }),
+    ConfigModule.forRoot({
+      envFilePath: `${process.env.NODE_ENV}.env`,
+      isGlobal: true,
+      load: [configuration]
+    }),
     MongooseModule.forRoot(process.env.DATABASE_URL ?? ''),
     UsersModule,
     BlogsModule,
@@ -28,10 +33,9 @@ import { JWTModule } from './jwt/jwt.module';
     EmailAdapterModule,
     EmailsModule,
     EmailManagerModule,
-    JWTModule,
+    JWTModule
   ],
   controllers: [],
-  providers: [],
+  providers: []
 })
-
 export class AppModule {}
