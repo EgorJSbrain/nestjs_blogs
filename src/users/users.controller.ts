@@ -11,7 +11,7 @@ import {
   HttpException,
   UseGuards
 } from '@nestjs/common'
-import { BasicAuthGuard } from 'src/auth/guards/basic-auth.guard'
+import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { UsersRepository } from './users.repository'
 import { UserDocument } from './users.schema'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
