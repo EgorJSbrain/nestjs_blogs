@@ -141,10 +141,8 @@ export class UsersRepository {
     const { passwordSalt, passwordHash } = await this.generateHash(
       data.password
     )
-    const basicHash = await this.generateBasicHash(data.password, passwordSalt)
     newUser.passwordHash = passwordHash
     newUser.passwordSalt = passwordSalt
-    newUser.basicHash = basicHash
     newUser.isConfirmed = !!isConfirmed
 
     const createdUser = await newUser.save()
@@ -166,15 +164,6 @@ export class UsersRepository {
       passwordSalt,
       passwordHash
     }
-  }
-
-  async generateBasicHash(
-    password: string,
-    passwordSalt: string,
-  ): Promise<string> {
-    const basicHash = await bcrypt.hash(password, passwordSalt)
-
-    return basicHash
   }
 
   async verifyBasicHash(
