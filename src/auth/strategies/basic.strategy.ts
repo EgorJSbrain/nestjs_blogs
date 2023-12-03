@@ -13,13 +13,7 @@ export class BasicAuthStrategy extends PassportStrategy(Strategy) {
     }
 
     public validate = async (username: string, password: string): Promise<boolean> => {
-      console.log("password:", password)
-      const isUserVerified = await this.usersRepository.verifyBasicHash(
-        password,
-        'YWRtaW46cXdlcnR5t',
-      )
-
-      if (isUserVerified && username === 'admin') {
+      if (password === 'qwerty' && username === 'admin') {
         return true;
       }
 

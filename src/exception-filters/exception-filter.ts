@@ -4,13 +4,12 @@ import { Request, Response } from 'express';
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
-    console.log("--------exception:", exception)
+
     try {
       const ctx = host.switchToHttp();
       const response = ctx.getResponse<Response>();
       const request = ctx.getRequest<Request>();
       const status = exception.getStatus();
-      console.log("!!!!!status:", status)
 
       if (status === 400) {
         const errorResponse: { errorsMessages: any[] } = {
@@ -19,7 +18,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
         const responseBody: any = exception.getResponse()
         const messages = responseBody.message || []
-        console.log("-----messages:------", messages)
 
         messages.forEach(message => {
           errorResponse.errorsMessages.push(message)
@@ -28,7 +26,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
         response.status(status).json(errorResponse)
 
       } else {
-        console.log('!------')
         response.status(status).json({
           statusCode: status,
           timestamp: new Date().toISOString(),
