@@ -20,10 +20,11 @@ export class BasicAuthStrategy extends PassportStrategy(Strategy) {
       const user = await this.usersRepository.getUserByLoginOrEmail(username, username)
 
         if (!user) {
-          throw new HttpException(
-            { message: 'Username is not correct' },
-            HttpStatus.BAD_REQUEST
-          )
+          // throw new HttpException(
+          //   { message: 'Username is not correct' },
+          //   HttpStatus.BAD_REQUEST
+          // )
+          throw new UnauthorizedException();
         }
 
         const isUserVerified = await this.usersRepository.verifyBasicHash(
