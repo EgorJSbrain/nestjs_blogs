@@ -59,11 +59,20 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registration(@Body() data: CreateUserDto) {
-    const existedUser = await this.usersRepository.getUserByLoginOrEmail(data.email, data.login)
+    const existedUserByLogin = await this.usersRepository.getUserByLoginOrEmail(data.login, data.login)
 
-    if (existedUser) {
+    if (existedUserByLogin) {
       throw new HttpException(
-        [{ message: 'Email or login are used', field: '' }],
+        [{ message: 'Login is used yet', field: 'login' }],
+        HttpStatus.BAD_REQUEST
+      )
+    }
+
+    const existedUserByEmail = await this.usersRepository.getUserByLoginOrEmail(data.email, data.email)
+
+    if (existedUserByEmail) {
+      throw new HttpException(
+        [{ message: 'Email is used yet', field: 'email' }],
         HttpStatus.BAD_REQUEST
       )
     }
@@ -151,7 +160,7 @@ export class AuthController {
   async registrationEmailResending(@Body() data: { email: string }) {
     if (!data.email) {
       throw new HttpException(
-        [{ message: 'Email is required field', field: ''}],
+        [{ message: 'Email is required field', field: 'email'}],
         HttpStatus.BAD_REQUEST
       )
     }
@@ -167,7 +176,7 @@ export class AuthController {
 
     if (existedUser?.isConfirmed) {
       throw new HttpException(
-        [{ message: 'This email is conformed', field: '' }],
+        [{ message: 'This email is conformed', field: 'email' }],
         HttpStatus.BAD_REQUEST
       )
     }
