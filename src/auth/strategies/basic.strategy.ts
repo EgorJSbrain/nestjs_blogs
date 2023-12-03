@@ -13,29 +13,15 @@ export class BasicAuthStrategy extends PassportStrategy(Strategy) {
     }
 
     public validate = async (username: string, password: string): Promise<boolean> => {
-      if (!password || !username) {
-        throw new UnauthorizedException();
+      const isUserVerified = await this.usersRepository.verifyBasicHash(
+        password,
+        'YWRtaW46cXdlcnR5t',
+      )
+
+      if (isUserVerified && username === 'admin') {
+        return true;
       }
 
-      const user = await this.usersRepository.getUserByLoginOrEmail(username, username)
-
-        if (!user) {
-          // throw new HttpException(
-          //   { message: 'Username is not correct' },
-          //   HttpStatus.BAD_REQUEST
-          // )
-          throw new UnauthorizedException();
-        }
-
-        const isUserVerified = await this.usersRepository.verifyBasicHash(
-          password,
-          user.basicHash,
-        )
-
-        if (isUserVerified) {
-            return true;
-        }
-
-        throw new UnauthorizedException();
+      throw new UnauthorizedException();
     }
 }
