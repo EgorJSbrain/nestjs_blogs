@@ -59,12 +59,12 @@ export class AuthController {
   async registration(@Body() data: CreateUserDto) {
     const user = this.authRepository.register(data)
 
-    if (!user) {
-      throw new HttpException(
-        { message: 'Something wrong' },
-        HttpStatus.NOT_FOUND
-      )
-    }
+    // if (!user) {
+    //   throw new HttpException(
+    //     { message: 'Something wrong' },
+    //     HttpStatus.NOT_FOUND
+    //   )
+    // }
   }
 
   @Post('registration-confirmation')
@@ -72,12 +72,12 @@ export class AuthController {
   async registrationConfirmation(@Body() data: { code: string }) {
     const isConfirmed = await this.authRepository.confirmEmail(data.code)
 
-    if (!isConfirmed) {
-      throw new HttpException(
-        { message: 'Something wrong' },
-        HttpStatus.BAD_REQUEST
-      )
-    }
+    // if (!isConfirmed) {
+    //   throw new HttpException(
+    //     { message: 'Something wrong' },
+    //     HttpStatus.BAD_REQUEST
+    //   )
+    // }
   }
 
   @Post('password-recovery')
