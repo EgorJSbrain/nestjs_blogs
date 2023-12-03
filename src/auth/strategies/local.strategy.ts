@@ -15,6 +15,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     const user = await this.authRepository.verifyUser({ loginOrEmail, password })
 
     if (!user) {
+      console.log("1")
       throw new UnauthorizedException();
     }
 
