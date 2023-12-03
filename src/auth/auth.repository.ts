@@ -64,7 +64,7 @@ export class AuthRepository {
   async confirmEmail(code: string): Promise<boolean> {
     const user = await this.usersRepository.getUserByVerificationCode(code)
 
-    if (!user || user?.isConfirmed) {
+    if (!user) {
       return false
     }
 

@@ -20,12 +20,14 @@ import { JwtRepository } from 'src/jwt/jwt.repository'
 import { LocalGuard } from './guards/local-auth.guard'
 import { JWTAuthGuard } from './guards/jwt-auth.guard'
 import { CurrentUserId } from './current-user-id.param.decorator'
+import { UsersRepository } from 'src/users/users.repository'
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authRepository: AuthRepository,
     private jwtRepository: JwtRepository,
+    private usersRepository: UsersRepository,
   ) {}
 
   @Post('login')
@@ -57,6 +59,15 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registration(@Body() data: CreateUserDto) {
+    const existedUser = await this.usersRepository.getUserByLoginOrEmail(data.email, data.login)
+
+    if (existedUser) {
+      throw new HttpException(
+        [{ message: 'Email or login are used', field: '' }],
+        HttpStatus.BAD_REQUEST
+      )
+    }
+
     const user = this.authRepository.register(data)
 
     if (!user) {
@@ -74,7 +85,7 @@ export class AuthController {
 
     if (!isConfirmed) {
       throw new HttpException(
-        [{ message: 'Something wrong', field: '' }],
+        [{ message: 'Something wrong', field: 'code' }],
         HttpStatus.BAD_REQUEST
       )
     }
@@ -141,7 +152,23 @@ export class AuthController {
     if (!data.email) {
       throw new HttpException(
         [{ message: 'Email is required field', field: ''}],
-        HttpStatus.NOT_FOUND
+        HttpStatus.BAD_REQUEST
+      )
+    }
+
+    const existedUser = await this.usersRepository.getUserByEmail(data.email)
+
+    if (!existedUser) {
+      throw new HttpException(
+        [{ message: 'This email doesn\'t exist', field: 'email' }],
+        HttpStatus.BAD_REQUEST
+      )
+    }
+
+    if (existedUser?.isConfirmed) {
+      throw new HttpException(
+        [{ message: 'This email is conformed', field: '' }],
+        HttpStatus.BAD_REQUEST
       )
     }
 
@@ -150,7 +177,7 @@ export class AuthController {
     if (!result) {
       throw new HttpException(
         [{ message: 'Something wrong', field: '' }],
-        HttpStatus.NOT_FOUND
+        HttpStatus.BAD_REQUEST
       )
     }
   }
