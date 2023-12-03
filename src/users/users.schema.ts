@@ -21,9 +21,6 @@ export class User {
   passwordHash: string;
 
   @Prop()
-  basicHash: string;
-
-  @Prop()
   passwordSalt: string;
 
   @Prop()
