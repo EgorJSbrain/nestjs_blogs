@@ -24,6 +24,7 @@ export class UsersController {
   constructor(private usersRepository: UsersRepository) {}
 
   @Get()
+  @UseGuards(BasicAuthGuard)
   async getAll(
     @Query() query: UsersRequestParams
   ): Promise<ResponseBody<UserDocument> | []> {
@@ -58,6 +59,7 @@ export class UsersController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(BasicAuthGuard)
   async deleteUser(@Param() params: { id: string }): Promise<undefined> {
     const user = await this.usersRepository.getById(params.id)
 
