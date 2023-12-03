@@ -59,12 +59,12 @@ export class AuthController {
   async registration(@Body() data: CreateUserDto) {
     const user = this.authRepository.register(data)
 
-    // if (!user) {
-    //   throw new HttpException(
-    //     { message: 'Something wrong' },
-    //     HttpStatus.NOT_FOUND
-    //   )
-    // }
+    if (!user) {
+      throw new HttpException(
+        [{ message: 'Something wrong', field: '' }],
+        HttpStatus.NOT_FOUND
+      )
+    }
   }
 
   @Post('registration-confirmation')
@@ -72,12 +72,12 @@ export class AuthController {
   async registrationConfirmation(@Body() data: { code: string }) {
     const isConfirmed = await this.authRepository.confirmEmail(data.code)
 
-    // if (!isConfirmed) {
-    //   throw new HttpException(
-    //     { message: 'Something wrong' },
-    //     HttpStatus.BAD_REQUEST
-    //   )
-    // }
+    if (!isConfirmed) {
+      throw new HttpException(
+        [{ message: 'Something wrong', field: '' }],
+        HttpStatus.BAD_REQUEST
+      )
+    }
   }
 
   @Post('password-recovery')
@@ -87,7 +87,7 @@ export class AuthController {
 
     if (!passwordChangingResult) {
       throw new HttpException(
-        { message: 'Something wrong' },
+        [{ message: 'Something wrong', field: '' }],
         HttpStatus.NOT_FOUND
       )
     }
@@ -103,7 +103,7 @@ export class AuthController {
 
     if (!passwordChangingResult) {
       throw new HttpException(
-        { message: 'Something wrong' },
+        [{ message: 'Something wrong', field: '' }],
         HttpStatus.NOT_FOUND
       )
     }
@@ -140,7 +140,7 @@ export class AuthController {
   async registrationEmailResending(@Body() data: { email: string }) {
     if (!data.email) {
       throw new HttpException(
-        { message: 'Email is required field' },
+        [{ message: 'Email is required field', field: ''}],
         HttpStatus.NOT_FOUND
       )
     }
@@ -149,7 +149,7 @@ export class AuthController {
 
     if (!result) {
       throw new HttpException(
-        { message: 'Something wrong' },
+        [{ message: 'Something wrong', field: '' }],
         HttpStatus.NOT_FOUND
       )
     }
@@ -163,7 +163,7 @@ export class AuthController {
 
     if (!user) {
       throw new HttpException(
-        { message: 'User doesn\'t found' },
+        [{ message: 'User doesn\'t found', field: '' }],
         HttpStatus.NOT_FOUND
       )
     }

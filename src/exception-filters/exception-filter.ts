@@ -18,7 +18,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
         }
 
         const responseBody: any = exception.getResponse()
-        console.log("------responseBody:------", responseBody)
         const messages = responseBody.message || []
         console.log("-----messages:------", messages)
 
