@@ -63,7 +63,7 @@ export class AuthController {
 
     if (existedUserByLogin) {
       throw new HttpException(
-        [{ message: 'Login is used yet', field: 'login' }],
+        { message: 'Login is used yet', field: 'login' },
         HttpStatus.BAD_REQUEST
       )
     }
@@ -72,7 +72,7 @@ export class AuthController {
 
     if (existedUserByEmail) {
       throw new HttpException(
-        [{ message: 'Email is used yet', field: 'email' }],
+        { message: 'Email is used yet', field: 'email' },
         HttpStatus.BAD_REQUEST
       )
     }
@@ -81,7 +81,7 @@ export class AuthController {
 
     if (!user) {
       throw new HttpException(
-        [{ message: 'Something wrong', field: '' }],
+        { message: 'Something wrong', field: '' },
         HttpStatus.NOT_FOUND
       )
     }
@@ -94,7 +94,7 @@ export class AuthController {
 
     if (!isConfirmed) {
       throw new HttpException(
-        [{ message: 'Something wrong', field: 'code' }],
+        { message: 'Something wrong', field: 'code' },
         HttpStatus.BAD_REQUEST
       )
     }
@@ -107,7 +107,7 @@ export class AuthController {
 
     if (!passwordChangingResult) {
       throw new HttpException(
-        [{ message: 'Something wrong', field: '' }],
+        { message: 'Something wrong', field: '' },
         HttpStatus.NOT_FOUND
       )
     }
@@ -123,7 +123,7 @@ export class AuthController {
 
     if (!passwordChangingResult) {
       throw new HttpException(
-        [{ message: 'Something wrong', field: '' }],
+        { message: 'Something wrong', field: '' },
         HttpStatus.NOT_FOUND
       )
     }
@@ -160,7 +160,7 @@ export class AuthController {
   async registrationEmailResending(@Body() data: { email: string }) {
     if (!data.email) {
       throw new HttpException(
-        [{ message: 'Email is required field', field: 'email'}],
+        { message: 'Email is required field', field: 'email'},
         HttpStatus.BAD_REQUEST
       )
     }
@@ -169,14 +169,14 @@ export class AuthController {
 
     if (!existedUser) {
       throw new HttpException(
-        [{ message: 'This email doesn\'t exist', field: 'email' }],
+        { message: 'This email doesn\'t exist', field: 'email' },
         HttpStatus.BAD_REQUEST
       )
     }
 
     if (existedUser?.isConfirmed) {
       throw new HttpException(
-        [{ message: 'This email is conformed', field: 'email' }],
+        { message: 'This email is conformed', field: 'email' },
         HttpStatus.BAD_REQUEST
       )
     }
@@ -185,7 +185,7 @@ export class AuthController {
 
     if (!result) {
       throw new HttpException(
-        [{ message: 'Something wrong', field: '' }],
+        { message: 'Something wrong', field: '' },
         HttpStatus.BAD_REQUEST
       )
     }
@@ -199,7 +199,7 @@ export class AuthController {
 
     if (!user) {
       throw new HttpException(
-        [{ message: 'User doesn\'t found', field: '' }],
+        { message: 'User doesn\'t found', field: '' },
         HttpStatus.NOT_FOUND
       )
     }
