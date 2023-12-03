@@ -45,6 +45,7 @@ export class AuthController {
     const tokens = await this.authRepository.login(req.user?.userId, data.password)
 
     if (!tokens) {
+      console.log("2")
       throw new UnauthorizedException({ message: 'Email or password aren\'t correct' })
     }
 
@@ -185,7 +186,7 @@ export class AuthController {
 
     if (!result) {
       throw new HttpException(
-        { message: 'Something wrong', field: '' },
+        { message: 'Something wrong', field: 'email' },
         HttpStatus.BAD_REQUEST
       )
     }
