@@ -87,10 +87,10 @@ export class UsersRepository {
     return user
   }
 
-  async getUserByLoginOrEmail(email: string, login: string): Promise<UserDocument | null> {
+  async getUserByLoginOrEmail(emailOrLogin: string): Promise<UserDocument | null> {
     try {
       const user = await this.usersModel.findOne(
-        { $or: [{ email }, { login }] },
+        { $or: [{ email: emailOrLogin }, { login: emailOrLogin }] },
         { projection: { _id: 0 } }
       )
 

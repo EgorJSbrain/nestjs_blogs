@@ -45,7 +45,6 @@ export class AuthController {
     const tokens = await this.authRepository.login(req.user?.userId, data.password)
 
     if (!tokens) {
-      console.log("2")
       throw new UnauthorizedException({ message: 'Email or password aren\'t correct' })
     }
 
@@ -60,7 +59,7 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registration(@Body() data: CreateUserDto) {
-    const existedUserByLogin = await this.usersRepository.getUserByLoginOrEmail(data.login, data.login)
+    const existedUserByLogin = await this.usersRepository.getUserByLoginOrEmail(data.login)
 
     if (existedUserByLogin) {
       throw new HttpException(
@@ -69,7 +68,7 @@ export class AuthController {
       )
     }
 
-    const existedUserByEmail = await this.usersRepository.getUserByLoginOrEmail(data.email, data.email)
+    const existedUserByEmail = await this.usersRepository.getUserByLoginOrEmail(data.email)
 
     if (existedUserByEmail) {
       throw new HttpException(
