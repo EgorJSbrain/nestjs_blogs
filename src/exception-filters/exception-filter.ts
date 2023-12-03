@@ -1,32 +1,41 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException } from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
-    const status = exception.getStatus();
+    try {
+      const ctx = host.switchToHttp();
+      const response = ctx.getResponse<Response>();
+      const request = ctx.getRequest<Request>();
+      const status = exception.getStatus();
 
-    if (status === 400) {
-      const errorResponse: { errorsMessages: any[] } = {
-        errorsMessages: []
+      if (status === 400) {
+        const errorResponse: { errorsMessages: any[] } = {
+          errorsMessages: []
+        }
+
+        const responseBody: any = exception.getResponse()
+        const messages = responseBody.message || []
+
+        messages.forEach(message => {
+          errorResponse.errorsMessages.push(message)
+        })
+
+        response.status(status).json(errorResponse)
+
+      } else {
+        response.status(status).json({
+          statusCode: status,
+          timestamp: new Date().toISOString(),
+          path: request.url
+        })
       }
-
-      const responseBody: any = exception.getResponse()
-
-      responseBody.message.forEach(message => {
-        errorResponse.errorsMessages.push(message)
-      })
-
-      response.status(status).json(errorResponse)
-    } else {
-      response.status(status).json({
-        statusCode: status,
-        timestamp: new Date().toISOString(),
-        path: request.url
-      })
+    } catch {
+      throw new HttpException(
+        { message: 'Something wrong' },
+        HttpStatus.BAD_REQUEST
+      )
     }
   }
 }
