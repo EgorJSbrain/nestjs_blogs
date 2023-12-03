@@ -1,15 +1,17 @@
-import { IsEmail, IsString, Length } from "class-validator"
+import { IsEmail, IsString, Length, Matches } from "class-validator"
 
 export class CreateUserDto {
   @IsString()
-  @Length(3, 255)
+  @Length(3, 10)
+  @Matches(/^[a-zA-Z0-9_-]*$/)
   login: string
 
   @IsString()
-  @Length(5, 10)
+  @Length(6, 20)
   password: string
 
   @IsString()
   @IsEmail()
+  @Matches(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)
   email: string
 }
