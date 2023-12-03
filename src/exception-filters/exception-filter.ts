@@ -4,6 +4,7 @@ import { Request, Response } from 'express';
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
+    console.log("--------exception:", exception)
     try {
       const ctx = host.switchToHttp();
       const response = ctx.getResponse<Response>();
@@ -16,7 +17,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
         }
 
         const responseBody: any = exception.getResponse()
+        console.log("------responseBody:------", responseBody)
         const messages = responseBody.message || []
+        console.log("-----messages:------", messages)
 
         messages.forEach(message => {
           errorResponse.errorsMessages.push(message)
@@ -32,10 +35,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         })
       }
     } catch {
-      throw new HttpException(
-        { message: 'Something wrong' },
-        HttpStatus.BAD_REQUEST
-      )
+      throw new Error('Something wrong in exception filter')
     }
   }
 }
