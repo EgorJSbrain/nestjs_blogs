@@ -67,6 +67,10 @@ export class AuthRepository {
       return false
     }
 
+    if (user && user.isConfirmed) {
+      return false
+    }
+
     user.isConfirmed = true
     user.save()
 

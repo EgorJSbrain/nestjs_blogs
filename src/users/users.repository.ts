@@ -101,13 +101,11 @@ export class UsersRepository {
   }
 
   async getUserByEmail(email: string): Promise<UserDocument | null> {
-    console.log("getUserByEmail ~ email:", email)
     try {
       const user =  await this.usersModel.findOne(
         { email },
         { projection: { _id: 0 } }
       )
-      console.log("getUserByEmail ~ user:", user)
 
       return user
     } catch {
