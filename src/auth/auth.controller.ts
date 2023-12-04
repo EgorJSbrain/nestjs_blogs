@@ -85,6 +85,8 @@ export class AuthController {
         HttpStatus.NOT_FOUND
       )
     }
+
+    return
   }
 
   @Post('registration-confirmation')
@@ -111,6 +113,8 @@ export class AuthController {
         HttpStatus.NOT_FOUND
       )
     }
+
+    return
   }
 
   @Post('new-password')
@@ -127,6 +131,8 @@ export class AuthController {
         HttpStatus.NOT_FOUND
       )
     }
+
+    return
   }
 
   @Post('refresh-token')
@@ -189,6 +195,8 @@ export class AuthController {
         HttpStatus.BAD_REQUEST
       )
     }
+
+    return
   }
 
   @Get('me')
