@@ -21,24 +21,16 @@ export class AuthRepository {
   ) {}
 
   async verifyUser(data: LoginDto): Promise<UserDocument | null> {
-    const userByLogin = await this.usersRepository.getUserByLogin(
-      data.loginOrEmail
-    )
-    const userByEmail = await this.usersRepository.getUserByEmail(
-      data.loginOrEmail
-    )
+    const user = await this.usersRepository.getUserByLoginOrEmail(data.loginOrEmail)
 
-    if (!userByLogin && !userByEmail) {
+    if (!user) {
       return null
     }
 
-    const user = userByLogin || userByEmail
-
     const checkedPassword = await this.checkPassword(
       data.password,
-      user!.passwordHash
+      user.passwordHash
     )
-    console.log("-----verifyUser------checkedPassword:", checkedPassword)
 
     if (!checkedPassword) {
       return null
@@ -59,7 +51,6 @@ export class AuthRepository {
 
   async register(data: CreateUserDto): Promise<boolean> {
     const user = await this.usersRepository.createUser(data)
-    console.log("register ~ user:", user)
 
     return await this.emailsRepository.sendRegistrationConfirmationMail(
       user.email,
@@ -69,7 +60,6 @@ export class AuthRepository {
 
   async confirmEmail(code: string): Promise<boolean> {
     const user = await this.usersRepository.getUserByVerificationCode(code)
-    console.log(" confirmEmail ~ user:", user)
 
     if (!user) {
       return false
