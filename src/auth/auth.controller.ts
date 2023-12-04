@@ -59,7 +59,7 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registration(@Body() data: CreateUserDto) {
-    const existedUserByLogin = await this.usersRepository.getUserByLoginOrEmail(data.login)
+    const existedUserByLogin = await this.usersRepository.getUserByLoginOrEmail(data.login, data.login)
 
     if (existedUserByLogin) {
       throw new HttpException(
@@ -68,7 +68,7 @@ export class AuthController {
       )
     }
 
-    const existedUserByEmail = await this.usersRepository.getUserByLoginOrEmail(data.email)
+    const existedUserByEmail = await this.usersRepository.getUserByLoginOrEmail(data.email, data.email)
 
     if (existedUserByEmail) {
       throw new HttpException(
