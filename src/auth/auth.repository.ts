@@ -49,13 +49,15 @@ export class AuthRepository {
     return { accessToken, refreshToken }
   }
 
-  async register(data: CreateUserDto): Promise<boolean> {
+  async register(data: CreateUserDto): Promise<UserDocument> {
     const user = await this.usersRepository.createUser(data)
 
-    return await this.emailsRepository.sendRegistrationConfirmationMail(
+    this.emailsRepository.sendRegistrationConfirmationMail(
       user.email,
       user.confirmationCode
     )
+
+    return user
   }
 
   async confirmEmail(code: string): Promise<boolean> {
