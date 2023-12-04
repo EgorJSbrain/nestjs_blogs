@@ -21,7 +21,11 @@ export class AuthRepository {
   ) {}
 
   async verifyUser(data: LoginDto): Promise<UserDocument | null> {
-    const user = await this.usersRepository.getUserByLoginOrEmail(data.loginOrEmail)
+    const user = await this.usersRepository.getUserByLoginOrEmail(
+      data.loginOrEmail,
+      data.loginOrEmail
+    )
+    console.log("----verifyUser----user:", user)
 
     if (!user) {
       return null
@@ -31,6 +35,7 @@ export class AuthRepository {
       data.password,
       user.passwordHash
     )
+    console.log("-----verifyUser------checkedPassword:", checkedPassword)
 
     if (!checkedPassword) {
       return null
