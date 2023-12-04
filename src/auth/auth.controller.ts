@@ -59,6 +59,7 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registration(@Body() data: CreateUserDto) {
+    console.log("registration ~ data:", data)
     const existedUserByLogin = await this.usersRepository.getUserByLoginOrEmail(data.login, data.login)
 
     if (existedUserByLogin) {
@@ -90,6 +91,7 @@ export class AuthController {
   @Post('registration-confirmation')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registrationConfirmation(@Body() data: { code: string }) {
+    console.log("registrationConfirmation ~ data:", data)
     const isConfirmed = await this.authRepository.confirmEmail(data.code)
 
     if (!isConfirmed) {
@@ -158,6 +160,7 @@ export class AuthController {
   @Post('registration-email-resending')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registrationEmailResending(@Body() data: { email: string }) {
+    console.log("registrationEmailResending ~ data:", data)
     if (!data.email) {
       throw new HttpException(
         { message: 'Email is required field', field: 'email'},
