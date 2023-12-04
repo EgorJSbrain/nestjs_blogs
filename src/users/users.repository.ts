@@ -87,13 +87,12 @@ export class UsersRepository {
     return user
   }
 
-  async getUserByLoginOrEmail(email: string, login: string): Promise<UserDocument | null> {
+  async getUserByLoginOrEmail(loginOrEmail: string): Promise<UserDocument | null> {
     try {
       const user = await this.usersModel.findOne(
-        { $or: [{ email }, { login }] },
+        { $or: [{ email: loginOrEmail }, { login: loginOrEmail }] },
         { projection: { _id: 0 } }
       )
-      console.log("!!!!!!!!! user:", user)
 
       return user
     } catch {
@@ -109,19 +108,6 @@ export class UsersRepository {
         { projection: { _id: 0 } }
       )
       console.log("getUserByEmail ~ user:", user)
-
-      return user
-    } catch {
-      return null
-    }
-  }
-
-  async getUserByLogin(login: string): Promise<UserDocument | null> {
-    try {
-      const user =  await this.usersModel.findOne(
-        { login },
-        { projection: { _id: 0 } }
-      )
 
       return user
     } catch {
