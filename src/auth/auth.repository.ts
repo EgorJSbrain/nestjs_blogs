@@ -56,6 +56,7 @@ export class AuthRepository {
 
   async register(data: CreateUserDto): Promise<boolean> {
     const user = await this.usersRepository.createUser(data)
+    console.log("register ~ user:", user)
 
     return await this.emailsRepository.sendRegistrationConfirmationMail(
       user.email,
@@ -65,6 +66,7 @@ export class AuthRepository {
 
   async confirmEmail(code: string): Promise<boolean> {
     const user = await this.usersRepository.getUserByVerificationCode(code)
+    console.log(" confirmEmail ~ user:", user)
 
     if (!user) {
       return false
