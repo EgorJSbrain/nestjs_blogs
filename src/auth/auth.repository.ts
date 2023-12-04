@@ -67,10 +67,28 @@ export class AuthRepository {
       return false
     }
 
+    if (user && user.isConfirmed) {
+      return false
+    }
+
     user.isConfirmed = true
     user.save()
 
     return true
+  }
+
+  async checkIsConfirmedEmail(code: string): Promise<boolean> {
+    const user = await this.usersRepository.getUserByVerificationCode(code)
+
+    if (!user) {
+      return false
+    }
+
+    if (user && user.isConfirmed) {
+      return true
+    }
+
+    return false
   }
 
   async recoveryPassword(email: string): Promise<boolean> {

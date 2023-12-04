@@ -92,6 +92,15 @@ export class AuthController {
   @Post('registration-confirmation')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registrationConfirmation(@Body() data: { code: string }) {
+    const isConfirmedYet = await this.authRepository.checkIsConfirmedEmail(data.code)
+
+    if (isConfirmedYet) {
+      throw new HttpException(
+        { message: 'Email is confirmed yet', field: 'code' },
+        HttpStatus.BAD_REQUEST
+      )
+    }
+
     const isConfirmed = await this.authRepository.confirmEmail(data.code)
 
     if (!isConfirmed) {
