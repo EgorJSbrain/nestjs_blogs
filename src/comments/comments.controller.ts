@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { CommentsRepository } from './comments.repository';
 import { Comment, CommentDocument } from './comments.schema';
-import { CreateCommentDto } from 'src/dtos/comments/create-comment.dto';
+import { CreateCommentDto } from '../dtos/comments/create-comment.dto';
 import { RequestParams, ResponseBody } from '../types/request';
 
 @Controller('comments')

@@ -2,10 +2,10 @@ import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
-import { Blog, BlogDocument } from 'src/blogs/blogs.schema';
-import { Post, PostDocument } from 'src/posts/posts.schema';
-import { Comment, CommentDocument } from 'src/comments/comments.schema';
-import { User, UserDocument } from 'src/users/users.schema';
+import { Blog, BlogDocument } from '../blogs/blogs.schema';
+import { Post, PostDocument } from '../posts/posts.schema';
+import { Comment, CommentDocument } from '../comments/comments.schema';
+import { User, UserDocument } from '../users/users.schema';
 
 @Injectable()
 export class GeneralRepository {

@@ -3,10 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
 import { Post, PostDocument } from './posts.schema';
-import { CreatePostDto } from 'src/dtos/posts/create-post.dto';
+import { CreatePostDto } from '../dtos/posts/create-post.dto';
 import { RequestParams, ResponseBody, SortDirections } from '../types/request';
 import { IPost } from './types/post';
-import { UpdatePostDto } from 'src/dtos/posts/update-post.dto';
+import { UpdatePostDto } from '../dtos/posts/update-post.dto';
 
 @Injectable()
 export class PostsRepository {

@@ -4,8 +4,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { BlogsRepository } from './blogs.repository';
 import { BlogsController } from './blogs.controller';
 import { Blog, BlogSchema } from './blogs.schema';
-import { PostsRepository } from 'src/posts/posts.repository';
-import { Post, PostSchema } from 'src/posts/posts.schema';
+import { PostsRepository } from '../posts/posts.repository';
+import { Post, PostSchema } from '../posts/posts.schema';
 
 @Module({
   imports: [MongooseModule.forFeature([
