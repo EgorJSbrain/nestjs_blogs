@@ -13,11 +13,11 @@ import {
 } from '@nestjs/common'
 import { PostsRepository } from './posts.repository'
 import { Post as PostSchema, PostDocument } from './posts.schema'
-import { CreatePostDto } from 'src/dtos/posts/create-post.dto'
+import { CreatePostDto } from '../dtos/posts/create-post.dto'
 import { ResponseBody, RequestParams } from '../types/request'
 import { IPost } from './types/post'
-import { BlogsRepository } from 'src/blogs/blogs.repository'
-import { UpdatePostDto } from 'src/dtos/posts/update-post.dto'
+import { BlogsRepository } from '../blogs/blogs.repository'
+import { UpdatePostDto } from '../dtos/posts/update-post.dto'
 
 @Controller('posts')
 export class PostsController {

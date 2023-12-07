@@ -13,14 +13,14 @@ import {
 } from '@nestjs/common'
 import { BlogsRepository } from './blogs.repository'
 import { BlogDocument } from './blogs.schema'
-import { CreateBlogDto } from 'src/dtos/blogs/create-blog.dto'
+import { CreateBlogDto } from '../dtos/blogs/create-blog.dto'
 import { BlogsRequestParams } from '../types/blogs'
 import { RequestParams, ResponseBody } from '../types/request'
-import { CreatePostDto } from 'src/dtos/posts/create-post.dto'
+import { CreatePostDto } from '../dtos/posts/create-post.dto'
 import { IBlog } from './types/blog'
-import { PostsRepository } from 'src/posts/posts.repository'
-import { IPost } from 'src/posts/types/post'
-import { UpdateBlogDto } from 'src/dtos/blogs/update-blog.dto'
+import { PostsRepository } from '../posts/posts.repository'
+import { IPost } from '../posts/types/post'
+import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 
 @Controller('blogs')
 export class BlogsController {

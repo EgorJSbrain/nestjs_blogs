@@ -15,12 +15,12 @@ import {
 import { Request, Response } from 'express'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { AuthRepository } from './auth.repository'
-import { LoginDto } from 'src/dtos/auth/login.dto'
-import { JwtRepository } from 'src/jwt/jwt.repository'
+import { LoginDto } from '../dtos/auth/login.dto'
+import { JwtRepository } from '../jwt/jwt.repository'
 import { LocalGuard } from './guards/local-auth.guard'
 import { JWTAuthGuard } from './guards/jwt-auth.guard'
 import { CurrentUserId } from './current-user-id.param.decorator'
-import { UsersRepository } from 'src/users/users.repository'
+import { UsersRepository } from '../users/users.repository'
 
 @Controller('auth')
 export class AuthController {

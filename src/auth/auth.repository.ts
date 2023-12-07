@@ -4,12 +4,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import bcrypt from 'bcrypt'
 import { v4 } from 'uuid'
 
-import { User, UserDocument } from 'src/users/users.schema';
-import { EmailsRepository } from 'src/emails/emails.repository';
+import { User, UserDocument } from '../users/users.schema';
+import { EmailsRepository } from '../emails/emails.repository';
 import { CreateUserDto } from '../dtos/users/create-user.dto';
-import { JwtRepository } from 'src/jwt/jwt.repository';
-import { UsersRepository } from 'src/users/users.repository';
-import { LoginDto } from 'src/dtos/auth/login.dto';
+import { JwtRepository } from '../jwt/jwt.repository';
+import { UsersRepository } from '../users/users.repository';
+import { LoginDto } from '../dtos/auth/login.dto';
 
 @Injectable()
 export class AuthRepository {
