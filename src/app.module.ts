@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService as NestJwtService } from '@nestjs/jwt';
 
 import { UsersModule } from './users/users.module';
@@ -23,7 +23,12 @@ import configuration from '../config/configuration';
       isGlobal: true,
       load: [configuration]
     }),
-    MongooseModule.forRoot(process.env.DATABASE_URL ?? ''),
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        uri: config.get<string>('DATABASE.URL')
+      })
+    }),
     UsersModule,
     BlogsModule,
     PostsModule,
