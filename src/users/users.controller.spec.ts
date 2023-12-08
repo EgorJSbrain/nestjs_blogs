@@ -5,16 +5,18 @@ import { UsersController } from './users.controller';
 import { AppModule } from '../app.module';
 import { User, UserSchema } from './users.schema';
 import { UsersRepository } from './users.repository';
+import { ConfigService } from '@nestjs/config';
 
 describe('UsersController', () => {
   let app: INestApplication
   let controller: UsersController;
+  let configService: UsersController;
   let httpServer
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [AppModule, MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])],
-      providers: [UsersRepository],
+      providers: [UsersRepository, ConfigService],
       controllers: [UsersRepository, UsersController],
     }).compile();
 
@@ -32,8 +34,6 @@ describe('UsersController', () => {
   })
 
   it('should be defined', () => {
-    console.log("----controller:", controller)
-
     expect(controller).toBeDefined();
   });
 });
