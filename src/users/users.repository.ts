@@ -12,7 +12,7 @@ import { UsersRequestParams } from '../types/users';
 export class UsersRepository {
   constructor(@InjectModel(User.name) private usersModel: Model<UserDocument>) {}
 
-  async getAll(params: UsersRequestParams): Promise<ResponseBody<UserDocument> | []>  {
+  async getAll(params: UsersRequestParams): Promise<ResponseBody<UserDocument> | null>  {
     try {
       const {
         sortBy = 'createdAt',
@@ -73,7 +73,7 @@ export class UsersRepository {
         items: users
       }
     } catch {
-      return []
+      return null
     }
   }
 

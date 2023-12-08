@@ -27,7 +27,7 @@ export class UsersController {
   @UseGuards(BasicAuthGuard)
   async getAll(
     @Query() query: UsersRequestParams
-  ): Promise<ResponseBody<UserDocument> | []> {
+  ): Promise<ResponseBody<UserDocument> | null> {
     const users = await this.usersRepository.getAll(query)
 
     return users
