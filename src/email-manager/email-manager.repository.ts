@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 
-import { MailAdapterRepository } from 'src/email-adapter/email-adapter.repository'
-import { IUser } from 'src/users/types/user'
+import { MailAdapterRepository } from '../email-adapter/email-adapter.repository'
+import { IUser } from '../users/types/user'
 
 @Injectable()
 export class EmailManagerRepository {

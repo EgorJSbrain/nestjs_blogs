@@ -3,11 +3,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
 import { Blog, BlogDocument } from './blogs.schema';
-import { CreateBlogDto } from 'src/dtos/blogs/create-blog.dto';
+import { CreateBlogDto } from '../dtos/blogs/create-blog.dto';
 import { ResponseBody, SortDirections } from '../types/request';
 import { BlogsRequestParams } from '../types/blogs';
 import { IBlog } from './types/blog';
-import { UpdateBlogDto } from 'src/dtos/blogs/update-blog.dto';
+import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto';
 
 @Injectable()
 export class BlogsRepository {
@@ -22,7 +22,7 @@ export class BlogsRepository {
         pageSize = 10,
         searchNameTerm,
       } = params
-  
+
       const filter: FilterQuery<BlogDocument> = {}
       const sort: Record<string, SortOrder> = {}
 
@@ -33,20 +33,20 @@ export class BlogsRepository {
       if (sortBy && sortDirection) {
         sort[sortBy] = sortDirection === SortDirections.asc ? 1 : -1
       }
-  
+
       const pageSizeNumber = Number(pageSize)
       const pageNumberNum = Number(pageNumber)
       const skip = (pageNumberNum - 1) * pageSizeNumber
       const count = await this.blogsModel.countDocuments(filter)
       const pagesCount = Math.ceil(count / pageSizeNumber)
-  
+
       const blogs = await this.blogsModel
         .find(filter, { _id: 0, __v: 0 })
         .skip(skip)
         .limit(pageSizeNumber)
         .sort(sort)
         .exec()
-      
+
       return {
         pagesCount,
         page: pageNumberNum,
