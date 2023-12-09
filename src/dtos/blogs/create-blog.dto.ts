@@ -17,16 +17,20 @@ import {
   BLOG_NAME_MAX_LENGTH,
   BLOG_NAME_MIN_LENGTH
 } from '../../constants/blogs'
+import { Transform, TransformFnParams } from 'class-transformer'
 
 export class CreateBlogDto {
   @IsDefined()
   @IsString()
+  @Transform(({ value }: TransformFnParams) => value?.trim())
+  @IsNotEmpty()
   @MinLength(BLOG_NAME_MIN_LENGTH)
   @MaxLength(BLOG_NAME_MAX_LENGTH)
   name: string
 
   @IsDefined()
   @IsString()
+  @Transform(({ value }: TransformFnParams) => value?.trim())
   @IsNotEmpty()
   @MinLength(BLOG_DESCRIPTION_MIN_LENGTH)
   @MaxLength(BLOG_DESCRIPTION_MAX_LENGTH)
@@ -36,6 +40,5 @@ export class CreateBlogDto {
   @IsString()
   @IsUrl()
   @MaxLength(STRING_MAX_LENGTH)
-  @Matches(URL_REGEX)
   websiteUrl: string
 }
