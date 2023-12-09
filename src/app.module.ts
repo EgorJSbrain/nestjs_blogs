@@ -25,11 +25,9 @@ import configuration from '../config/configuration';
     }),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        // console.log('----', config.get<string>('DATABASE_URL'))
-        return {
+      useFactory: (config: ConfigService) => ({
         uri: config.get<string>('DATABASE_URL')
-      }}
+      })
     }),
     UsersModule,
     BlogsModule,
