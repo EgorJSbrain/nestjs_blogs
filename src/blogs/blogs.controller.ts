@@ -22,8 +22,7 @@ import { IBlog } from './types/blog'
 import { PostsRepository } from '../posts/posts.repository'
 import { IPost } from '../posts/types/post'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
-import { BasicAuthGuard } from 'src/auth/guards/basic-auth.guard'
-import { JWTAuthGuard } from 'src/auth/guards/jwt-auth.guard'
+import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 
 @Controller('blogs')
 export class BlogsController {
