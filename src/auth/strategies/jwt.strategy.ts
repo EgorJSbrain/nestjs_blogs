@@ -7,6 +7,7 @@ type JwtPayload = {
   userId: string;
   password: string;
   iat: number;
+  exp: number;
 };
 
 @Injectable()

@@ -12,14 +12,14 @@ export class JwtRepository {
   generateAcessToken(userId: string, password: string): string {
     return this.jwtService.sign(
       { userId, password },
-      { secret: this.configService.get<string>('ACCESS_SECRET_KEY'), expiresIn: '10s' }
+      { secret: this.configService.get<string>('ACCESS_SECRET_KEY'), expiresIn: '10m' }
     )
   }
 
   generateRefreshToken(userId: string, password: string): string {
     return this.jwtService.sign(
       { userId, password },
-      { secret: this.configService.get<string>('REFRESH_SECRET_KEY'), expiresIn: '20s' }
+      { secret: this.configService.get<string>('REFRESH_SECRET_KEY'), expiresIn: '2h' }
     )
   }
 

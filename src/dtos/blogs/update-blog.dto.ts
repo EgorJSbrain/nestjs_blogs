@@ -36,6 +36,5 @@ export class UpdateBlogDto {
   @IsString()
   @IsUrl()
   @MaxLength(STRING_MAX_LENGTH)
-  @Matches(URL_REGEX)
   websiteUrl: string
 }
