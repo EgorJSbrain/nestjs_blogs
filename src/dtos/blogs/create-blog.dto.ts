@@ -1,5 +1,6 @@
 import {
   IsDefined,
+  IsNotEmpty,
   IsString,
   IsUrl,
   Matches,
@@ -26,6 +27,7 @@ export class CreateBlogDto {
 
   @IsDefined()
   @IsString()
+  @IsNotEmpty()
   @MinLength(BLOG_DESCRIPTION_MIN_LENGTH)
   @MaxLength(BLOG_DESCRIPTION_MAX_LENGTH)
   description: string
