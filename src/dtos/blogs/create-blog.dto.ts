@@ -15,7 +15,7 @@ import {
   BLOG_DESCRIPTION_MIN_LENGTH,
   BLOG_NAME_MAX_LENGTH,
   BLOG_NAME_MIN_LENGTH
-} from 'src/constants/blogs'
+} from '../../constants/blogs'
 
 export class CreateBlogDto {
   @IsDefined()
