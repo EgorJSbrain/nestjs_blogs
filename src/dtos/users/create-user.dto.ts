@@ -26,7 +26,6 @@ export class CreateUserDto {
   @IsString()
   @MinLength(PASSWORD_MIN_LENGTH)
   @MaxLength(PASSWORD_MAX_LENGTH)
-  @Matches(PASSWORD_REGEX)
   password: string
 
   @IsString()
