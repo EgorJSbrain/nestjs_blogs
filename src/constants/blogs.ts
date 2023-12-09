@@ -1,0 +1,6 @@
+export const BLOG_NAME_MIN_LENGTH = 3
+export const BLOG_NAME_MAX_LENGTH = 15
+export const BLOG_DESCRIPTION_MIN_LENGTH = 1
+export const BLOG_DESCRIPTION_MAX_LENGTH = 500
+export const BLOG_URL_MIN_LENGTH = 5
+export const BLOG_URL_MAX_LENGTH = 100
