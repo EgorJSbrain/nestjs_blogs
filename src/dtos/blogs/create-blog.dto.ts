@@ -1,3 +1,4 @@
+import { Transform, TransformFnParams } from 'class-transformer'
 import {
   IsDefined,
   IsNotEmpty,
@@ -9,7 +10,6 @@ import {
 } from 'class-validator'
 import {
   STRING_MAX_LENGTH,
-  URL_REGEX
 } from '../../constants/global'
 import {
   BLOG_DESCRIPTION_MAX_LENGTH,
@@ -17,21 +17,20 @@ import {
   BLOG_NAME_MAX_LENGTH,
   BLOG_NAME_MIN_LENGTH
 } from '../../constants/blogs'
-import { Transform, TransformFnParams } from 'class-transformer'
 
 export class CreateBlogDto {
   @IsDefined()
   @IsString()
-  @Transform(({ value }: TransformFnParams) => value?.trim())
   @IsNotEmpty()
+  @Transform(({ value }: TransformFnParams) => value?.trim())
   @MinLength(BLOG_NAME_MIN_LENGTH)
   @MaxLength(BLOG_NAME_MAX_LENGTH)
   name: string
 
   @IsDefined()
   @IsString()
-  @Transform(({ value }: TransformFnParams) => value?.trim())
   @IsNotEmpty()
+  @Transform(({ value }: TransformFnParams) => value?.trim())
   @MinLength(BLOG_DESCRIPTION_MIN_LENGTH)
   @MaxLength(BLOG_DESCRIPTION_MAX_LENGTH)
   description: string

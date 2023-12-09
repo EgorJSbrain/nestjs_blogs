@@ -12,7 +12,6 @@ import {
   LOGIN_REGEX,
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
-  PASSWORD_REGEX,
   STRING_MAX_LENGTH
 } from '../../constants/global'
 

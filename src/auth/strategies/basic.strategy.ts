@@ -1,6 +1,6 @@
 
 import { BasicStrategy as Strategy } from 'passport-http';
-import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { UsersRepository } from '../../users/users.repository';
 
