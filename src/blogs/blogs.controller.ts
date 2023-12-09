@@ -22,7 +22,7 @@ import { IBlog } from './types/blog'
 import { PostsRepository } from '../posts/posts.repository'
 import { IPost } from '../posts/types/post'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
-import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 
 @Controller('blogs')
 export class BlogsController {
@@ -52,13 +52,13 @@ export class BlogsController {
   }
 
   @Post()
-  @UseGuards(JWTAuthGuard)
+  @UseGuards(BasicAuthGuard)
   async creatBlog(@Body() data: CreateBlogDto): Promise<IBlog> {
     return this.blogsRepository.createBlog(data)
   }
 
   @Put(':id')
-  @UseGuards(JWTAuthGuard)
+  @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async updateBlog(
     @Param() params: { id: string },
@@ -82,7 +82,7 @@ export class BlogsController {
   }
 
   @Delete(':id')
-  @UseGuards(JWTAuthGuard)
+  @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBlog(@Param() params: { id: string }): Promise<any> {
     const blog = await this.blogsRepository.getById(params.id)

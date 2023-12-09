@@ -2,13 +2,11 @@ import {
   IsNotEmpty,
   IsString,
   IsUrl,
-  Matches,
   MaxLength,
   MinLength
 } from 'class-validator'
 import {
   STRING_MAX_LENGTH,
-  URL_REGEX
 } from '../../constants/global'
 import {
   BLOG_DESCRIPTION_MAX_LENGTH,
