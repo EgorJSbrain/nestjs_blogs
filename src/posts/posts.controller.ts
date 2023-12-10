@@ -19,11 +19,11 @@ import { ResponseBody, RequestParams } from '../types/request'
 import { IPost } from './types/post'
 import { BlogsRepository } from '../blogs/blogs.repository'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
-import { JWTAuthGuard } from 'src/auth/guards/jwt-auth.guard'
-import { UsersRepository } from 'src/users/users.repository'
-import { CurrentUserId } from 'src/auth/current-user-id.param.decorator'
-import { LikeDto } from 'src/dtos/like/like.dto'
-import { appMessages } from 'src/constants/messages'
+import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { UsersRepository } from '../users/users.repository'
+import { CurrentUserId } from '../auth/current-user-id.param.decorator'
+import { LikeDto } from '../dtos/like/like.dto'
+import { appMessages } from '../constants/messages'
 
 @Controller('posts')
 export class PostsController {
