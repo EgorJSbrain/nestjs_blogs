@@ -1,7 +1,7 @@
 import {
   IsEnum
 } from 'class-validator'
-import { LikeStatusEnum } from 'src/constants/like'
+import { LikeStatusEnum } from '../../constants/like'
 
 export class LikeDto {
   @IsEnum(LikeStatusEnum, {
