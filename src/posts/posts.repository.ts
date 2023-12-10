@@ -20,7 +20,7 @@ export class PostsRepository {
         pageNumber = 1,
         pageSize = 10,
       } = params
-  
+
       let filter: FilterQuery<PostDocument> = {}
       const sort: Record<string, SortOrder> = {}
 
@@ -31,13 +31,13 @@ export class PostsRepository {
       if (sortBy && sortDirection) {
         sort[sortBy] = sortDirection === SortDirections.asc ? 1 : -1
       }
-  
+
       const pageSizeNumber = Number(pageSize)
       const pageNumberNum = Number(pageNumber)
       const skip = (pageNumberNum - 1) * pageSizeNumber
       const count = await this.postsModel.countDocuments(filter)
       const pagesCount = Math.ceil(count / pageSizeNumber)
-  
+
       const posts = await this.postsModel
         .find(filter, { _id: 0, __v: 0 })
         .skip(skip)
@@ -60,7 +60,7 @@ export class PostsRepository {
           newestLikes: []
         }
       }))
-      
+
       return {
         pagesCount,
         page: pageNumberNum,
@@ -75,11 +75,11 @@ export class PostsRepository {
 
   async getById(id: string): Promise<IPost | null> {
     const post = await this.postsModel.findOne({ id }, { _id: 0, __v: 0 })
-    
+
     if (!post) {
       return null
     }
-    
+
     return {
       id: post.id,
       title: post.title,
@@ -140,6 +140,22 @@ export class PostsRepository {
 
     return true
   }
+
+  // async likePost(postId: string): Promise<any> {
+  //   const post = await this.postsModel.findOne({ id: postId })
+
+  //   if (!post) {
+  //     return null
+  //   }
+
+  //   // post.title = data.title ?? post.title
+  //   // post.content = data.content ?? post.content
+  //   // post.shortDescription = data.shortDescription ?? post.shortDescription
+
+  //   post.save()
+
+  //   return true
+  // }
 
   deletePost(id: string) {
     return this.postsModel.deleteOne({ id })
