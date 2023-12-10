@@ -9,7 +9,8 @@ import {
   Post,
   Put,
   Query,
-  HttpCode
+  HttpCode,
+  UseGuards
 } from '@nestjs/common'
 import { PostsRepository } from './posts.repository'
 import { Post as PostSchema, PostDocument } from './posts.schema'
@@ -18,12 +19,18 @@ import { ResponseBody, RequestParams } from '../types/request'
 import { IPost } from './types/post'
 import { BlogsRepository } from '../blogs/blogs.repository'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
+import { JWTAuthGuard } from 'src/auth/guards/jwt-auth.guard'
+import { UsersRepository } from 'src/users/users.repository'
+import { CurrentUserId } from 'src/auth/current-user-id.param.decorator'
+import { LikeDto } from 'src/dtos/like/like.dto'
+import { appMessages } from 'src/constants/messages'
 
 @Controller('posts')
 export class PostsController {
   constructor(
     private postsRepository: PostsRepository,
-    private blogsRepository: BlogsRepository
+    private blogsRepository: BlogsRepository,
+    private usersRepository: UsersRepository
   ) {}
 
   @Get()
@@ -123,5 +130,33 @@ export class PostsController {
   @Post()
   async creatPostByPostId(@Body() data: CreatePostDto): Promise<any> {
     return this.postsRepository.createPost(data)
+  }
+
+  @Put('/:postId/like-status')
+  @UseGuards(JWTAuthGuard)
+  async likePostById(
+    @Param() params: { postId: string },
+    @CurrentUserId() currentUseruserId: string,
+    @Body() data: LikeDto
+  ): Promise<undefined> {
+    console.log("data:", data)
+    const exitedUser = await this.usersRepository.getById(currentUseruserId)
+
+    if (!exitedUser) {
+      throw new HttpException(
+        { message: appMessages('User').errors.dontFound, field: '' },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const existedPost = await this.postsRepository.getById(params.postId)
+
+    if (!existedPost) {
+      throw new HttpException(
+        { message: appMessages('Post').errors.dontFound, field: '' },
+        HttpStatus.NOT_FOUND
+      )
+    }
+    // return this.postsRepository.likePost(postId)
   }
 }
