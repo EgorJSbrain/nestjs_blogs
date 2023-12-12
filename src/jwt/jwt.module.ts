@@ -12,7 +12,7 @@ import { JwtRepository } from './jwt.repository';
         secret: config.get<string>('ACCESS_SECRET_KEY'),
         signOptions: { expiresIn: '10m' }
       }),
-    })
+    }),
   ],
   controllers: [],
   providers: [

@@ -1,12 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-
-// id: { type: String, required: true },
-// authorId: { type: String, required: true },
-// sourceId: { type: String, required: true },
-// status: { type: String, enum: LikeStatus, required: true },
-// createdAt: { type: String, required: true },
-// login: { type: String, required: true }
+import { LikeStatusEnum } from '../constants/like';
 
 @Schema()
 export class Like {
@@ -20,7 +14,7 @@ export class Like {
   sourceId: string;
 
   @Prop()
-  status: string;
+  status: LikeStatusEnum;
 
   @Prop()
   createdAt: string;

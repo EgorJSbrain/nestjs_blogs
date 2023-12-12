@@ -1,119 +1,163 @@
-import { FilterQuery, Model, SortOrder } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
-import { Blog, BlogDocument } from './likes.schema';
-import { CreateBlogDto } from '../dtos/blogs/create-blog.dto';
-import { ResponseBody, SortDirections } from '../types/request';
-import { BlogsRequestParams } from '../types/blogs';
-import { IBlog } from './types/blog';
-import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto';
+import { Like, LikeDocument } from './likes.schema';
+import { LikeStatusEnum } from '../constants/like';
+import { ILike, ILikesInfo, LikesRequestParams } from '../types/likes';
+import { CreateLikeDto } from '../dtos/like/create-like.dto';
 
 @Injectable()
-export class BlogsRepository {
-  constructor(@InjectModel(Blog.name) private blogsModel: Model<BlogDocument>) {}
+export class LikesRepository {
+  constructor(@InjectModel(Like.name) private likesModel: Model<LikeDocument>) {}
 
-  async getAll(params: BlogsRequestParams): Promise<ResponseBody<BlogDocument> | []>  {
+  async getLikesCountsBySourceId(sourceId: string): Promise<ILikesInfo | null> {
     try {
-      const {
-        sortBy = 'createdAt',
-        sortDirection = SortDirections.desc,
-        pageNumber = 1,
-        pageSize = 10,
-        searchNameTerm,
-      } = params
+      const filter: FilterQuery<ILikesInfo> = { sourceId }
 
-      const filter: FilterQuery<BlogDocument> = {}
-      const sort: Record<string, SortOrder> = {}
-
-      if (searchNameTerm) {
-        filter.name = { $regex: searchNameTerm, $options: 'i' }
-      }
-
-      if (sortBy && sortDirection) {
-        sort[sortBy] = sortDirection === SortDirections.asc ? 1 : -1
-      }
-
-      const pageSizeNumber = Number(pageSize)
-      const pageNumberNum = Number(pageNumber)
-      const skip = (pageNumberNum - 1) * pageSizeNumber
-      const count = await this.blogsModel.countDocuments(filter)
-      const pagesCount = Math.ceil(count / pageSizeNumber)
-
-      const blogs = await this.blogsModel
-        .find(filter, { _id: 0, __v: 0 })
-        .skip(skip)
-        .limit(pageSizeNumber)
-        .sort(sort)
-        .exec()
+      const likesCount = await this.likesModel.countDocuments({
+        ...filter,
+        status: LikeStatusEnum.like
+      })
+      const dislikesCount = await this.likesModel.countDocuments({
+        ...filter,
+        status: LikeStatusEnum.dislike
+      })
 
       return {
-        pagesCount,
-        page: pageNumberNum,
-        pageSize: pageSizeNumber,
-        totalCount: count,
-        items: blogs
+        sourceId,
+        dislikesCount,
+        likesCount
       }
+    } catch {
+      return null
+    }
+  }
+
+  async getSegmentOfLikesByParams(
+    sourceId: string,
+    limit: number,
+    authorId?: string
+  ): Promise<ILike[]> {
+    try {
+      let filter: FilterQuery<ILikesInfo> = {
+        sourceId,
+        status: LikeStatusEnum.like
+      }
+
+      if (authorId) {
+        filter = {
+          $and: [{ sourceId }, { authorId }],
+          status: LikeStatusEnum.like
+        }
+      }
+
+      const count = await this.likesModel.countDocuments(filter)
+      const countForSkiping = count < limit ? 0 : count - limit
+
+      const newLikes = await this.likesModel
+        .find(filter, { _id: 0, __v: 0 })
+        .sort({ createdAt: 1 })
+        .skip(countForSkiping)
+
+      const sortedNewsetLikes = newLikes.sort((a, b) => {
+        if (Number(new Date(a.createdAt)) > Number(new Date(b.createdAt))) return -1
+        return 1
+      })
+
+      return sortedNewsetLikes.map(like => ({
+        id: like.id,
+        login: like.login,
+        authorId: like.authorId,
+        sourceId: like.sourceId,
+        status: like.status,
+        createdAt: like.createdAt,
+      }))
     } catch {
       return []
     }
   }
 
-  async getById(id: string): Promise<IBlog | null> {
-    const blog = await this.blogsModel.findOne({ id }, { _id: 0, __v: 0 })
+  async createLike(data: CreateLikeDto): Promise<boolean> {
+    const newLike = new this.likesModel(data)
+    newLike.setDateOfCreatedAt()
+    newLike.setId()
 
-    if (!blog) {
-      return null
+    const createdLike = await newLike.save()
+
+    if (!createdLike) {
+      return false
     }
 
-    return {
-      id: blog.id,
-      name: blog.name,
-      description: blog.description,
-      websiteUrl: blog.websiteUrl,
-      isMembership: blog.isMembership,
-      createdAt: blog.createdAt,
-    }
+    return !!createdLike
   }
 
-  async createBlog(data: CreateBlogDto): Promise<IBlog> {
-    const newBlog = new this.blogsModel(data)
-    newBlog.setDateOfCreatedAt()
-    newBlog.setId()
+  async updateLike(id: string, likeStatus: LikeStatusEnum): Promise<boolean> {
+    const like = await this.likesModel.findOne({ id })
 
-    const createdBlog = await newBlog.save()
-
-    return {
-      id: createdBlog.id,
-      name: createdBlog.name,
-      description: createdBlog.description,
-      websiteUrl: createdBlog.websiteUrl,
-      isMembership: createdBlog.isMembership,
-      createdAt: createdBlog.createdAt,
-    }
-  }
-
-  async updateBlog(id: string, data: UpdateBlogDto): Promise<any> {
-    const blog = await this.blogsModel.findOne({ id })
-
-    if (!blog) {
-      return null
+    if (!like) {
+      return false
     }
 
-    blog.name = data.name ?? blog.name
-    blog.description = data.description ?? blog.description
-    blog.websiteUrl = data.websiteUrl ?? blog.websiteUrl
+    like.status = likeStatus ?? like.status
 
-    blog.save()
+    like.save()
 
     return true
   }
 
-  async deleteBlog(id: string) {
-    return await this.blogsModel.deleteOne({ id })
+  async getLikeBySourceIdAndAuthorId(
+    params: LikesRequestParams
+  ): Promise<LikeDocument | null> {
+    try {
+      const like = await this.likesModel.findOne(
+        { sourceId: params.sourceId, authorId: params.authorId },
+        { _id: 0 }
+      ).lean()
+
+      if (!like) {
+        return null
+      }
+
+      return like
+    } catch {
+      return null
+    }
   }
 
-  save(blog: BlogDocument) {
-    return blog.save()
+  async likeEntity(
+    likeStatus: LikeStatusEnum,
+    sourceId: string,
+    authorId: string,
+    userLogin: string
+  ): Promise<boolean> {
+    const like = await this.getLikeBySourceIdAndAuthorId({ sourceId, authorId })
+
+    if (!like && (likeStatus === LikeStatusEnum.like || likeStatus === LikeStatusEnum.dislike)) {
+      const newLike = await this.createLike({
+        sourceId,
+        authorId,
+        likeStatus,
+        login: userLogin
+      })
+
+      if (!newLike) {
+        return false
+      }
+    }
+
+    if (like && likeStatus !== like.status) {
+      const updatedLike = await this.updateLike(like.id, likeStatus)
+
+      if (!updatedLike) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  save(like: LikeDocument) {
+    return like.save()
   }
 }

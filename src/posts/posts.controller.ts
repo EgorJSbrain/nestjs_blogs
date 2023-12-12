@@ -10,8 +10,10 @@ import {
   Put,
   Query,
   HttpCode,
-  UseGuards
+  UseGuards,
+  Req
 } from '@nestjs/common'
+import { Request } from 'express'
 import { PostsRepository } from './posts.repository'
 import { Post as PostSchema, PostDocument } from './posts.schema'
 import { CreatePostDto } from '../dtos/posts/create-post.dto'
@@ -22,22 +24,33 @@ import { UpdatePostDto } from '../dtos/posts/update-post.dto'
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { UsersRepository } from '../users/users.repository'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
-import { LikeDto } from '../dtos/like/like.dto'
 import { appMessages } from '../constants/messages'
+import { LikeStatusEnum } from '../constants/like'
+import { JwtRepository } from '../jwt/jwt.repository'
 
 @Controller('posts')
 export class PostsController {
   constructor(
     private postsRepository: PostsRepository,
     private blogsRepository: BlogsRepository,
-    private usersRepository: UsersRepository
+    private usersRepository: UsersRepository,
+    private jwtRepository: JwtRepository,
   ) {}
 
   @Get()
   async getAll(
-    @Query() query: RequestParams
+    @Query() query: RequestParams,
+    @Req() req: Request,
   ): Promise<ResponseBody<IPost> | []> {
-    const posts = await this.postsRepository.getAll(query)
+    let currentUserId: string | null = null
+
+    if (req.headers.authorization) {
+      const token = req.headers.authorization.split(' ')[1]
+      const { userId } = this.jwtRepository.verifyAccessToken(token)
+      currentUserId = userId || null
+    }
+
+    const posts = await this.postsRepository.getAll(query, currentUserId)
 
     return posts
   }
@@ -46,7 +59,7 @@ export class PostsController {
   async getCommentsByPostId(
     @Query() query: RequestParams
   ): Promise<ResponseBody<IPost> | []> {
-    const comments = await this.postsRepository.getAll(query)
+    const comments = await this.postsRepository.getAll(query, '')
 
     return comments
   }
@@ -65,7 +78,10 @@ export class PostsController {
   @Post()
   async creatPost(@Body() data: CreatePostDto): Promise<any> {
     if (!data.blogId) {
-      throw new HttpException({ message: "Blog id is requiered field" }, HttpStatus.BAD_REQUEST)
+      throw new HttpException(
+        { message: appMessages(appMessages().blogId).errors.isRequiredField },
+        HttpStatus.BAD_REQUEST
+      )
     }
 
     const blog = await this.blogsRepository.getById(data.blogId)
@@ -137,14 +153,13 @@ export class PostsController {
   async likePostById(
     @Param() params: { postId: string },
     @CurrentUserId() currentUseruserId: string,
-    @Body() data: LikeDto
+    @Body() data: { likeStatus: LikeStatusEnum }
   ): Promise<undefined> {
-    console.log("data:", data)
     const exitedUser = await this.usersRepository.getById(currentUseruserId)
 
     if (!exitedUser) {
       throw new HttpException(
-        { message: appMessages('User').errors.dontFound, field: '' },
+        { message: appMessages('User').errors.notFound, field: '' },
         HttpStatus.NOT_FOUND
       )
     }
@@ -153,7 +168,7 @@ export class PostsController {
 
     if (!existedPost) {
       throw new HttpException(
-        { message: appMessages('Post').errors.dontFound, field: '' },
+        { message: appMessages('Post').errors.notFound, field: '' },
         HttpStatus.NOT_FOUND
       )
     }
