@@ -1,0 +1,1 @@
+export const LENGTH_OF_NEWEST_LIKES = 3

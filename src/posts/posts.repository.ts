@@ -7,18 +7,29 @@ import { CreatePostDto } from '../dtos/posts/create-post.dto';
 import { RequestParams, ResponseBody, SortDirections } from '../types/request';
 import { IPost } from './types/post';
 import { UpdatePostDto } from '../dtos/posts/update-post.dto';
+import { LikesRepository } from '../likes/likes.repository';
+import { LENGTH_OF_NEWEST_LIKES } from '../constants/posts';
+import { LikeStatusEnum } from '../constants/like';
+import { formatLikes } from '../utils/formatLikes';
 
 @Injectable()
 export class PostsRepository {
-  constructor(@InjectModel(Post.name) private postsModel: Model<PostDocument>) {}
+  constructor(
+    @InjectModel(Post.name) private postsModel: Model<PostDocument>,
+    private likeRepository: LikesRepository
+  ) {}
 
-  async getAll(params: RequestParams, blogId?: string): Promise<ResponseBody<IPost> | []>  {
+  async getAll(
+    params: RequestParams,
+    userId: string | null,
+    blogId?: string
+  ): Promise<ResponseBody<IPost> | []> {
     try {
       const {
         sortBy = 'createdAt',
         sortDirection = SortDirections.desc,
         pageNumber = 1,
-        pageSize = 10,
+        pageSize = 10
       } = params
 
       let filter: FilterQuery<PostDocument> = {}
@@ -45,28 +56,60 @@ export class PostsRepository {
         .sort(sort)
         .lean()
 
-      const postsWithLikeinfo = posts.map((post) => ({
-        id: post.id,
-        title: post.title,
-        shortDescription: post.shortDescription,
-        content: post.content,
-        blogId: post.blogId,
-        blogName: post.blogName,
-        createdAt: post.createdAt,
-        extendedLikesInfo: {
-          likesCount: 0,
-          dislikesCount: 0,
-          myStatus: 'None',
-          newestLikes: []
-        }
-      }))
+      // const postsWithLikeinfo = posts.map((post) => ({
+      //   id: post.id,
+      //   title: post.title,
+      //   shortDescription: post.shortDescription,
+      //   content: post.content,
+      //   blogId: post.blogId,
+      //   blogName: post.blogName,
+      //   createdAt: post.createdAt,
+      //   extendedLikesInfo: {
+      //     likesCount: 0,
+      //     dislikesCount: 0,
+      //     myStatus: 'None',
+      //     newestLikes: []
+      //   }
+      // }))
+
+      const postsWithInfoAboutLikes = await Promise.all(
+        posts.map(async (post) => {
+          const likesCounts = await this.likeRepository.getLikesCountsBySourceId(
+            post.id
+          )
+          const newestLikes = await this.likeRepository.getSegmentOfLikesByParams(
+            post.id,
+            LENGTH_OF_NEWEST_LIKES
+          )
+
+          let likesUserInfo
+
+          if (userId) {
+            likesUserInfo =
+              await this.likeRepository.getLikeBySourceIdAndAuthorId({
+                sourceId: post.id,
+                authorId: userId
+              })
+          }
+
+          return {
+            ...post,
+            extendedLikesInfo: {
+              likesCount: likesCounts?.likesCount ?? 0,
+              dislikesCount: likesCounts?.dislikesCount ?? 0,
+              myStatus: likesUserInfo ? likesUserInfo.status : LikeStatusEnum.none,
+              newestLikes: formatLikes(newestLikes)
+            }
+          }
+        })
+      )
 
       return {
         pagesCount,
         page: pageNumberNum,
         pageSize: pageSizeNumber,
         totalCount: count,
-        items: postsWithLikeinfo
+        items: postsWithInfoAboutLikes
       }
     } catch {
       return []
@@ -92,7 +135,7 @@ export class PostsRepository {
         likesCount: 0,
         dislikesCount: 0,
         myStatus: 'None',
-        newestLikes: [],
+        newestLikes: []
       }
     }
   }
@@ -120,7 +163,7 @@ export class PostsRepository {
         likesCount: 0,
         dislikesCount: 0,
         myStatus: 'None',
-        newestLikes: [],
+        newestLikes: []
       }
     }
   }

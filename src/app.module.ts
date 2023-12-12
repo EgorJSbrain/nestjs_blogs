@@ -14,6 +14,7 @@ import { EmailsModule } from './emails/emails.module';
 import { EmailManagerModule } from './email-manager/email-manager.module';
 import { JWTModule } from './jwt/jwt.module';
 import configuration from '../config/configuration';
+import { LikesModule } from './likes/likes.module';
 
 
 @Module({
@@ -38,7 +39,8 @@ import configuration from '../config/configuration';
     EmailAdapterModule,
     EmailsModule,
     EmailManagerModule,
-    JWTModule
+    JWTModule,
+    LikesModule,
   ],
   controllers: [],
   providers: []
