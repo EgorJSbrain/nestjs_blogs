@@ -2,10 +2,11 @@ import {
   IsEnum
 } from 'class-validator'
 import { LikeStatusEnum } from '../../constants/like'
+import { appMessages } from '../../constants/messages'
 
-export class LikeDto {
+export class UpdateLikeDto {
   @IsEnum(LikeStatusEnum, {
-    message: 'Is\'t correct forma of like'
+    message: appMessages().errors.incorrectLikeStatus
   })
   likeStatus: LikeStatusEnum
 }
