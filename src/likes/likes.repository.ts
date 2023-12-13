@@ -137,7 +137,7 @@ export class LikesRepository {
       const newLike = await this.createLike({
         sourceId,
         authorId,
-        likeStatus,
+        status: likeStatus,
         login: userLogin
       })
 

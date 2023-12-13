@@ -6,7 +6,7 @@ import { Blog, BlogDocument } from './blogs.schema';
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto';
 import { ResponseBody, SortDirections } from '../types/request';
 import { BlogsRequestParams } from '../types/blogs';
-import { IBlog } from './types/blog';
+import { IBlog } from '../types/blogs';
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto';
 
 @Injectable()
