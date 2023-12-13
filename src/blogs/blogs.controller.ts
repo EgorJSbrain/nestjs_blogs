@@ -23,6 +23,7 @@ import { PostsRepository } from '../posts/posts.repository'
 import { IPost } from '../posts/types/post'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
+import { appMessages } from 'src/constants/messages'
 
 @Controller('blogs')
 export class BlogsController {
@@ -45,7 +46,10 @@ export class BlogsController {
     const blog = await this.blogsRepository.getById(params.id)
 
     if (!blog) {
-      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     return blog
@@ -65,19 +69,28 @@ export class BlogsController {
     @Body() data: UpdateBlogDto
   ): Promise<any> {
     if (!params.id) {
-      throw new HttpException({ message: "Blog id is required field" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().blogId).errors.isRequiredField },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     const blog = await this.blogsRepository.getById(params.id)
 
     if (!blog) {
-      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     const updatedBlog = await this.blogsRepository.updateBlog(params.id, data)
 
     if (!updatedBlog) {
-      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
   }
 
@@ -88,14 +101,16 @@ export class BlogsController {
     const blog = await this.blogsRepository.getById(params.id)
 
     if (!blog) {
-      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     await this.blogsRepository.deleteBlog(params.id)
   }
 
   @Get(':blogId/posts')
-  @UseGuards(BasicAuthGuard)
   async getPostsByBlogId(
     @Query() query: RequestParams,
     @Param() params: { blogId: string }
@@ -103,7 +118,10 @@ export class BlogsController {
     const blog = await this.blogsRepository.getById(params.blogId)
 
     if (!blog) {
-      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     const posts = await this.postsRepository.getAll(query, blog.id)
@@ -112,6 +130,7 @@ export class BlogsController {
   }
 
   @Post(':blogId/posts')
+  @UseGuards(BasicAuthGuard)
   async creatPostByBlogId(
     @Param() params: { blogId: string },
     @Body() data: CreatePostDto
@@ -119,7 +138,10 @@ export class BlogsController {
     const blog = await this.blogsRepository.getById(params.blogId)
 
     if (!blog) {
-      throw new HttpException({ message: "Blog doesn't exist", field: '' }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound, field: '' },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     const creatingData = {
