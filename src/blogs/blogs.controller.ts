@@ -95,6 +95,7 @@ export class BlogsController {
   }
 
   @Get(':blogId/posts')
+  @UseGuards(BasicAuthGuard)
   async getPostsByBlogId(
     @Query() query: RequestParams,
     @Param() params: { blogId: string }

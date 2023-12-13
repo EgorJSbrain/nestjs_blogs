@@ -27,6 +27,7 @@ import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { appMessages } from '../constants/messages'
 import { LikeStatusEnum } from '../constants/like'
 import { JwtRepository } from '../jwt/jwt.repository'
+import { BasicAuthGuard } from 'src/auth/guards/basic-auth.guard'
 
 @Controller('posts')
 export class PostsController {
@@ -100,6 +101,7 @@ export class PostsController {
   }
 
   @Put(':id')
+  @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async updatePost(
     @Param() params: { id: string },
@@ -150,6 +152,7 @@ export class PostsController {
 
   @Put('/:postId/like-status')
   @UseGuards(JWTAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
   async likePostById(
     @Param() params: { postId: string },
     @CurrentUserId() currentUseruserId: string,
