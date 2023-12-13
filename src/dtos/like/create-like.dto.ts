@@ -8,7 +8,7 @@ export class CreateLikeDto {
   @IsEnum(LikeStatusEnum, {
     message: appMessages().errors.incorrectLikeStatus
   })
-  likeStatus: LikeStatusEnum
+  status: LikeStatusEnum
 
   @IsString()
   authorId: string

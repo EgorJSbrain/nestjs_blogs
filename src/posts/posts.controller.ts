@@ -27,7 +27,8 @@ import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { appMessages } from '../constants/messages'
 import { LikeStatusEnum } from '../constants/like'
 import { JwtRepository } from '../jwt/jwt.repository'
-import { BasicAuthGuard } from 'src/auth/guards/basic-auth.guard'
+import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
+import { LikesRepository } from '../likes/likes.repository'
 
 @Controller('posts')
 export class PostsController {
@@ -36,6 +37,7 @@ export class PostsController {
     private blogsRepository: BlogsRepository,
     private usersRepository: UsersRepository,
     private jwtRepository: JwtRepository,
+    private likesRepository: LikesRepository,
   ) {}
 
   @Get()
@@ -66,11 +68,25 @@ export class PostsController {
   }
 
   @Get(':id')
-  async getPostById(@Param() params: { id: string }): Promise<IPost | null> {
-    const post = await this.postsRepository.getById(params.id)
+  async getPostById(
+    @Param() params: { id: string },
+    @Req() req: Request,
+  ): Promise<IPost | null> {
+    let currentUserId: string | undefined
+
+    if (req.headers.authorization) {
+      const token = req.headers.authorization.split(' ')[1]
+      const { userId } = this.jwtRepository.verifyAccessToken(token)
+      currentUserId = userId
+    }
+
+    const post = await this.postsRepository.getById(params.id, currentUserId)
 
     if (!post) {
-      throw new HttpException({ message: "Post doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().post).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     return post
@@ -88,7 +104,10 @@ export class PostsController {
     const blog = await this.blogsRepository.getById(data.blogId)
 
     if (!blog) {
-      throw new HttpException({ message: "Blog doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     const creatingData = {
@@ -108,19 +127,25 @@ export class PostsController {
     @Body() data: UpdatePostDto
   ): Promise<undefined> {
     if (!params.id) {
-      throw new HttpException({ message: "Post id is required field" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().postId).errors.isRequiredField },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     const post = await this.postsRepository.getById(params.id)
 
     if (!post) {
-      throw new HttpException({ message: "Post doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().post).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     const updatedPost = await this.postsRepository.updatePost(params.id, data)
 
     if (!updatedPost) {
-      throw new HttpException({ message: "Post doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException({ message: appMessages(appMessages().post).errors.notFound }, HttpStatus.NOT_FOUND)
     }
   }
 
@@ -130,7 +155,7 @@ export class PostsController {
     const post = await this.postsRepository.getById(params.id)
 
     if (!post) {
-      throw new HttpException({ message: "Post doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException({ message: appMessages(appMessages().post).errors.notFound }, HttpStatus.NOT_FOUND)
     }
 
     await this.postsRepository.deletePost(params.id)
@@ -158,9 +183,9 @@ export class PostsController {
     @CurrentUserId() currentUseruserId: string,
     @Body() data: { likeStatus: LikeStatusEnum }
   ): Promise<undefined> {
-    const exitedUser = await this.usersRepository.getById(currentUseruserId)
+    const existedUser = await this.usersRepository.getById(currentUseruserId)
 
-    if (!exitedUser) {
+    if (!existedUser) {
       throw new HttpException(
         { message: appMessages('User').errors.notFound, field: '' },
         HttpStatus.NOT_FOUND
@@ -171,7 +196,21 @@ export class PostsController {
 
     if (!existedPost) {
       throw new HttpException(
-        { message: appMessages('Post').errors.notFound, field: '' },
+        { message: appMessages(appMessages().post).errors.notFound, field: '' },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const like = await this.likesRepository.likeEntity(
+      data.likeStatus,
+      params.postId,
+      existedUser?.id,
+      existedUser?.login
+    )
+
+    if (!like) {
+      throw new HttpException(
+        { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.NOT_FOUND
       )
     }
