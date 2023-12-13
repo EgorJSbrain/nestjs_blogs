@@ -11,6 +11,7 @@ import { LikesRepository } from '../likes/likes.repository';
 import { LENGTH_OF_NEWEST_LIKES } from '../constants/posts';
 import { LikeStatusEnum } from '../constants/like';
 import { formatLikes } from '../utils/formatLikes';
+import { ILike } from '../types/likes';
 
 @Injectable()
 export class PostsRepository {
@@ -116,11 +117,22 @@ export class PostsRepository {
     }
   }
 
-  async getById(id: string): Promise<IPost | null> {
+  async getById(id: string, userId?: string): Promise<IPost | null> {
     const post = await this.postsModel.findOne({ id }, { _id: 0, __v: 0 })
+    let myLike: ILike | null = null
 
     if (!post) {
       return null
+    }
+
+    const likesCounts = await this.likeRepository.getLikesCountsBySourceId(post.id)
+    const newestLikes = await this.likeRepository.getSegmentOfLikesByParams(post.id, LENGTH_OF_NEWEST_LIKES)
+
+    if (userId) {
+      myLike = await this.likeRepository.getLikeBySourceIdAndAuthorId({
+        sourceId: post.id,
+        authorId: userId
+      })
     }
 
     return {
@@ -132,10 +144,10 @@ export class PostsRepository {
       blogName: post.blogName,
       createdAt: post.createdAt,
       extendedLikesInfo: {
-        likesCount: 0,
-        dislikesCount: 0,
-        myStatus: 'None',
-        newestLikes: []
+        likesCount: likesCounts?.likesCount ?? 0,
+        dislikesCount: likesCounts?.dislikesCount ?? 0,
+        myStatus: myLike?.status,
+        newestLikes: formatLikes(newestLikes)
       }
     }
   }
