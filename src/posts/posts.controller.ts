@@ -15,8 +15,8 @@ import {
 } from '@nestjs/common'
 import { Request } from 'express'
 import { PostsRepository } from './posts.repository'
-import { Post as PostSchema, PostDocument } from './posts.schema'
-import { CreatePostDto } from '../dtos/posts/create-post.dto'
+import { Post as PostSchema } from './posts.schema'
+import { CreatePostByBlogIdDto, CreatePostDto } from '../dtos/posts/create-post.dto'
 import { ResponseBody, RequestParams } from '../types/request'
 import { BlogsRepository } from '../blogs/blogs.repository'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
@@ -24,7 +24,6 @@ import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { UsersRepository } from '../users/users.repository'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { appMessages } from '../constants/messages'
-import { LikeStatusEnum } from '../constants/likes'
 import { JwtRepository } from '../jwt/jwt.repository'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { LikesRepository } from '../likes/likes.repository'
@@ -95,7 +94,7 @@ export class PostsController {
 
   @Post()
   @UseGuards(BasicAuthGuard)
-  async creatPost(@Body() data: CreatePostDto): Promise<any> {
+  async creatPost(@Body() data: CreatePostByBlogIdDto): Promise<any> {
     if (!data.blogId) {
       throw new HttpException(
         { message: appMessages(appMessages().blogId).errors.isRequiredField },
