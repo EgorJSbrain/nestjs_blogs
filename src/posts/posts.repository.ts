@@ -3,15 +3,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
 import { Post, PostDocument } from './posts.schema';
-import { CreatePostDto } from '../dtos/posts/create-post.dto';
 import { RequestParams, ResponseBody, SortDirections } from '../types/request';
-import { IPost } from './types/post';
 import { UpdatePostDto } from '../dtos/posts/update-post.dto';
 import { LikesRepository } from '../likes/likes.repository';
-import { LENGTH_OF_NEWEST_LIKES } from '../constants/posts';
-import { LikeStatusEnum } from '../constants/like';
+import { LENGTH_OF_NEWEST_LIKES_FOR_POST } from '../constants/likes'
+import { LikeStatusEnum } from '../constants/likes';
 import { formatLikes } from '../utils/formatLikes';
 import { ILike } from '../types/likes';
+import { CreatePostType, IPost } from '../types/posts';
 
 @Injectable()
 export class PostsRepository {
@@ -64,7 +63,7 @@ export class PostsRepository {
           )
           const newestLikes = await this.likeRepository.getSegmentOfLikesByParams(
             post.id,
-            LENGTH_OF_NEWEST_LIKES
+            LENGTH_OF_NEWEST_LIKES_FOR_POST
           )
 
           let likesUserInfo
@@ -110,7 +109,7 @@ export class PostsRepository {
     }
 
     const likesCounts = await this.likeRepository.getLikesCountsBySourceId(post.id)
-    const newestLikes = await this.likeRepository.getSegmentOfLikesByParams(post.id, LENGTH_OF_NEWEST_LIKES)
+    const newestLikes = await this.likeRepository.getSegmentOfLikesByParams(post.id, LENGTH_OF_NEWEST_LIKES_FOR_POST)
 
     if (userId) {
       myLike = await this.likeRepository.getLikeBySourceIdAndAuthorId({
@@ -136,7 +135,7 @@ export class PostsRepository {
     }
   }
 
-  async createPost(data: CreatePostDto): Promise<IPost | null> {
+  async createPost(data: CreatePostType): Promise<IPost | null> {
     const newPost = new this.postsModel(data)
     newPost.setDateOfCreatedAt()
     newPost.setId()
