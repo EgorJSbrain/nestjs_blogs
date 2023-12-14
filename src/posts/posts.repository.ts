@@ -57,22 +57,6 @@ export class PostsRepository {
         .sort(sort)
         .lean()
 
-      // const postsWithLikeinfo = posts.map((post) => ({
-      //   id: post.id,
-      //   title: post.title,
-      //   shortDescription: post.shortDescription,
-      //   content: post.content,
-      //   blogId: post.blogId,
-      //   blogName: post.blogName,
-      //   createdAt: post.createdAt,
-      //   extendedLikesInfo: {
-      //     likesCount: 0,
-      //     dislikesCount: 0,
-      //     myStatus: 'None',
-      //     newestLikes: []
-      //   }
-      // }))
-
       const postsWithInfoAboutLikes = await Promise.all(
         posts.map(async (post) => {
           const likesCounts = await this.likeRepository.getLikesCountsBySourceId(
@@ -146,7 +130,7 @@ export class PostsRepository {
       extendedLikesInfo: {
         likesCount: likesCounts?.likesCount ?? 0,
         dislikesCount: likesCounts?.dislikesCount ?? 0,
-        myStatus: myLike?.status,
+        myStatus: myLike?.status ?? LikeStatusEnum.none,
         newestLikes: formatLikes(newestLikes)
       }
     }
@@ -174,7 +158,7 @@ export class PostsRepository {
       extendedLikesInfo: {
         likesCount: 0,
         dislikesCount: 0,
-        myStatus: 'None',
+        myStatus: LikeStatusEnum.none,
         newestLikes: []
       }
     }
