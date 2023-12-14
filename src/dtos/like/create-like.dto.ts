@@ -1,7 +1,7 @@
 import {
   IsEnum, IsString
 } from 'class-validator'
-import { LikeStatusEnum } from '../../constants/like'
+import { LikeStatusEnum } from '../../constants/likes'
 import { appMessages } from '../../constants/messages'
 
 export class CreateLikeDto {

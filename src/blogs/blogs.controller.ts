@@ -20,10 +20,10 @@ import { RequestParams, ResponseBody } from '../types/request'
 import { CreatePostDto } from '../dtos/posts/create-post.dto'
 import { IBlog } from '../types/blogs'
 import { PostsRepository } from '../posts/posts.repository'
-import { IPost } from '../posts/types/post'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
-import { appMessages } from 'src/constants/messages'
+import { appMessages } from '../constants/messages'
+import { IPost } from '../types/posts'
 
 @Controller('blogs')
 export class BlogsController {

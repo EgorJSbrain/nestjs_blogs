@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
 import { Like, LikeDocument } from './likes.schema';
-import { LikeStatusEnum } from '../constants/like';
+import { LikeStatusEnum } from '../constants/likes';
 import { ILike, ILikesInfo, LikesRequestParams } from '../types/likes';
 import { CreateLikeDto } from '../dtos/like/create-like.dto';
 

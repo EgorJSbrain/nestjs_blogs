@@ -1,4 +1,4 @@
-import { LikeStatusEnum } from "../constants/like"
+import { LikeStatusEnum } from "../constants/likes"
 
 export interface ILikesInfo {
   sourceId: string
