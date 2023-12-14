@@ -42,7 +42,9 @@ export class CreatePostDto {
   @MinLength(POST_SHORT_DESCRIPTION_MIN_LENGTH)
   @MaxLength(POST_SHORT_DESCRIPTION_MAX_LENGTH)
   shortDescription: string
+}
 
+export class CreatePostByBlogIdDto extends CreatePostDto {
   @IsString()
   @IsDefined()
   @IsNotEmpty()
