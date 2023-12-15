@@ -10,10 +10,9 @@ import { Blog, BlogSchema } from '../blogs/blogs.schema';
 import { UsersRepository } from '../users/users.repository';
 import { User, UserSchema } from '../users/users.schema';
 import { LikesRepository } from '../likes/likes.repository';
-import { LikesModule } from '../likes/likes.module';
 import { Like, LikeSchema } from '../likes/likes.schema';
-import { JWTModule } from '../jwt/jwt.module';
 import { JwtRepository } from '../jwt/jwt.repository';
+import { BlogIdValidator } from '../validators/blog-id.validator';
 
 @Module({
   imports: [
@@ -32,6 +31,7 @@ import { JwtRepository } from '../jwt/jwt.repository';
     JwtRepository,
     BlogsRepository,
     UsersRepository,
+    BlogIdValidator
   ]
 })
 
