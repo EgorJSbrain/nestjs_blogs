@@ -124,7 +124,7 @@ export class BlogsController {
       )
     }
 
-    const posts = await this.postsRepository.getAll(query, blog.id)
+    const posts = await this.postsRepository.getAll(query, null, blog.id)
 
     return posts
   }
