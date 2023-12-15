@@ -10,8 +10,10 @@ import {
   Put,
   Query,
   HttpCode,
-  UseGuards
+  UseGuards,
+  Req
 } from '@nestjs/common'
+import { Request } from 'express'
 import { BlogsRepository } from './blogs.repository'
 import { BlogDocument } from './blogs.schema'
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto'
@@ -24,12 +26,14 @@ import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { appMessages } from '../constants/messages'
 import { IPost } from '../types/posts'
+import { JwtRepository } from '../jwt/jwt.repository'
 
 @Controller('blogs')
 export class BlogsController {
   constructor(
     private blogsRepository: BlogsRepository,
-    private postsRepository: PostsRepository
+    private postsRepository: PostsRepository,
+    private jwtRepository: JwtRepository,
   ) {}
 
   @Get()
@@ -113,9 +117,17 @@ export class BlogsController {
   @Get(':blogId/posts')
   async getPostsByBlogId(
     @Query() query: RequestParams,
-    @Param() params: { blogId: string }
+    @Param() params: { blogId: string },
+    @Req() req: Request
   ): Promise<ResponseBody<IPost> | []> {
     const blog = await this.blogsRepository.getById(params.blogId)
+    let currentUserId: string | null = null
+
+    if (req.headers.authorization) {
+      const token = req.headers.authorization.split(' ')[1]
+      const { userId } = this.jwtRepository.verifyAccessToken(token)
+      currentUserId = userId || null
+    }
 
     if (!blog) {
       throw new HttpException(
@@ -124,7 +136,7 @@ export class BlogsController {
       )
     }
 
-    const posts = await this.postsRepository.getAll(query, null, blog.id)
+    const posts = await this.postsRepository.getAll(query, currentUserId, blog.id)
 
     return posts
   }
