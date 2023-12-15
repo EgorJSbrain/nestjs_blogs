@@ -3,7 +3,8 @@ import {
   IsNotEmpty,
   IsString,
   MaxLength,
-  MinLength
+  MinLength,
+  Validate
 } from 'class-validator'
 import {
   STRING_MAX_LENGTH,
@@ -16,6 +17,7 @@ import {
   POST_SHORT_DESCRIPTION_MIN_LENGTH,
   POST_SHORT_DESCRIPTION_MAX_LENGTH,
 } from '../../constants/posts'
+import { BlogIdValidator } from '../../validators/blog-id.validator'
 
 export class UpdatePostDto {
   @IsString()
@@ -43,5 +45,6 @@ export class UpdatePostDto {
   @IsNotEmpty()
   @Transform(({ value }: TransformFnParams) => value?.trim())
   @MaxLength(STRING_MAX_LENGTH)
+  @Validate(BlogIdValidator)
   blogId: string
 }
