@@ -151,6 +151,7 @@ export class PostsController {
   }
 
   @Delete(':id')
+  @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deletePost(@Param() params: { id: string }): Promise<any> {
     const post = await this.postsRepository.getById(params.id)

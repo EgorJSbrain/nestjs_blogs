@@ -27,11 +27,6 @@ export class Post {
   @Prop()
   websiteUrl: string;
 
-  @Prop({ default: true })
-  isMembership: boolean;
-
-  // TO DO add extendedLikesInfo
-
   async setDateOfCreatedAt() {
     this.createdAt = new Date().toISOString()
   }
