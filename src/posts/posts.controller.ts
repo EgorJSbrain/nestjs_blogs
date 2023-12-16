@@ -258,7 +258,6 @@ export class PostsController {
       },
       sourceId: existedPost.id
     })
-    console.log(" ~ comment:", comment)
 
     if (!comment) {
       throw new HttpException(

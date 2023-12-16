@@ -11,9 +11,7 @@ import {
   Query,
   HttpCode,
   UseGuards,
-  Req
 } from '@nestjs/common'
-import { Request } from 'express'
 import { BlogsRepository } from './blogs.repository'
 import { BlogDocument } from './blogs.schema'
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto'
@@ -119,7 +117,6 @@ export class BlogsController {
   async getPostsByBlogId(
     @Query() query: RequestParams,
     @Param() params: { blogId: string },
-    @Req() req: Request
   ): Promise<ResponseBody<IPost> | []> {
     if (!params.blogId) {
       throw new HttpException(
@@ -132,13 +129,6 @@ export class BlogsController {
     }
 
     const blog = await this.blogsRepository.getById(params.blogId)
-    let currentUserId: string | null = null
-
-    if (req.headers.authorization) {
-      const token = req.headers.authorization.split(' ')[1]
-      const { userId } = this.jwtRepository.verifyAccessToken(token)
-      currentUserId = userId || null
-    }
 
     if (!blog) {
       throw new HttpException(
@@ -147,7 +137,7 @@ export class BlogsController {
       )
     }
 
-    const posts = await this.postsRepository.getAll(query, currentUserId, blog.id)
+    const posts = await this.postsRepository.getAll(query, null, blog.id)
 
     return posts
   }
