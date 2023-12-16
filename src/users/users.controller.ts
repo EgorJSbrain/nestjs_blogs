@@ -18,8 +18,9 @@ import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { UsersRequestParams } from '../types/users'
 import { ResponseBody } from '../types/request'
 import { IUser } from './types/user'
+import { RoutesEnum } from '../constants/global'
 
-@Controller('users')
+@Controller(RoutesEnum.users)
 export class UsersController {
   constructor(private usersRepository: UsersRepository) {}
 

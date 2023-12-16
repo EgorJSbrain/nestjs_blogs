@@ -5,8 +5,9 @@ import {
   HttpStatus,
 } from '@nestjs/common'
 import { GeneralRepository } from './general.repository'
+import { RoutesEnum } from '../constants/global'
 
-@Controller('testing/all-data')
+@Controller(RoutesEnum.testing_all_data)
 export class GenerealController {
   constructor(private generalRepository: GeneralRepository) {}
 

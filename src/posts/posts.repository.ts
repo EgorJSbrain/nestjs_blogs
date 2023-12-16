@@ -10,7 +10,7 @@ import { LENGTH_OF_NEWEST_LIKES_FOR_POST } from '../constants/likes'
 import { LikeStatusEnum } from '../constants/likes';
 import { formatLikes } from '../utils/formatLikes';
 import { ILike } from '../types/likes';
-import { CreatePostType, IPost } from '../types/posts';
+import { ICreatePostType, IPost } from '../types/posts';
 
 @Injectable()
 export class PostsRepository {
@@ -135,7 +135,7 @@ export class PostsRepository {
     }
   }
 
-  async createPost(data: CreatePostType): Promise<IPost | null> {
+  async createPost(data: ICreatePostType): Promise<IPost | null> {
     const newPost = new this.postsModel(data)
     newPost.setDateOfCreatedAt()
     newPost.setId()
@@ -178,22 +178,6 @@ export class PostsRepository {
 
     return true
   }
-
-  // async likePost(postId: string): Promise<any> {
-  //   const post = await this.postsModel.findOne({ id: postId })
-
-  //   if (!post) {
-  //     return null
-  //   }
-
-  //   // post.title = data.title ?? post.title
-  //   // post.content = data.content ?? post.content
-  //   // post.shortDescription = data.shortDescription ?? post.shortDescription
-
-  //   post.save()
-
-  //   return true
-  // }
 
   deletePost(id: string) {
     return this.postsModel.deleteOne({ id })

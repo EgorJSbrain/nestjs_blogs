@@ -9,7 +9,7 @@ export interface IPost {
   extendedLikesInfo?: any
 }
 
-export interface CreatePostType {
+export interface ICreatePostType {
   readonly title: string
   readonly content: string
   readonly shortDescription: string

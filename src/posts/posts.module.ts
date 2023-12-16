@@ -13,6 +13,8 @@ import { LikesRepository } from '../likes/likes.repository';
 import { Like, LikeSchema } from '../likes/likes.schema';
 import { JwtRepository } from '../jwt/jwt.repository';
 import { BlogIdValidator } from '../validators/blog-id.validator';
+import { CommentsRepository } from '../comments/comments.repository';
+import { Comment, CommentSchema } from '../comments/comments.schema';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { BlogIdValidator } from '../validators/blog-id.validator';
     { name: Post.name, schema: PostSchema },
     { name: Blog.name, schema: BlogSchema },
     { name: User.name, schema: UserSchema },
+    { name: Comment.name, schema: CommentSchema },
   ]),
 ],
   controllers: [PostsController],
@@ -31,7 +34,8 @@ import { BlogIdValidator } from '../validators/blog-id.validator';
     JwtRepository,
     BlogsRepository,
     UsersRepository,
-    BlogIdValidator
+    BlogIdValidator,
+    CommentsRepository
   ]
 })
 
