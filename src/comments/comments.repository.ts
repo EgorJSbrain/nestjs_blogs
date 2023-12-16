@@ -52,8 +52,8 @@ export class CommentsRepository {
     }
   }
 
-  getCommentById(id: string) {
-    return this.commentsModel.findById(id)
+  getCommentById(id: string): Promise<CommentDocument | null>  {
+    return this.commentsModel.findOne({ id }, { _id: 0, __v: 0 })
   }
 
   createComment(data: ICreateCommentType) {
