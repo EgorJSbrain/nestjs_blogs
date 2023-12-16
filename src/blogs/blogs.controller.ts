@@ -140,15 +140,15 @@ export class BlogsController {
       )
     }
 
-    // let currentUserId: string | null = null
+    let currentUserId: string | null = null
 
-    // if (req.headers.authorization) {
-    //   const basic = req.headers.authorization.split(' ')[0]
-    //   const token = req.headers.authorization.split(' ')[1]
-    //   console.log('---token-', token)
-    //   const { userId } = this.jwtRepository.verifyAccessToken(token)
-    //   currentUserId = userId || null
-    // }
+    if (req.headers.authorization) {
+      const basic = req.headers.authorization.split(' ')[0]
+      const token = req.headers.authorization.split(' ')[1]
+      console.log('---token-', token)
+      const { userId } = this.jwtRepository.verifyAccessToken(token)
+      currentUserId = userId || null
+    }
 
     const posts = await this.postsRepository.getAll(query, null, blog.id)
 
