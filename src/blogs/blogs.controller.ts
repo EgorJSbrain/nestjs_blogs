@@ -121,7 +121,7 @@ export class BlogsController {
     @Param() params: { blogId: string },
     @Req() req: Request
   ): Promise<ResponseBody<IPost> | []> {
-    if (params.blogId) {
+    if (!params.blogId) {
       throw new HttpException(
         {
           message: appMessages(appMessages().blogId).errors.isRequiredParameter,
