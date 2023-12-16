@@ -1,8 +1,10 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { Prop, Schema as NextSchema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, { HydratedDocument, Schema } from 'mongoose';
+import { ILikeInfo } from '../types/likes';
+import { CommentUserInfo } from 'src/types/comments';
 
-@Schema()
-export class commentatorInfo {
+@NextSchema()
+export class AuthorInfo {
   @Prop({ required: true })
   userId: string;
 
@@ -10,7 +12,7 @@ export class commentatorInfo {
   userLogin: string;
 }
 
-@Schema()
+@NextSchema()
 export class Comment {
   @Prop({ required: true })
   id: string;
@@ -19,14 +21,13 @@ export class Comment {
   content: string;
 
   @Prop()
-  commentatorInfo: string;
+  authorInfo: AuthorInfo;
 
   @Prop()
   createdAt: string;
 
-  // TODO likes info type
-  // @Prop()
-  // likesInfo: any
+  @Prop()
+  sourceId: string;
 
   async setDateOfCreatedAt() {
     this.createdAt = new Date().toISOString()

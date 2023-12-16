@@ -7,8 +7,8 @@ export interface ILikesInfo {
 }
 
 export interface ILikeInfo {
-  dislikesCount: number
   likesCount: number
+  dislikesCount: number
   myStatus: LikeStatusEnum
 }
 

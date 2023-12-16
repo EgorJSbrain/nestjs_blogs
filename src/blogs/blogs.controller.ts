@@ -27,8 +27,9 @@ import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { appMessages } from '../constants/messages'
 import { IPost } from '../types/posts'
 import { JwtRepository } from '../jwt/jwt.repository'
+import { RoutesEnum } from '../constants/global'
 
-@Controller('blogs')
+@Controller(RoutesEnum.blogs)
 export class BlogsController {
   constructor(
     private blogsRepository: BlogsRepository,
@@ -120,6 +121,16 @@ export class BlogsController {
     @Param() params: { blogId: string },
     @Req() req: Request
   ): Promise<ResponseBody<IPost> | []> {
+    if (params.blogId) {
+      throw new HttpException(
+        {
+          message: appMessages(appMessages().blogId).errors.isRequiredParameter,
+          field: ''
+        },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
     const blog = await this.blogsRepository.getById(params.blogId)
     let currentUserId: string | null = null
 

@@ -29,8 +29,13 @@ import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { LikesRepository } from '../likes/likes.repository'
 import { LikeDto } from '../dtos/like/like.dto'
 import { IPost } from '../types/posts'
+import { RoutesEnum } from '../constants/global'
+import { CreateCommentDto } from '../dtos/comments/create-comment.dto'
+import { CommentsRepository } from '../comments/comments.repository'
+import { LikeStatusEnum } from '../constants/likes'
+import { IComment } from '../types/comments'
 
-@Controller('posts')
+@Controller(RoutesEnum.posts)
 export class PostsController {
   constructor(
     private postsRepository: PostsRepository,
@@ -38,6 +43,7 @@ export class PostsController {
     private usersRepository: UsersRepository,
     private jwtRepository: JwtRepository,
     private likesRepository: LikesRepository,
+    private commentsRepository: CommentsRepository,
   ) {}
 
   @Get()
@@ -216,6 +222,64 @@ export class PostsController {
         HttpStatus.NOT_FOUND
       )
     }
-    // return this.postsRepository.likePost(postId)
+  }
+
+  @Post('/:postId/comments')
+  @UseGuards(JWTAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  async createCommentByPost(
+    @Param() params: { postId: string },
+    @CurrentUserId() currentUseruserId: string,
+    @Body() data: CreateCommentDto
+  ): Promise<IComment> {
+    const existedUser = await this.usersRepository.getById(currentUseruserId)
+
+    if (!existedUser) {
+      throw new HttpException(
+        { message: appMessages(appMessages().user).errors.notFound, field: '' },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const existedPost = await this.postsRepository.getById(params.postId)
+
+    if (!existedPost) {
+      throw new HttpException(
+        { message: appMessages(appMessages().post).errors.notFound, field: '' },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const comment = await this.commentsRepository.createComment({
+      content: data.content,
+      authorInfo: {
+        userId: existedUser.id,
+        userLogin: existedUser.login
+      },
+      sourceId: existedPost.id
+    })
+    console.log(" ~ comment:", comment)
+
+    if (!comment) {
+      throw new HttpException(
+        { message: appMessages().errors.somethingIsWrong, field: '' },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    return {
+      id: comment.id,
+      content: comment.content,
+      commentatorInfo: {
+        userId: comment.authorInfo.userId,
+        userLogin: comment.authorInfo.userLogin
+      },
+      createdAt: comment.createdAt,
+      likesInfo: {
+        likesCount: 0,
+        dislikesCount: 0,
+        myStatus: LikeStatusEnum.none
+      }
+    }
   }
 }

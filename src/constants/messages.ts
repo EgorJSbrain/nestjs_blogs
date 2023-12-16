@@ -11,6 +11,7 @@ export const appMessages = (data?: string | number) => ({
     notFound: `${data} not found`,
     incorrectLikeStatus: 'Is not correct status for like',
     isRequiredField: `${data} is requiered field`,
+    isRequiredParameter: `${data} is requiered parameter`,
     somethingIsWrong: 'Something is wrong',
   },
 });
