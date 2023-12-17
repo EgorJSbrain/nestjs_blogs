@@ -1,13 +1,13 @@
 import { ILikeInfo } from './likes'
 
-export type CommentUserInfo = {
+export type CommentAuthorInfo = {
   userId: string
   userLogin: string
 }
 
 export interface IComment {
   id: string
-  commentatorInfo: CommentUserInfo
+  commentatorInfo: CommentAuthorInfo
   content: string
   createdAt: string
   likesInfo: ILikeInfo
@@ -15,6 +15,11 @@ export interface IComment {
 
 export interface ICreateCommentType {
   readonly content: string
-  readonly authorInfo: CommentUserInfo
+  readonly authorInfo: CommentAuthorInfo
   readonly sourceId: string
+}
+
+export interface IUpdateCommentType {
+  readonly id: string
+  readonly content: string
 }

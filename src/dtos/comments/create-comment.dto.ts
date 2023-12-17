@@ -11,7 +11,7 @@ import {
   COMMENT_CONTENT_MAX_LENGTH
 } from '../../constants/comments'
 
-export class CreateCommentDto {
+export class CommentDto {
   @IsDefined()
   @IsString()
   @IsNotEmpty()

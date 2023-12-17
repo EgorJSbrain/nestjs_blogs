@@ -1,9 +1,11 @@
 export const appMessages = (data?: string | number) => ({
   blogId: 'Blog id',
   postId: 'Post id',
+  commentId: 'Comment id',
   user: 'User',
   post: 'Post',
   blog: 'Blog',
+  comment: 'Comment',
   info: {
     userRegistred: 'User was registered successfully.',
   },

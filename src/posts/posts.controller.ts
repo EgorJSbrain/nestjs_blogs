@@ -30,7 +30,7 @@ import { LikesRepository } from '../likes/likes.repository'
 import { LikeDto } from '../dtos/like/like.dto'
 import { IPost } from '../types/posts'
 import { RoutesEnum } from '../constants/global'
-import { CreateCommentDto } from '../dtos/comments/create-comment.dto'
+import { CommentDto } from '../dtos/comments/create-comment.dto'
 import { CommentsRepository } from '../comments/comments.repository'
 import { LikeStatusEnum } from '../constants/likes'
 import { IComment } from '../types/comments'
@@ -64,11 +64,39 @@ export class PostsController {
     return posts
   }
 
-  @Get(':postId/comments')
+  @Get(':id/comments')
   async getCommentsByPostId(
-    @Query() query: RequestParams
-  ): Promise<ResponseBody<IPost> | []> {
-    const comments = await this.postsRepository.getAll(query, '')
+    @Param() params: { id: string },
+    @Query() query: RequestParams,
+    @Req() req: Request,
+  ): Promise<ResponseBody<IComment> | []> {
+    const postId = params.id
+
+    if (!postId) {
+      throw new HttpException(
+        { message: appMessages(appMessages().postId).errors.isRequiredField },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const post = await this.postsRepository.getById(params.id)
+
+    if (!post) {
+      throw new HttpException(
+        { message: appMessages(appMessages().post).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    let currentUserId: string | null = null
+
+    if (req.headers.authorization) {
+      const token = req.headers.authorization.split(' ')[1]
+      const { userId } = this.jwtRepository.verifyAccessToken(token)
+      currentUserId = userId || null
+    }
+
+    const comments = await this.commentsRepository.getAll(query, postId, currentUserId)
 
     return comments
   }
@@ -188,10 +216,10 @@ export class PostsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async likePostById(
     @Param() params: { postId: string },
-    @CurrentUserId() currentUseruserId: string,
+    @CurrentUserId() currentUserId: string,
     @Body() data: LikeDto
   ): Promise<undefined> {
-    const existedUser = await this.usersRepository.getById(currentUseruserId)
+    const existedUser = await this.usersRepository.getById(currentUserId)
 
     if (!existedUser) {
       throw new HttpException(
@@ -230,7 +258,7 @@ export class PostsController {
   async createCommentByPost(
     @Param() params: { postId: string },
     @CurrentUserId() currentUseruserId: string,
-    @Body() data: CreateCommentDto
+    @Body() data: CommentDto
   ): Promise<IComment> {
     const existedUser = await this.usersRepository.getById(currentUseruserId)
 
