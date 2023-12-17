@@ -121,6 +121,8 @@ export class BlogsController {
     @Param() params: { blogId: string },
     @Req() req: Request
   ): Promise<ResponseBody<IPost> | []> {
+    let currentUserId: string | null = null
+
     if (!params.blogId) {
       throw new HttpException(
         {
@@ -140,17 +142,17 @@ export class BlogsController {
       )
     }
 
-    let currentUserId: string | null = null
-
     if (req.headers.authorization) {
-      const basic = req.headers.authorization.split(' ')[0]
       const token = req.headers.authorization.split(' ')[1]
-      console.log('---token-', token)
+      try {
       const { userId } = this.jwtRepository.verifyAccessToken(token)
       currentUserId = userId || null
+      } catch {
+        console.log('err')
+      }
     }
 
-    const posts = await this.postsRepository.getAll(query, null, blog.id)
+    const posts = await this.postsRepository.getAll(query, currentUserId, blog.id)
 
     return posts
   }
