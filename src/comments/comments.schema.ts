@@ -1,7 +1,5 @@
 import { Prop, Schema as NextSchema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument, Schema } from 'mongoose';
-import { ILikeInfo } from '../types/likes';
-import { CommentUserInfo } from 'src/types/comments';
+import { HydratedDocument } from 'mongoose';
 
 @NextSchema()
 export class AuthorInfo {
@@ -20,7 +18,7 @@ export class Comment {
   @Prop({ required: true })
   content: string;
 
-  @Prop()
+  @Prop(({ type: AuthorInfo }))
   authorInfo: AuthorInfo;
 
   @Prop()
