@@ -10,6 +10,7 @@ import { Like, LikeSchema } from '../likes/likes.schema';
 import { JwtRepository } from '../jwt/jwt.repository';
 import { UsersRepository } from '../users/users.repository';
 import { User, UserSchema } from '../users/users.schema';
+import { HashRepository } from '../hash/hash.repository';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { User, UserSchema } from '../users/users.schema';
     CommentsRepository,
     JwtRepository,
     UsersRepository,
+    HashRepository,
   ]
 })
 

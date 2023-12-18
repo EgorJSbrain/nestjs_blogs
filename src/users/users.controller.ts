@@ -17,8 +17,9 @@ import { UserDocument } from './users.schema'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { UsersRequestParams } from '../types/users'
 import { ResponseBody } from '../types/request'
-import { IUser } from './types/user'
+import { IUser } from '../types/users'
 import { RoutesEnum } from '../constants/global'
+import { appMessages } from '../constants/messages'
 
 @Controller(RoutesEnum.users)
 export class UsersController {
@@ -39,7 +40,10 @@ export class UsersController {
     const user = await this.usersRepository.getById(params.id)
 
     if (!user) {
-      throw new HttpException({ message: "User doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().user).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     return user
@@ -65,7 +69,10 @@ export class UsersController {
     const user = await this.usersRepository.getById(params.id)
 
     if (!user) {
-      throw new HttpException({ message: "User doesn't exist" }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().user).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     await this.usersRepository.deleteUser(params.id)
