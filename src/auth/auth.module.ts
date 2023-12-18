@@ -13,6 +13,7 @@ import { JwtRepository } from '../jwt/jwt.repository';
 import { JwtModule } from '@nestjs/jwt';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JWTStrategy } from './strategies/jwt.strategy';
+import { HashRepository } from '../hash/hash.repository';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { JWTStrategy } from './strategies/jwt.strategy';
     UsersRepository,
     LocalStrategy,
     JWTStrategy,
+    HashRepository,
   ]
 })
 

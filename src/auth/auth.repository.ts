@@ -1,7 +1,6 @@
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import bcrypt from 'bcrypt'
 import { v4 } from 'uuid'
 
 import { User, UserDocument } from '../users/users.schema';
@@ -10,14 +9,15 @@ import { CreateUserDto } from '../dtos/users/create-user.dto';
 import { JwtRepository } from '../jwt/jwt.repository';
 import { UsersRepository } from '../users/users.repository';
 import { LoginDto } from '../dtos/auth/login.dto';
+import { HashRepository } from '../hash/hash.repository';
 
 @Injectable()
 export class AuthRepository {
   constructor(
-    @InjectModel(User.name) private usersModel: Model<UserDocument>,
     private emailsRepository: EmailsRepository,
     private jwtRepository: JwtRepository,
-    private usersRepository: UsersRepository
+    private usersRepository: UsersRepository,
+    private hashRepository: HashRepository,
   ) {}
 
   async verifyUser(data: LoginDto): Promise<UserDocument | null> {
@@ -27,7 +27,7 @@ export class AuthRepository {
       return null
     }
 
-    const checkedPassword = await this.checkPassword(
+    const checkedPassword = await this.hashRepository.comparePassword(
       data.password,
       user.passwordHash
     )
@@ -114,7 +114,7 @@ export class AuthRepository {
     const user =
       await this.usersRepository.getUserByVerificationCode(recoveryCode)
     const { passwordSalt, passwordHash } =
-      await this.usersRepository.generateHash(newPassword)
+      await this.hashRepository.generateHash(newPassword)
 
     if (!user) {
       return false
@@ -134,7 +134,7 @@ export class AuthRepository {
       return null
     }
 
-    const checkedPassword = await this.checkPassword(
+    const checkedPassword = await this.hashRepository.comparePassword(
       password,
       user.passwordHash
     )
@@ -189,19 +189,6 @@ export class AuthRepository {
 
   private generateRefreshToken(userId: string, password: string): string {
     return this.jwtRepository.generateRefreshToken(userId, password)
-  }
-
-  private async checkPassword(
-    password: string,
-    passwordHash: string
-  ): Promise<boolean> {
-    const passwordChecked = await bcrypt.compare(password, passwordHash)
-
-    if (passwordChecked) {
-      return true
-    } else {
-      return false
-    }
   }
 
   save(user: UserDocument) {

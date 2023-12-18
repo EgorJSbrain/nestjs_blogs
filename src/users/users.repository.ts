@@ -1,16 +1,19 @@
 import { FilterQuery, Model, SortOrder } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import bcrypt from 'bcrypt'
 
 import { User, UserDocument } from './users.schema';
 import { CreateUserDto } from '../dtos/users/create-user.dto';
 import { ResponseBody, SortDirections } from '../types/request';
 import { UsersRequestParams } from '../types/users';
+import { HashRepository } from '../hash/hash.repository';
 
 @Injectable()
 export class UsersRepository {
-  constructor(@InjectModel(User.name) private usersModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private usersModel: Model<UserDocument>,
+    private hashRepository: HashRepository
+  ) {}
 
   async getAll(params: UsersRequestParams): Promise<ResponseBody<UserDocument> | null>  {
     try {
@@ -138,7 +141,7 @@ export class UsersRepository {
     newUser.setId()
     newUser.setConfirmationCode()
     newUser.setExpirationDate()
-    const { passwordSalt, passwordHash } = await this.generateHash(
+    const { passwordSalt, passwordHash } = await this.hashRepository.generateHash(
       data.password
     )
     newUser.passwordHash = passwordHash
@@ -152,27 +155,6 @@ export class UsersRepository {
 
   deleteUser(id: string) {
     return this.usersModel.deleteOne({ id })
-  }
-
-  async generateHash(
-    password: string
-  ): Promise<{ passwordSalt: string; passwordHash: string }> {
-    const passwordSalt = await bcrypt.genSalt(10)
-    const passwordHash = await bcrypt.hash(password, passwordSalt)
-
-    return {
-      passwordSalt,
-      passwordHash
-    }
-  }
-
-  async verifyBasicHash(
-    password: string,
-    userHashedPassword: string,
-  ): Promise<boolean> {
-    const isComparedPassword = await bcrypt.compare(password, userHashedPassword)
-
-    return isComparedPassword
   }
 
   save(user: UserDocument) {

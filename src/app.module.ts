@@ -15,6 +15,7 @@ import { EmailManagerModule } from './email-manager/email-manager.module';
 import { JWTModule } from './jwt/jwt.module';
 import configuration from '../config/configuration';
 import { LikesModule } from './likes/likes.module';
+import { HashModule } from './hash/hash.module';
 
 
 @Module({
@@ -41,6 +42,7 @@ import { LikesModule } from './likes/likes.module';
     EmailManagerModule,
     JWTModule,
     LikesModule,
+    HashModule,
   ],
   controllers: [],
   providers: []
