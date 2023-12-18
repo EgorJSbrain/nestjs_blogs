@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EmailManagerRepository } from '../email-manager/email-manager.repository';
 
-import { IUser } from '../users/types/user';
-
 @Injectable()
 export class EmailsRepository {
   constructor(private emailManager: EmailManagerRepository) {}
