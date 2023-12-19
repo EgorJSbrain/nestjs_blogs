@@ -11,7 +11,7 @@ import { UsersRepository } from '../users/users.repository';
 import { User, UserSchema } from '../users/users.schema';
 import { LikesRepository } from '../likes/likes.repository';
 import { Like, LikeSchema } from '../likes/likes.schema';
-import { JwtRepository } from '../jwt/jwt.repository';
+import { JWTService } from '../jwt/jwt.service';
 import { BlogIdValidator } from '../validators/blog-id.validator';
 import { CommentsRepository } from '../comments/comments.repository';
 import { Comment, CommentSchema } from '../comments/comments.schema';
@@ -29,10 +29,10 @@ import { HashRepository } from 'src/hash/hash.repository';
 ],
   controllers: [PostsController],
   providers: [
-    JwtService,
+    JWTService,
     LikesRepository,
     PostsRepository,
-    JwtRepository,
+    JwtService,
     BlogsRepository,
     UsersRepository,
     BlogIdValidator,

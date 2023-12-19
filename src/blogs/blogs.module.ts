@@ -10,7 +10,7 @@ import { Post, PostSchema } from '../posts/posts.schema';
 import { LikesRepository } from '../likes/likes.repository';
 import { LikesModule } from '../likes/likes.module';
 import { Like, LikeSchema } from '../likes/likes.schema';
-import { JwtRepository } from '../jwt/jwt.repository';
+import { JWTService } from '../jwt/jwt.service';
 
 @Module({
   imports: [
@@ -27,7 +27,7 @@ import { JwtRepository } from '../jwt/jwt.repository';
     LikesRepository,
     BlogsRepository,
     PostsRepository,
-    JwtRepository,
+    JWTService,
   ]
 })
 
