@@ -24,7 +24,7 @@ import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { UsersRepository } from '../users/users.repository'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { appMessages } from '../constants/messages'
-import { JwtRepository } from '../jwt/jwt.repository'
+import { JWTService } from '../jwt/jwt.service'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { LikesRepository } from '../likes/likes.repository'
 import { LikeDto } from '../dtos/like/like.dto'
@@ -41,7 +41,7 @@ export class PostsController {
     private postsRepository: PostsRepository,
     private blogsRepository: BlogsRepository,
     private usersRepository: UsersRepository,
-    private jwtRepository: JwtRepository,
+    private JWTService: JWTService,
     private likesRepository: LikesRepository,
     private commentsRepository: CommentsRepository,
   ) {}
@@ -55,7 +55,7 @@ export class PostsController {
 
     if (req.headers.authorization) {
       const token = req.headers.authorization.split(' ')[1]
-      const { userId } = this.jwtRepository.verifyAccessToken(token)
+      const { userId } = this.JWTService.verifyAccessToken(token)
       currentUserId = userId || null
     }
 
@@ -92,7 +92,7 @@ export class PostsController {
 
     if (req.headers.authorization) {
       const token = req.headers.authorization.split(' ')[1]
-      const { userId } = this.jwtRepository.verifyAccessToken(token)
+      const { userId } = this.JWTService.verifyAccessToken(token)
       currentUserId = userId || null
     }
 
@@ -110,7 +110,7 @@ export class PostsController {
 
     if (req.headers.authorization) {
       const token = req.headers.authorization.split(' ')[1]
-      const { userId } = this.jwtRepository.verifyAccessToken(token)
+      const { userId } = this.JWTService.verifyAccessToken(token)
       currentUserId = userId
     }
 

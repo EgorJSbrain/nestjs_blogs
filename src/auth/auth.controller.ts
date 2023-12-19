@@ -16,17 +16,18 @@ import { Request, Response } from 'express'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { AuthRepository } from './auth.repository'
 import { LoginDto } from '../dtos/auth/login.dto'
-import { JwtRepository } from '../jwt/jwt.repository'
+import { JWTService } from '../jwt/jwt.service'
 import { LocalGuard } from './guards/local-auth.guard'
 import { JWTAuthGuard } from './guards/jwt-auth.guard'
 import { CurrentUserId } from './current-user-id.param.decorator'
 import { UsersRepository } from '../users/users.repository'
+import { appMessages } from '../constants/messages'
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authRepository: AuthRepository,
-    private jwtRepository: JwtRepository,
+    private JWTService: JWTService,
     private usersRepository: UsersRepository,
   ) {}
 
@@ -144,32 +145,6 @@ export class AuthController {
     return
   }
 
-  @Post('refresh-token')
-  @HttpCode(HttpStatus.OK)
-  async refreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response,) {
-    const token = request.cookies.refreshToken
-
-    if (!token) {
-      throw new UnauthorizedException()
-    }
-
-    const { userId, password } = await this.jwtRepository.verifyRefreshToken(token)
-
-    if (!userId || !password) {
-      throw new UnauthorizedException()
-    }
-
-    const { accessToken, refreshToken } =
-      await this.authRepository.refreshToken(userId, password)
-
-    response.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: true
-    })
-
-    return { accessToken }
-  }
-
   @Post('registration-email-resending')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registrationEmailResending(@Body() data: { email: string }) {
@@ -191,7 +166,7 @@ export class AuthController {
 
     if (existedUser?.isConfirmed) {
       throw new HttpException(
-        { message: 'This email is conformed', field: 'email' },
+        { message: appMessages().errors.emailIsConfirmed, field: 'email' },
         HttpStatus.BAD_REQUEST
       )
     }
@@ -200,7 +175,7 @@ export class AuthController {
 
     if (!result) {
       throw new HttpException(
-        { message: 'Something wrong', field: 'email' },
+        { message: appMessages().errors.somethingIsWrong, field: 'email' },
         HttpStatus.BAD_REQUEST
       )
     }
@@ -224,23 +199,59 @@ export class AuthController {
     return user
   }
 
-  // @Post('logout')
-  // @HttpCode(HttpStatus.NO_CONTENT)
-  // async logout(@Req() request: Request, @Res() response: Response) {
-  //   const token = request.cookies.refreshToken
+  @Post('refresh-token')
+  @HttpCode(HttpStatus.OK)
+  async refreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response,) {
+    const token = request.cookies.refreshToken
 
-  //   if (!token) {
-  //     throw new UnauthorizedException()
-  //   }
+    if (!token) {
+      throw new UnauthorizedException()
+    }
 
-  //   const { userId } = await this.jwtRepository.verifyRefreshToken(token)
-  //   console.log("userId:", userId)
+    const { userId, password } = await this.JWTService.verifyRefreshToken(token)
 
-  //   // if (!userId) {
-  //   //   throw new UnauthorizedException()
-  //   // }
+    if (!userId || !password) {
+      throw new UnauthorizedException()
+    }
 
-  //   // response.clearCookie('refreshToken')
-  //   return {}
-  // }
+    const existedUser = this.usersRepository.getById(userId)
+
+    if (!existedUser) {
+      throw new UnauthorizedException()
+    }
+
+    const { accessToken, refreshToken } =
+      await this.authRepository.refreshToken(userId, password)
+
+    response.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true
+    })
+
+    return { accessToken }
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logout(@Req() request: Request, @Res() response: Response) {
+    const token = request.cookies.refreshToken
+
+    if (!token) {
+      throw new UnauthorizedException()
+    }
+
+    const { userId } = await this.JWTService.verifyRefreshToken(token)
+
+    if (!userId) {
+      throw new UnauthorizedException()
+    }
+
+    const existedUser = this.usersRepository.getById(userId)
+
+    if (!existedUser) {
+      throw new UnauthorizedException()
+    }
+
+    response.clearCookie('refreshToken')
+  }
 }

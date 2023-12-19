@@ -13,9 +13,8 @@ import {
 } from '@nestjs/common'
 import { Request } from 'express'
 import { CommentsRepository } from './comments.repository'
-import { Comment } from './comments.schema'
 import { RoutesEnum } from '../constants/global'
-import { JwtRepository } from '../jwt/jwt.repository'
+import { JWTService } from '../jwt/jwt.service'
 import { IComment } from '../types/comments'
 import { appMessages } from '../constants/messages'
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
@@ -29,7 +28,7 @@ import { CommentDto } from '../dtos/comments/create-comment.dto'
 export class CommentsController {
   constructor(
     private commentsRepository: CommentsRepository,
-    private jwtRepository: JwtRepository,
+    private JWTService: JWTService,
     private usersRepository: UsersRepository,
     private likesRepository: LikesRepository,
   ) {}
@@ -51,7 +50,7 @@ export class CommentsController {
 
     if (req.headers.authorization) {
       const token = req.headers.authorization.split(' ')[1]
-      const { userId } = this.jwtRepository.verifyAccessToken(token)
+      const { userId } = this.JWTService.verifyAccessToken(token)
       currentUserId = userId || null
     }
 

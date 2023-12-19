@@ -15,5 +15,6 @@ export const appMessages = (data?: string | number) => ({
     isRequiredField: `${data} is requiered field`,
     isRequiredParameter: `${data} is requiered parameter`,
     somethingIsWrong: 'Something is wrong',
+    emailIsConfirmed: 'This email is confirmed',
   },
 });
