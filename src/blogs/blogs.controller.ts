@@ -26,7 +26,7 @@ import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { appMessages } from '../constants/messages'
 import { IPost } from '../types/posts'
-import { JwtRepository } from '../jwt/jwt.repository'
+import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
 
 @Controller(RoutesEnum.blogs)
@@ -34,7 +34,7 @@ export class BlogsController {
   constructor(
     private blogsRepository: BlogsRepository,
     private postsRepository: PostsRepository,
-    private jwtRepository: JwtRepository,
+    private JWTService: JWTService,
   ) {}
 
   @Get()
@@ -145,7 +145,7 @@ export class BlogsController {
     if (req.headers.authorization) {
       const token = req.headers.authorization.split(' ')[1]
       try {
-      const { userId } = this.jwtRepository.verifyAccessToken(token)
+      const { userId } = this.JWTService.verifyAccessToken(token)
       currentUserId = userId || null
       } catch {
         console.log('err')

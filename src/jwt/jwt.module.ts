@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule as JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
-import { JwtRepository } from './jwt.repository';
+import { JWTService } from './jwt.service';
 
 @Module({
   imports: [
@@ -10,13 +10,13 @@ import { JwtRepository } from './jwt.repository';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('ACCESS_SECRET_KEY'),
-        signOptions: { expiresIn: '10m' }
+        signOptions: { expiresIn: '10s' }
       }),
     }),
   ],
   controllers: [],
   providers: [
-    JwtRepository,
+    JWTService,
     ConfigService
   ]
 })

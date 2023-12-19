@@ -1,12 +1,10 @@
-import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { v4 } from 'uuid'
 
 import { User, UserDocument } from '../users/users.schema';
 import { EmailsRepository } from '../emails/emails.repository';
 import { CreateUserDto } from '../dtos/users/create-user.dto';
-import { JwtRepository } from '../jwt/jwt.repository';
+import { JWTService } from '../jwt/jwt.service';
 import { UsersRepository } from '../users/users.repository';
 import { LoginDto } from '../dtos/auth/login.dto';
 import { HashRepository } from '../hash/hash.repository';
@@ -15,7 +13,7 @@ import { HashRepository } from '../hash/hash.repository';
 export class AuthRepository {
   constructor(
     private emailsRepository: EmailsRepository,
-    private jwtRepository: JwtRepository,
+    private JWTService: JWTService,
     private usersRepository: UsersRepository,
     private hashRepository: HashRepository,
   ) {}
@@ -184,11 +182,11 @@ export class AuthRepository {
   }
 
   private generateAccessToken(userId: string, password: string): string {
-    return this.jwtRepository.generateAcessToken(userId, password)
+    return this.JWTService.generateAcessToken(userId, password)
   }
 
   private generateRefreshToken(userId: string, password: string): string {
-    return this.jwtRepository.generateRefreshToken(userId, password)
+    return this.JWTService.generateRefreshToken(userId, password)
   }
 
   save(user: UserDocument) {

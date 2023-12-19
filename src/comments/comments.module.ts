@@ -7,7 +7,7 @@ import { CommentsController } from './comments.controller';
 import { Comment, CommentSchema } from './comments.schema';
 import { LikesRepository } from '../likes/likes.repository';
 import { Like, LikeSchema } from '../likes/likes.schema';
-import { JwtRepository } from '../jwt/jwt.repository';
+import { JWTService } from '../jwt/jwt.service';
 import { UsersRepository } from '../users/users.repository';
 import { User, UserSchema } from '../users/users.schema';
 import { HashRepository } from '../hash/hash.repository';
@@ -21,10 +21,10 @@ import { HashRepository } from '../hash/hash.repository';
     ])],
   controllers: [CommentsController],
   providers: [
-    JwtService,
+    JWTService,
     LikesRepository,
     CommentsRepository,
-    JwtRepository,
+    JwtService,
     UsersRepository,
     HashRepository,
   ]

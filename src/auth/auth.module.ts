@@ -9,7 +9,7 @@ import { EmailsRepository } from '../emails/emails.repository';
 import { EmailsModule } from '../emails/emails.module';
 import { EmailManagerRepository } from '../email-manager/email-manager.repository';
 import { MailAdapterRepository } from '../email-adapter/email-adapter.repository';
-import { JwtRepository } from '../jwt/jwt.repository';
+import { JWTService } from '../jwt/jwt.service';
 import { JwtModule } from '@nestjs/jwt';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JWTStrategy } from './strategies/jwt.strategy';
@@ -25,7 +25,7 @@ import { HashRepository } from '../hash/hash.repository';
   providers: [
     MailAdapterRepository,
     EmailManagerRepository,
-    JwtRepository,
+    JWTService,
     EmailsRepository,
     AuthRepository,
     UsersRepository,
