@@ -15,7 +15,7 @@ import { JWTService } from '../jwt/jwt.service';
 import { BlogIdValidator } from '../validators/blog-id.validator';
 import { CommentsRepository } from '../comments/comments.repository';
 import { Comment, CommentSchema } from '../comments/comments.schema';
-import { HashRepository } from 'src/hash/hash.repository';
+import { HashService } from 'src/hash/hash.service';
 
 @Module({
   imports: [
@@ -37,7 +37,7 @@ import { HashRepository } from 'src/hash/hash.repository';
     UsersRepository,
     BlogIdValidator,
     CommentsRepository,
-    HashRepository,
+    HashService,
   ]
 })
 

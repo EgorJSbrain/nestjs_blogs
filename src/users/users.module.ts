@@ -5,11 +5,11 @@ import { UsersRepository } from './users.repository';
 import { UsersController } from './users.controller';
 import { User, UserSchema } from './users.schema';
 import { BasicAuthStrategy } from '../auth/strategies/basic.strategy';
-import { HashRepository } from '../hash/hash.repository';
+import { HashService } from '../hash/hash.service';
 import { HashModule } from 'src/hash/hash.module';
 
 const adapters = [BasicAuthStrategy]
-const repositories = [UsersRepository, HashRepository]
+const repositories = [UsersRepository, HashService]
 const useCases = []
 
 @Module({

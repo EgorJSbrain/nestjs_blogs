@@ -9,33 +9,34 @@ export class JWTService {
     private readonly configService: ConfigService
   ) {}
 
-  generateAcessToken(userId: string, password: string): string {
+  generateAcessToken(userId: string): string {
     return this.jwtService.sign(
-      { userId, password },
+      { userId },
       { secret: this.configService.get<string>('ACCESS_SECRET_KEY'), expiresIn: '10s' }
     )
   }
 
-  generateRefreshToken(userId: string, password: string): string {
+  generateRefreshToken(userId: string, lastActiveDate: string, deviceId: string): string {
     return this.jwtService.sign(
-      { userId, password },
+      { userId, lastActiveDate, deviceId },
       { secret: this.configService.get<string>('REFRESH_SECRET_KEY'), expiresIn: '20s' }
     )
   }
 
   async verifyRefreshToken(
     token: string
-  ): Promise<{ userId?: string; password?: string }> {
+  ): Promise<{ userId?: string; deviceId?: string, lastActiveDate?: string }> {
     try {
-      const { userId, password } = await this.jwtService.verifyAsync<{
+      const { userId, deviceId, lastActiveDate } = await this.jwtService.verifyAsync<{
         userId: string
-        password: string
+        deviceId: string,
+        lastActiveDate: string,
       }>(token, {
         secret: this.configService.get<string>('REFRESH_SECRET_KEY'),
         ignoreExpiration: false
       })
 
-      return { userId, password }
+      return { userId, deviceId, lastActiveDate }
     } catch {
       throw new UnauthorizedException()
     }

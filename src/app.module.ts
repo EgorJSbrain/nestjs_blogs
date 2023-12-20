@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule, JwtService as NestJwtService } from '@nestjs/jwt';
 
+import configuration from '../config/configuration';
 import { UsersModule } from './users/users.module';
 import { BlogsModule } from './blogs/blogs.module';
 import { PostsModule } from './posts/posts.module';
@@ -13,9 +13,9 @@ import { EmailAdapterModule } from './email-adapter/email-adapter.module';
 import { EmailsModule } from './emails/emails.module';
 import { EmailManagerModule } from './email-manager/email-manager.module';
 import { JWTModule } from './jwt/jwt.module';
-import configuration from '../config/configuration';
 import { LikesModule } from './likes/likes.module';
 import { HashModule } from './hash/hash.module';
+import { DeviceModule } from './devices/devices.module';
 
 
 @Module({
@@ -43,6 +43,7 @@ import { HashModule } from './hash/hash.module';
     JWTModule,
     LikesModule,
     HashModule,
+    DeviceModule,
   ],
   controllers: [],
   providers: []
