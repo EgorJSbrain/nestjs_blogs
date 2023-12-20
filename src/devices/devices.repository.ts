@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { Device, DeviceDocument } from './devices.schema';
 import { IDevice } from '../types/devices';
-import { CreateDeviceDto } from 'src/dtos/devices/create-device.dto';
+import { CreateDeviceDto } from '../dtos/devices/create-device.dto';
 import add from 'date-fns/add';
 
 @Injectable()
