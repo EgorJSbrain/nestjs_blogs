@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 
-import { HashRepository } from './hash.repository';
+import { HashService } from './hash.service';
 
 @Module({
   imports: [],
   controllers: [],
-  providers: [HashRepository]
+  providers: [HashService]
 })
 export class HashModule {}

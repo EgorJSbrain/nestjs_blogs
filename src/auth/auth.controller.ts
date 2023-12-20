@@ -22,6 +22,7 @@ import { JWTAuthGuard } from './guards/jwt-auth.guard'
 import { CurrentUserId } from './current-user-id.param.decorator'
 import { UsersRepository } from '../users/users.repository'
 import { appMessages } from '../constants/messages'
+import { DevicesRepository } from '../devices/devices.repository'
 
 @Controller('auth')
 export class AuthController {
@@ -29,6 +30,7 @@ export class AuthController {
     private authRepository: AuthRepository,
     private JWTService: JWTService,
     private usersRepository: UsersRepository,
+    private devicesRepository: DevicesRepository,
   ) {}
 
   @Post('login')
@@ -40,21 +42,31 @@ export class AuthController {
     @Ip() ip: string,
     @Body() data: LoginDto
   ) {
-    const userIp = ip
     const deviceTitle = req.headers['user-agent']
 
-    const tokens = await this.authRepository.login(req.user?.userId, data.password)
+    const accessToken = this.JWTService.generateAcessToken(req.user?.userId)
 
-    if (!tokens) {
+    if (!accessToken) {
       throw new UnauthorizedException({ message: 'Email or password aren\'t correct' })
     }
 
-    response.cookie('refreshToken', tokens.refreshToken, {
+    const device = await this.devicesRepository.createDevice({
+      ip,
+      title: deviceTitle ?? 'device_title',
+      userId: req.user?.userId
+    })
+
+    const refreshToken = this.JWTService.generateRefreshToken(
+      device?.userId ?? '',
+      device?.lastActiveDate ?? '',
+      device?.deviceId ?? ''
+    )
+    response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: true
     })
 
-    return { accessToken: tokens?.accessToken }
+    return { accessToken }
   }
 
   @Post('registration')
@@ -208,9 +220,10 @@ export class AuthController {
       throw new UnauthorizedException()
     }
 
-    const { userId, password } = await this.JWTService.verifyRefreshToken(token)
+    const { userId, deviceId, lastActiveDate } =
+      await this.JWTService.verifyRefreshToken(token)
 
-    if (!userId || !password) {
+    if (!userId || !deviceId || !lastActiveDate) {
       throw new UnauthorizedException()
     }
 
@@ -220,8 +233,20 @@ export class AuthController {
       throw new UnauthorizedException()
     }
 
-    const { accessToken, refreshToken } =
-      await this.authRepository.refreshToken(userId, password)
+    const existedDevice = await this.devicesRepository.getDeviceByDate(lastActiveDate)
+
+    if (!existedDevice) {
+      throw new UnauthorizedException()
+    }
+
+    const updatedDevice = await this.devicesRepository.updateDevice(existedDevice.lastActiveDate)
+
+    if (!updatedDevice) {
+      throw new UnauthorizedException()
+    }
+
+    const accessToken = this.JWTService.generateAcessToken(userId)
+    const refreshToken = this.JWTService.generateRefreshToken(userId, lastActiveDate, deviceId)
 
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,

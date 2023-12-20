@@ -10,7 +10,7 @@ import { Like, LikeSchema } from '../likes/likes.schema';
 import { JWTService } from '../jwt/jwt.service';
 import { UsersRepository } from '../users/users.repository';
 import { User, UserSchema } from '../users/users.schema';
-import { HashRepository } from '../hash/hash.repository';
+import { HashService } from '../hash/hash.service';
 
 @Module({
   imports: [
@@ -26,7 +26,7 @@ import { HashRepository } from '../hash/hash.repository';
     CommentsRepository,
     JwtService,
     UsersRepository,
-    HashRepository,
+    HashService,
   ]
 })
 

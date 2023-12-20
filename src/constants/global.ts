@@ -15,5 +15,6 @@ export enum RoutesEnum {
   posts = 'posts',
   users = 'users',
   comments = 'comments',
+  devices = 'security/devices',
   testing_all_data = 'testing/all-data'
 }

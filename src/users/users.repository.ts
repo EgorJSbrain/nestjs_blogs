@@ -6,13 +6,13 @@ import { User, UserDocument } from './users.schema';
 import { CreateUserDto } from '../dtos/users/create-user.dto';
 import { ResponseBody, SortDirections } from '../types/request';
 import { UsersRequestParams } from '../types/users';
-import { HashRepository } from '../hash/hash.repository';
+import { HashService } from '../hash/hash.service';
 
 @Injectable()
 export class UsersRepository {
   constructor(
     @InjectModel(User.name) private usersModel: Model<UserDocument>,
-    private hashRepository: HashRepository
+    private hashService: HashService
   ) {}
 
   async getAll(params: UsersRequestParams): Promise<ResponseBody<UserDocument> | null>  {
@@ -141,7 +141,7 @@ export class UsersRepository {
     newUser.setId()
     newUser.setConfirmationCode()
     newUser.setExpirationDate()
-    const { passwordSalt, passwordHash } = await this.hashRepository.generateHash(
+    const { passwordSalt, passwordHash } = await this.hashService.generateHash(
       data.password
     )
     newUser.passwordHash = passwordHash
