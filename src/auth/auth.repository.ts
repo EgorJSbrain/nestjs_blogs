@@ -7,7 +7,7 @@ import { CreateUserDto } from '../dtos/users/create-user.dto';
 import { JWTService } from '../jwt/jwt.service';
 import { UsersRepository } from '../users/users.repository';
 import { LoginDto } from '../dtos/auth/login.dto';
-import { HashRepository } from '../hash/hash.repository';
+import { HashService } from '../hash/hash.service';
 
 @Injectable()
 export class AuthRepository {
@@ -15,7 +15,7 @@ export class AuthRepository {
     private emailsRepository: EmailsRepository,
     private JWTService: JWTService,
     private usersRepository: UsersRepository,
-    private hashRepository: HashRepository,
+    private hashService: HashService,
   ) {}
 
   async verifyUser(data: LoginDto): Promise<UserDocument | null> {
@@ -25,7 +25,7 @@ export class AuthRepository {
       return null
     }
 
-    const checkedPassword = await this.hashRepository.comparePassword(
+    const checkedPassword = await this.hashService.comparePassword(
       data.password,
       user.passwordHash
     )
@@ -37,15 +37,15 @@ export class AuthRepository {
     return user
   }
 
-  async login(
-    userId: string,
-    password: string
-  ): Promise<{ accessToken: string; refreshToken: string } | null> {
-    const accessToken = this.generateAccessToken(userId, password)
-    const refreshToken = this.generateRefreshToken(userId, password)
+  // async login(
+  //   userId: string,
+  //   password: string
+  // ): Promise<{ accessToken: string; refreshToken: string } | null> {
+  //   const accessToken = this.generateAccessToken(userId, password)
+  //   const refreshToken = this.generateRefreshToken(userId, password)
 
-    return { accessToken, refreshToken }
-  }
+  //   return { accessToken, refreshToken }
+  // }
 
   async register(data: CreateUserDto): Promise<UserDocument> {
     const user = await this.usersRepository.createUser(data)
@@ -112,7 +112,7 @@ export class AuthRepository {
     const user =
       await this.usersRepository.getUserByVerificationCode(recoveryCode)
     const { passwordSalt, passwordHash } =
-      await this.hashRepository.generateHash(newPassword)
+      await this.hashService.generateHash(newPassword)
 
     if (!user) {
       return false
@@ -125,27 +125,27 @@ export class AuthRepository {
     return true
   }
 
-  async refreshToken(userId: string, password: string): Promise<any> {
-    const user = await this.usersRepository.getById(userId)
+  // async refreshToken(userId: string, password: string): Promise<any> {
+  //   const user = await this.usersRepository.getById(userId)
 
-    if (!user) {
-      return null
-    }
+  //   if (!user) {
+  //     return null
+  //   }
 
-    const checkedPassword = await this.hashRepository.comparePassword(
-      password,
-      user.passwordHash
-    )
+  //   const checkedPassword = await this.hashService.comparePassword(
+  //     password,
+  //     user.passwordHash
+  //   )
 
-    if (!checkedPassword) {
-      return null
-    }
+  //   if (!checkedPassword) {
+  //     return null
+  //   }
 
-    const accessToken = this.generateAccessToken(user.id, password)
-    const refreshToken = this.generateRefreshToken(user.id, password)
+  //   const accessToken = this.generateAccessToken(user.id, password)
+  //   const refreshToken = this.generateRefreshToken(user.id, password)
 
-    return { accessToken, refreshToken }
-  }
+  //   return { accessToken: '', refreshToken: '' }
+  // }
 
   async getMe(userId: string): Promise<any> {
     const user = await this.usersRepository.getById(userId)
@@ -181,13 +181,13 @@ export class AuthRepository {
     )
   }
 
-  private generateAccessToken(userId: string, password: string): string {
-    return this.JWTService.generateAcessToken(userId, password)
-  }
+  // private generateAccessToken(userId: string, password: string): string {
+  //   return this.JWTService.generateAcessToken(userId, password)
+  // }
 
-  private generateRefreshToken(userId: string, password: string): string {
-    return this.JWTService.generateRefreshToken(userId, password)
-  }
+  // private generateRefreshToken(userId: string, password: string): string {
+  //   return this.JWTService.generateRefreshToken(userId, password)
+  // }
 
   save(user: UserDocument) {
     return user.save()

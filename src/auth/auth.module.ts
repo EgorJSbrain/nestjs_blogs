@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { JwtModule } from '@nestjs/jwt';
 
 import { AuthRepository } from './auth.repository';
 import { AuthController } from './auth.controller';
@@ -10,14 +11,18 @@ import { EmailsModule } from '../emails/emails.module';
 import { EmailManagerRepository } from '../email-manager/email-manager.repository';
 import { MailAdapterRepository } from '../email-adapter/email-adapter.repository';
 import { JWTService } from '../jwt/jwt.service';
-import { JwtModule } from '@nestjs/jwt';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JWTStrategy } from './strategies/jwt.strategy';
-import { HashRepository } from '../hash/hash.repository';
+import { HashService } from '../hash/hash.service';
+import { DevicesRepository } from '../devices/devices.repository';
+import { Device, DeviceSchema } from '../devices/devices.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Device.name, schema: DeviceSchema },
+    ]),
     forwardRef(() => EmailsModule),
     forwardRef(() => JwtModule)
   ],
@@ -31,7 +36,8 @@ import { HashRepository } from '../hash/hash.repository';
     UsersRepository,
     LocalStrategy,
     JWTStrategy,
-    HashRepository,
+    HashService,
+    DevicesRepository,
   ]
 })
 
