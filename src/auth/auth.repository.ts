@@ -37,16 +37,6 @@ export class AuthRepository {
     return user
   }
 
-  // async login(
-  //   userId: string,
-  //   password: string
-  // ): Promise<{ accessToken: string; refreshToken: string } | null> {
-  //   const accessToken = this.generateAccessToken(userId, password)
-  //   const refreshToken = this.generateRefreshToken(userId, password)
-
-  //   return { accessToken, refreshToken }
-  // }
-
   async register(data: CreateUserDto): Promise<UserDocument> {
     const user = await this.usersRepository.createUser(data)
 
@@ -125,28 +115,6 @@ export class AuthRepository {
     return true
   }
 
-  // async refreshToken(userId: string, password: string): Promise<any> {
-  //   const user = await this.usersRepository.getById(userId)
-
-  //   if (!user) {
-  //     return null
-  //   }
-
-  //   const checkedPassword = await this.hashService.comparePassword(
-  //     password,
-  //     user.passwordHash
-  //   )
-
-  //   if (!checkedPassword) {
-  //     return null
-  //   }
-
-  //   const accessToken = this.generateAccessToken(user.id, password)
-  //   const refreshToken = this.generateRefreshToken(user.id, password)
-
-  //   return { accessToken: '', refreshToken: '' }
-  // }
-
   async getMe(userId: string): Promise<any> {
     const user = await this.usersRepository.getById(userId)
 
@@ -180,14 +148,6 @@ export class AuthRepository {
       user.confirmationCode
     )
   }
-
-  // private generateAccessToken(userId: string, password: string): string {
-  //   return this.JWTService.generateAcessToken(userId, password)
-  // }
-
-  // private generateRefreshToken(userId: string, password: string): string {
-  //   return this.JWTService.generateRefreshToken(userId, password)
-  // }
 
   save(user: UserDocument) {
     return user.save()

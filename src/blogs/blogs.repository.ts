@@ -60,7 +60,7 @@ export class BlogsRepository {
   }
 
   async getById(id: string): Promise<IBlog | null> {
-    const blog = await this.blogsModel.findOne({ id }, { _id: 0, __v: 0 })
+    const blog = await this.blogsModel.findOne({ id })
 
     if (!blog) {
       return null
