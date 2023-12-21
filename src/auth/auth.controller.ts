@@ -246,7 +246,7 @@ export class AuthController {
     }
 
     const accessToken = this.JWTService.generateAcessToken(userId)
-    const refreshToken = this.JWTService.generateRefreshToken(userId, lastActiveDate, deviceId)
+    const refreshToken = this.JWTService.generateRefreshToken(userId, updatedDevice.lastActiveDate, deviceId)
 
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -258,25 +258,36 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async logout(@Req() request: Request, @Res() response: Response) {
+  async logout(@Req() request: Request) {
     const token = request.cookies.refreshToken
 
     if (!token) {
       throw new UnauthorizedException()
     }
 
-    const { userId } = await this.JWTService.verifyRefreshToken(token)
+    const { userId, deviceId, lastActiveDate } = await this.JWTService.verifyRefreshToken(token)
 
-    if (!userId) {
+    if (!userId || !lastActiveDate || !deviceId) {
       throw new UnauthorizedException()
     }
 
-    const existedUser = this.usersRepository.getById(userId)
+    const existedUser = await this.usersRepository.getById(userId)
 
     if (!existedUser) {
       throw new UnauthorizedException()
     }
 
-    response.clearCookie('refreshToken')
+    const existedDevice = await this.devicesRepository.getDeviceByDate(lastActiveDate)
+
+    if (!existedDevice) {
+      throw new UnauthorizedException()
+    }
+
+    const deletedDevice = await this.devicesRepository.deleteDevice(deviceId)
+    console.log("deletedDevice:", deletedDevice)
+
+    // TODO clear cookie
+    // response.clearCookie('refreshToken')
+    return
   }
 }

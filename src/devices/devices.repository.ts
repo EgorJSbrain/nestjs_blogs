@@ -17,10 +17,9 @@ export class DevicesRepository {
     userId: string | null,
   ): Promise<any> {
     try {
-      const devices = await this.devicesModel.find(
-        { userId },
-        { projection: { _id: 0, expiredDate: 0, userId: 0 } }
-      ).lean()
+      const devices = await this.devicesModel
+        .find({ userId }, { _id: 0, __v: 0, expiredDate: 0, userId: 0 })
+        .exec()
 
       return devices
     } catch {
@@ -32,7 +31,7 @@ export class DevicesRepository {
     try {
       const device = await this.devicesModel.findOne(
         { lastActiveDate },
-        { projection: { _id: 0 } }
+        { _id: 0 }
       )
 
       return device
@@ -43,10 +42,7 @@ export class DevicesRepository {
 
   async getDeviceByDeviceId(deviceId: string): Promise<IDevice | null> {
     try {
-      const device = await this.devicesModel.findOne(
-        { deviceId },
-        { projection: { _id: 0 } }
-      )
+      const device = await this.devicesModel.findOne({ deviceId }, { _id: 0, __v: 0 })
 
       return device
     } catch {
@@ -78,29 +74,23 @@ export class DevicesRepository {
   }
 
   async updateDevice(
-    prevDate: string,
+    currentLastActiveDate: string,
   ): Promise<IDevice | null> {
     try {
-      let updatedDevice = null
-      const newDate = new Date()
-      const currentDate = newDate.toISOString()
-      const newExpiredDate = add(newDate, {
-        seconds: 20
-      }).toISOString()
-
-      const response = await this.devicesModel.updateOne(
-        { lastActiveDate: prevDate },
-        { $set: { lastActiveDate: currentDate, expiredDate: newExpiredDate } }
+      const device = await this.devicesModel.findOne(
+        { lastActiveDate: currentLastActiveDate }
       )
 
-      if (response) {
-        updatedDevice = await this.devicesModel.findOne(
-          { lastActiveDate: currentDate },
-          { projection: { _id: 0 } }
-        )
+      if (!currentLastActiveDate) {
+        return null
       }
 
-      return updatedDevice
+      device?.setExpiredDate()
+      device?.setLastActiveDate()
+
+      device?.save()
+
+      return device
     } catch {
       return null
     }
@@ -124,9 +114,7 @@ export class DevicesRepository {
 
   async deleteDevice(deviceId: string): Promise<boolean> {
     try {
-      const response = await this.devicesModel.deleteOne({ deviceId })
-
-      return !!response.deletedCount
+      return !!(await this.devicesModel.deleteOne({ deviceId })).deletedCount
     } catch {
       return false
     }
