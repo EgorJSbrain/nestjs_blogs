@@ -16,7 +16,7 @@ import { DevicesRepository } from './devices.repository'
 import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
 import { IDevice } from '../types/devices'
-import { appMessages } from 'src/constants/messages'
+import { appMessages } from '../constants/messages'
 
 @Controller(RoutesEnum.devices)
 export class DevicesController {
