@@ -23,9 +23,7 @@ import { CurrentUserId } from './current-user-id.param.decorator'
 import { UsersRepository } from '../users/users.repository'
 import { appMessages } from '../constants/messages'
 import { DevicesRepository } from '../devices/devices.repository'
-import { Throttle } from '@nestjs/throttler'
 
-// @Throttle({ default: { limit: 3, ttl: 10000 } })
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -185,14 +183,7 @@ export class AuthController {
       )
     }
 
-    const result = await this.authRepository.resendConfirmationEmail(data.email)
-
-    if (!result) {
-      throw new HttpException(
-        { message: appMessages().errors.somethingIsWrong, field: 'email' },
-        HttpStatus.BAD_REQUEST
-      )
-    }
+    await this.authRepository.resendConfirmationEmail(data.email)
 
     return
   }
