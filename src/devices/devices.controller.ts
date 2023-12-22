@@ -9,7 +9,6 @@ import {
   UnauthorizedException,
   HttpException,
   ForbiddenException,
-  BadRequestException
 } from '@nestjs/common'
 import { Request } from 'express'
 import { DevicesRepository } from './devices.repository'
