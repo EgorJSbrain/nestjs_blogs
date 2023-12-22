@@ -16,6 +16,8 @@ import { JWTModule } from './jwt/jwt.module';
 import { LikesModule } from './likes/likes.module';
 import { HashModule } from './hash/hash.module';
 import { DeviceModule } from './devices/devices.module';
+import { ThrottlerGuard, ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 
 @Module({
@@ -30,6 +32,14 @@ import { DeviceModule } from './devices/devices.module';
       useFactory: (config: ConfigService) => ({
         uri: config.get<string>('DATABASE_URL')
       })
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [{
+        ttl: Number(config.get('THROTTLE_TTL')),
+        limit: Number(config.get('THROTTLE_LIMIT')),
+      }],
     }),
     UsersModule,
     BlogsModule,
@@ -46,6 +56,9 @@ import { DeviceModule } from './devices/devices.module';
     DeviceModule,
   ],
   controllers: [],
-  providers: []
+  providers: [{
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard
+}]
 })
 export class AppModule {}

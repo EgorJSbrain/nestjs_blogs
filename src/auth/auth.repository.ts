@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { v4 } from 'uuid'
 
-import { User, UserDocument } from '../users/users.schema';
+import { UserDocument } from '../users/users.schema';
 import { EmailsRepository } from '../emails/emails.repository';
 import { CreateUserDto } from '../dtos/users/create-user.dto';
-import { JWTService } from '../jwt/jwt.service';
 import { UsersRepository } from '../users/users.repository';
 import { LoginDto } from '../dtos/auth/login.dto';
 import { HashService } from '../hash/hash.service';
@@ -13,7 +12,6 @@ import { HashService } from '../hash/hash.service';
 export class AuthRepository {
   constructor(
     private emailsRepository: EmailsRepository,
-    private JWTService: JWTService,
     private usersRepository: UsersRepository,
     private hashService: HashService,
   ) {}

@@ -1,4 +1,6 @@
 export default () => ({
+  THROTTLE_TTL: 10000,
+  THROTTLE_LIMIT: 10,
   PORT: parseInt(process.env.PORT ?? '3008', 10) || 3000,
   DATABASE_URL: process.env.DATABASE_URL ?? '',
   SMTP_USER: process.env.SMTP_USER,
