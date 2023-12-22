@@ -1,3 +1,4 @@
+import { SkipThrottle } from '@nestjs/throttler'
 import {
   Controller,
   Delete,
@@ -17,6 +18,7 @@ import { RoutesEnum } from '../constants/global'
 import { IDevice } from '../types/devices'
 import { appMessages } from '../constants/messages'
 
+@SkipThrottle()
 @Controller(RoutesEnum.devices)
 export class DevicesController {
   constructor(

@@ -1,3 +1,4 @@
+import { SkipThrottle } from '@nestjs/throttler'
 import {
   Body,
   Controller,
@@ -21,6 +22,7 @@ import { IUser } from '../types/users'
 import { RoutesEnum } from '../constants/global'
 import { appMessages } from '../constants/messages'
 
+@SkipThrottle()
 @Controller(RoutesEnum.users)
 export class UsersController {
   constructor(private usersRepository: UsersRepository) {}
