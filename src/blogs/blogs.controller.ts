@@ -1,3 +1,4 @@
+import { SkipThrottle } from '@nestjs/throttler'
 import {
   Body,
   Controller,
@@ -29,6 +30,7 @@ import { IPost } from '../types/posts'
 import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
 
+@SkipThrottle()
 @Controller(RoutesEnum.blogs)
 export class BlogsController {
   constructor(

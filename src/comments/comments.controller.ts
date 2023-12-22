@@ -1,3 +1,4 @@
+import { SkipThrottle } from '@nestjs/throttler'
 import {
   Body,
   Controller,
@@ -24,6 +25,7 @@ import { UsersRepository } from '../users/users.repository'
 import { LikesRepository } from '../likes/likes.repository'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
 
+@SkipThrottle()
 @Controller(RoutesEnum.comments)
 export class CommentsController {
   constructor(

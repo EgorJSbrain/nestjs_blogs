@@ -1,3 +1,4 @@
+import { SkipThrottle } from '@nestjs/throttler'
 import {
   Body,
   Controller,
@@ -35,6 +36,7 @@ import { CommentsRepository } from '../comments/comments.repository'
 import { LikeStatusEnum } from '../constants/likes'
 import { IComment } from '../types/comments'
 
+@SkipThrottle()
 @Controller(RoutesEnum.posts)
 export class PostsController {
   constructor(
