@@ -13,7 +13,7 @@ export const URL_REGEX =
 export enum RoutesEnum {
   blogs = 'blogs',
   posts = 'posts',
-  users = 'users',
+  saUsers = 'sa/users',
   comments = 'comments',
   devices = 'security/devices',
   testing_all_data = 'testing/all-data'

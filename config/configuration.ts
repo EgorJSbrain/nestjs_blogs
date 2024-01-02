@@ -6,5 +6,13 @@ export default () => ({
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASSWORD: process.env.SMTP_PASSWORD,
   ACCESS_SECRET_KEY: process.env.ACCESS_SECRET_KEY ?? '',
-  REFRESH_SECRET_KEY: process.env.REFRESH_SECRET_KEY ?? ''
+  REFRESH_SECRET_KEY: process.env.REFRESH_SECRET_KEY ?? '',
+  DB: {
+    DIALECT: process.env.DB_DIALECT,
+    HOST: process.env.DB_HOST,
+    PORT: Number(process.env.DB_PORT),
+    USER: process.env.DB_USER,
+    NAME: process.env.DB_NAME,
+    PASS: process.env.DB_PASS,
+  }
 });

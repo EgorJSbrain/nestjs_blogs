@@ -18,10 +18,25 @@ import { HashModule } from './hash/hash.module';
 import { DeviceModule } from './devices/devices.module';
 import { ThrottlerGuard, ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 
 @Module({
   imports: [
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get('DB.HOST'),
+        port: config.get('DB.PORT'),
+        username: config.get('DB.USER'),
+        password: config.get('DB.PASS'),
+        database: config.get('DB.NAME'),
+        entities: [],
+        autoLoadEntities: false,
+        synchronize: false,
+      }),
+    }),
     ConfigModule.forRoot({
       envFilePath: `${process.env.NODE_ENV}.env`,
       isGlobal: true,

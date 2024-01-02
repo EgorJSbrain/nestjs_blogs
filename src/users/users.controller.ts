@@ -21,21 +21,35 @@ import { ResponseBody } from '../types/request'
 import { IUser } from '../types/users'
 import { RoutesEnum } from '../constants/global'
 import { appMessages } from '../constants/messages'
+import { UsersSQLRepository } from './users.sql.repository'
 
 @SkipThrottle()
-@Controller(RoutesEnum.users)
+@Controller(RoutesEnum.saUsers)
 export class UsersController {
-  constructor(private usersRepository: UsersRepository) {}
+  constructor(
+    private usersRepository: UsersRepository,
+    private usersSqlRepository: UsersSQLRepository
+  ) {}
 
   @Get()
   @UseGuards(BasicAuthGuard)
   async getAll(
     @Query() query: UsersRequestParams
-  ): Promise<ResponseBody<UserDocument> | null> {
-    const users = await this.usersRepository.getAll(query)
+  ): Promise<any> {
+    const users = await this.usersSqlRepository.getAll()
 
     return users
   }
+
+  // @Get()
+  // @UseGuards(BasicAuthGuard)
+  // async getAll(
+  //   @Query() query: UsersRequestParams
+  // ): Promise<ResponseBody<UserDocument> | null> {
+  //   const users = await this.usersRepository.getAll(query)
+
+  //   return users
+  // }
 
   @Get(':id')
   async getById(@Param() params: { id: string }): Promise<UserDocument | null> {
