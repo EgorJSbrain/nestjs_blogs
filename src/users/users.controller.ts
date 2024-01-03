@@ -41,19 +41,10 @@ export class UsersController {
     return users
   }
 
-  // @Get()
-  // @UseGuards(BasicAuthGuard)
-  // async getAll(
-  //   @Query() query: UsersRequestParams
-  // ): Promise<ResponseBody<UserDocument> | null> {
-  //   const users = await this.usersRepository.getAll(query)
-
-  //   return users
-  // }
-
   @Get(':id')
+  @UseGuards(BasicAuthGuard)
   async getById(@Param() params: { id: string }): Promise<UserDocument | null> {
-    const user = await this.usersRepository.getById(params.id)
+    const user = await this.usersSqlRepository.getById(params.id)
 
     if (!user) {
       throw new HttpException(
@@ -68,7 +59,7 @@ export class UsersController {
   @Post()
   @UseGuards(BasicAuthGuard)
   async creatUser(@Body() data: CreateUserDto): Promise<IUser> {
-    const user = await this.usersRepository.createUser(data)
+    const user = await this.usersSqlRepository.createUser(data)
 
     return {
       id: user.id,
@@ -77,6 +68,8 @@ export class UsersController {
       createdAt: user.createdAt
     }
   }
+
+  // TODO delete
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
