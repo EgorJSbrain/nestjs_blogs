@@ -4,9 +4,10 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { User, UserDocument } from './users.schema';
 import { CreateUserDto } from '../dtos/users/create-user.dto';
-import { ResponseBody, SortDirections } from '../types/request';
+import { ResponseBody } from '../types/request';
 import { UsersRequestParams } from '../types/users';
 import { HashService } from '../hash/hash.service';
+import { SortDirectionsEnum } from 'src/constants/global';
 
 @Injectable()
 export class UsersRepository {
@@ -19,7 +20,7 @@ export class UsersRepository {
     try {
       const {
         sortBy = 'createdAt',
-        sortDirection = SortDirections.desc,
+        sortDirection = SortDirectionsEnum.desc,
         pageNumber = 1,
         pageSize = 10,
         searchLoginTerm,
@@ -44,7 +45,7 @@ export class UsersRepository {
       }
 
       if (sortBy && sortDirection) {
-        sort[sortBy] = sortDirection === SortDirections.asc ? 1 : -1
+        sort[sortBy] = sortDirection === SortDirectionsEnum.asc ? 1 : -1
       }
 
       const pageSizeNumber = Number(pageSize)

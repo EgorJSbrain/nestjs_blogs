@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
 import { Post, PostDocument } from './posts.schema';
-import { RequestParams, ResponseBody, SortDirections } from '../types/request';
+import { RequestParams, ResponseBody } from '../types/request';
 import { UpdatePostDto } from '../dtos/posts/update-post.dto';
 import { LikesRepository } from '../likes/likes.repository';
 import { LENGTH_OF_NEWEST_LIKES_FOR_POST } from '../constants/likes'
@@ -11,6 +11,7 @@ import { LikeStatusEnum } from '../constants/likes';
 import { formatLikes } from '../utils/formatLikes';
 import { ILike } from '../types/likes';
 import { ICreatePostType, IPost } from '../types/posts';
+import { SortDirectionsEnum } from 'src/constants/global';
 
 @Injectable()
 export class PostsRepository {
@@ -27,7 +28,7 @@ export class PostsRepository {
     try {
       const {
         sortBy = 'createdAt',
-        sortDirection = SortDirections.desc,
+        sortDirection = SortDirectionsEnum.desc,
         pageNumber = 1,
         pageSize = 10
       } = params
@@ -40,7 +41,7 @@ export class PostsRepository {
       }
 
       if (sortBy && sortDirection) {
-        sort[sortBy] = sortDirection === SortDirections.asc ? 1 : -1
+        sort[sortBy] = sortDirection === SortDirectionsEnum.asc ? 1 : -1
       }
 
       const pageSizeNumber = Number(pageSize)

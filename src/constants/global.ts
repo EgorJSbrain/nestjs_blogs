@@ -18,3 +18,8 @@ export enum RoutesEnum {
   devices = 'security/devices',
   testing_all_data = 'testing/all-data'
 }
+
+export enum SortDirectionsEnum {
+  asc = 'asc',
+  desc = 'desc'
+}
