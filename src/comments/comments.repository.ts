@@ -3,11 +3,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
 import { Comment, CommentDocument } from './comments.schema';
-import { RequestParams, ResponseBody, SortDirections } from '../types/request';
+import { RequestParams, ResponseBody } from '../types/request';
 import { IComment, ICreateCommentType, IUpdateCommentType } from '../types/comments';
 import { ILike } from '../types/likes';
 import { LikesRepository } from '../likes/likes.repository';
 import { LikeStatusEnum } from '../constants/likes';
+import { SortDirectionsEnum } from '../constants/global';
 
 @Injectable()
 export class CommentsRepository {
@@ -24,7 +25,7 @@ export class CommentsRepository {
     try {
       const {
         sortBy = 'createdAt',
-        sortDirection = SortDirections.desc,
+        sortDirection = SortDirectionsEnum.desc,
         pageNumber = 1,
         pageSize = 10,
       } = params
@@ -33,7 +34,7 @@ export class CommentsRepository {
       let filter: FilterQuery<CommentDocument> = { sourceId }
 
       if (sortBy && sortDirection) {
-        sort[sortBy] = sortDirection === SortDirections.asc ? 1 : -1
+        sort[sortBy] = sortDirection === SortDirectionsEnum.asc ? 1 : -1
       }
 
       if (userId) {

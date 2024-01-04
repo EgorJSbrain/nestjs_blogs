@@ -13,8 +13,6 @@ import {
   UseGuards
 } from '@nestjs/common'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
-import { UsersRepository } from './users.repository'
-import { UserDocument } from './users.schema'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { UsersRequestParams } from '../types/users'
 import { ResponseBody } from '../types/request'
@@ -27,33 +25,15 @@ import { UsersSQLRepository } from './users.sql.repository'
 @Controller(RoutesEnum.saUsers)
 export class UsersController {
   constructor(
-    private usersRepository: UsersRepository,
     private usersSqlRepository: UsersSQLRepository
   ) {}
 
   @Get()
   @UseGuards(BasicAuthGuard)
-  async getAll(
-    @Query() query: UsersRequestParams
-  ): Promise<any> {
-    const users = await this.usersSqlRepository.getAll()
+  async getAll(@Query() query: UsersRequestParams): Promise<any> {
+    const users = await this.usersSqlRepository.getAll(query)
 
     return users
-  }
-
-  @Get(':id')
-  @UseGuards(BasicAuthGuard)
-  async getById(@Param() params: { id: string }): Promise<UserDocument | null> {
-    const user = await this.usersSqlRepository.getById(params.id)
-
-    if (!user) {
-      throw new HttpException(
-        { message: appMessages(appMessages().user).errors.notFound },
-        HttpStatus.NOT_FOUND
-      )
-    }
-
-    return user
   }
 
   @Post()
@@ -69,13 +49,11 @@ export class UsersController {
     }
   }
 
-  // TODO delete
-
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(BasicAuthGuard)
   async deleteUser(@Param() params: { id: string }): Promise<undefined> {
-    const user = await this.usersRepository.getById(params.id)
+    const user = await this.usersSqlRepository.getById(params.id)
 
     if (!user) {
       throw new HttpException(
@@ -84,6 +62,22 @@ export class UsersController {
       )
     }
 
-    await this.usersRepository.deleteUser(params.id)
+    await this.usersSqlRepository.deleteById(params.id)
   }
+
+  // TODO remove later if unnecessary
+  // @Get(':id')
+  // @UseGuards(BasicAuthGuard)
+  // async getById(@Param() params: { id: string }): Promise<UserDocument | null> {
+  //   const user = await this.usersSqlRepository.getById(params.id)
+
+  //   if (!user) {
+  //     throw new HttpException(
+  //       { message: appMessages(appMessages().user).errors.notFound },
+  //       HttpStatus.NOT_FOUND
+  //     )
+  //   }
+
+  //   return user
+  // }
 }
