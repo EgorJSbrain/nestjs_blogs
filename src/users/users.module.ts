@@ -7,6 +7,7 @@ import { User, UserSchema } from './users.schema';
 import { BasicAuthStrategy } from '../auth/strategies/basic.strategy';
 import { HashService } from '../hash/hash.service';
 import { UsersSQLRepository } from './users.sql.repository';
+import { UsersSqlController } from './users.controller.sa';
 
 const adapters = [BasicAuthStrategy]
 const repositories = [UsersRepository, HashService, UsersSQLRepository]
@@ -16,7 +17,7 @@ const useCases = []
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
-  controllers: [UsersController],
+  controllers: [UsersController, UsersSqlController],
   providers: [...repositories, ...adapters, ...useCases]
 })
 
