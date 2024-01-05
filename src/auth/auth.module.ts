@@ -16,6 +16,10 @@ import { JWTStrategy } from './strategies/jwt.strategy';
 import { HashService } from '../hash/hash.service';
 import { DevicesRepository } from '../devices/devices.repository';
 import { Device, DeviceSchema } from '../devices/devices.schema';
+import { AuthSqlRepository } from './auth.repository.sql';
+import { AuthSqlController } from './auth.controller.sql';
+import { UsersSQLRepository } from 'src/users/users.sql.repository';
+import { LocalSqlStrategy } from './strategies/local.strategy.sql';
 
 @Module({
   imports: [
@@ -26,15 +30,21 @@ import { Device, DeviceSchema } from '../devices/devices.schema';
     forwardRef(() => EmailsModule),
     forwardRef(() => JwtModule)
   ],
-  controllers: [AuthController],
+  controllers: [
+    // AuthController,
+    AuthSqlController
+  ],
   providers: [
     MailAdapterRepository,
     EmailManagerRepository,
     JWTService,
     EmailsRepository,
-    AuthRepository,
-    UsersRepository,
-    LocalStrategy,
+    // AuthRepository,
+    AuthSqlRepository,
+    // UsersRepository,
+    UsersSQLRepository,
+    // LocalStrategy,
+    LocalSqlStrategy,
     JWTStrategy,
     HashService,
     DevicesRepository,

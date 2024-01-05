@@ -8,8 +8,13 @@ export const appMessages = (data?: string | number) => ({
   blog: 'Blog',
   comment: 'Comment',
   device: 'Device',
+  email: 'email',
+  code: 'code',
   info: {
     userRegistred: 'User was registered successfully.',
+    emailIsUsedYet: 'Email is used yet',
+    emailIsConfirmedYet: 'Email is confirmed yet',
+    loginIsUsedYet: 'Login is used yet',
   },
   errors: {
     notFound: `${data} not found`,
@@ -18,5 +23,8 @@ export const appMessages = (data?: string | number) => ({
     isRequiredParameter: `${data} is requiered parameter`,
     somethingIsWrong: 'Something is wrong',
     emailIsConfirmed: 'This email is confirmed',
+    emailOrPasswordNotCorrect: 'Email or password aren\'t correct',
+    emailDoesntExist: 'This email doesn\'t exist',
+    codeIsNotCorrect: 'This code isn\'t correct',
   },
 });

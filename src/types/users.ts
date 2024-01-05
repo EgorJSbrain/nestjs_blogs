@@ -11,3 +11,9 @@ export interface IUser {
   email: string
   createdAt: string
 }
+
+export interface IExtendedUser extends IUser {
+  passwordHash: string
+  isConfirmed: boolean
+  confirmationCode: string
+}
