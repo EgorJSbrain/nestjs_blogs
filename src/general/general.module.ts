@@ -7,6 +7,7 @@ import { Blog, BlogSchema } from '../blogs/blogs.schema';
 import { Post, PostSchema } from '../posts/posts.schema';
 import { Comment, CommentSchema } from '../comments/comments.schema';
 import { User, UserSchema } from '../users/users.schema';
+import { GeneralSqlRepository } from './general.sql.repository';
 
 @Module({
   imports: [MongooseModule.forFeature([
@@ -16,7 +17,8 @@ import { User, UserSchema } from '../users/users.schema';
     { name: User.name, schema: UserSchema }
   ])],
   controllers: [GenerealController],
-  providers: [GeneralRepository]
+  providers: [GeneralSqlRepository]
+  // providers: [GeneralRepository]
 })
 
 export class GeneralModule {}

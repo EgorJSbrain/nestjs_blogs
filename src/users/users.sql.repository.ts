@@ -1,11 +1,11 @@
-import { Controller, Injectable } from "@nestjs/common";
-import { InjectDataSource } from "@nestjs/typeorm";
-import { add } from "date-fns";
-import { SortDirectionsEnum } from "../constants/global";
-import { CreateUserDto } from "src/dtos/users/create-user.dto";
-import { HashService } from "src/hash/hash.service";
-import { IUser, UsersRequestParams } from "src/types/users";
-import { DataSource } from "typeorm";
+import { Injectable } from '@nestjs/common'
+import { InjectDataSource } from '@nestjs/typeorm'
+import { DataSource } from 'typeorm'
+
+import { SortDirectionsEnum } from '../constants/global'
+import { CreateUserDto } from '../dtos/users/create-user.dto'
+import { HashService } from '../hash/hash.service'
+import { IUser, UsersRequestParams } from '../types/users'
 
 @Injectable()
 export class UsersSQLRepository {
@@ -14,10 +14,10 @@ export class UsersSQLRepository {
     private hashService: HashService
   ) {}
 
-  getAll(params: UsersRequestParams) {
+  async getAll(params: UsersRequestParams) {
     const {
-      sortBy = "createdAt",
-      sortDirection = SortDirectionsEnum.asc,
+      sortBy = 'createdAt',
+      sortDirection = SortDirectionsEnum.desc,
       pageNumber = 1,
       pageSize = 10,
       searchLoginTerm = '',
@@ -31,12 +31,38 @@ export class UsersSQLRepository {
     const query = `
       SELECT "createdAt", login, email, id
       FROM public.users
-      WHERE "email" like $1 AND
-        "login" like $2
-      ORDER BY "${sortBy}" ${sortDirection.toLocaleUpperCase()}
+      WHERE "email" ILIKE $1 OR
+        "login" ILIKE $2
+      ORDER BY LOWER("${sortBy}"::text) ${sortDirection.toLocaleUpperCase()}
       LIMIT $3 OFFSET $4
     `
-    return this.dataSource.query(query, [`%${searchEmailTerm}%`, `%${searchLoginTerm}%`, pageSizeNumber, skip])
+    const users = await this.dataSource.query(query, [
+      `%${searchEmailTerm}%`,
+      `%${searchLoginTerm}%`,
+      pageSizeNumber,
+      skip
+    ])
+
+    const queryForCount = `
+      SELECT count(*) AS count FROM public.users
+      WHERE "email" ILIKE $1 OR
+        "login" ILIKE $2
+    `
+    const countResult = await this.dataSource.query(queryForCount, [
+      `%${searchEmailTerm}%`,
+      `%${searchLoginTerm}%`
+    ])
+
+    const count = countResult[0] ? Number(countResult[0].count) : 0
+    const pagesCount = Math.ceil(count / pageSizeNumber)
+
+    return {
+      pagesCount,
+      page: pageNumberNum,
+      pageSize: pageSizeNumber,
+      totalCount: count,
+      items: users
+    }
   }
 
   async getById(id: string) {
@@ -66,7 +92,12 @@ export class UsersSQLRepository {
         WHERE email = $1
       `
 
-    await this.dataSource.query(query, [data.login, data.email, passwordHash, passwordSalt])
+    await this.dataSource.query(query, [
+      data.login,
+      data.email,
+      passwordHash,
+      passwordSalt
+    ])
     const users = await this.dataSource.query(selectQuery, [data.email])
 
     return users[0]
