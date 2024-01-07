@@ -12,14 +12,14 @@ export class JWTService {
   generateAcessToken(userId: string): string {
     return this.jwtService.sign(
       { userId },
-      { secret: this.configService.get<string>('ACCESS_SECRET_KEY'), expiresIn: '10s' }
+      { secret: this.configService.get<string>('ACCESS_SECRET_KEY'), expiresIn: '10m' }
     )
   }
 
   generateRefreshToken(userId: string, lastActiveDate: string, deviceId: string): string {
     return this.jwtService.sign(
       { userId, lastActiveDate, deviceId },
-      { secret: this.configService.get<string>('REFRESH_SECRET_KEY'), expiresIn: '20s' }
+      { secret: this.configService.get<string>('REFRESH_SECRET_KEY'), expiresIn: '20m' }
     )
   }
 
@@ -38,7 +38,6 @@ export class JWTService {
 
       return { userId, deviceId, lastActiveDate }
     } catch {
-      console.log('--verifyRefreshToken---EXPIRED--')
       throw new UnauthorizedException()
     }
   }

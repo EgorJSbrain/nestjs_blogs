@@ -13,9 +13,9 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { Request, Response } from 'express'
+import { SkipThrottle } from '@nestjs/throttler'
 
 import { CreateUserDto } from '../dtos/users/create-user.dto'
-import { AuthRepository } from './auth.repository'
 import { LoginDto } from '../dtos/auth/login.dto'
 import { JWTService } from '../jwt/jwt.service'
 import { LocalGuard } from './guards/local-auth.guard'
@@ -24,13 +24,17 @@ import { CurrentUserId } from './current-user-id.param.decorator'
 import { UsersRepository } from '../users/users.repository'
 import { appMessages } from '../constants/messages'
 import { DevicesRepository } from '../devices/devices.repository'
+import { UsersSQLRepository } from '../users/users.sql.repository'
+import { AuthSqlRepository } from './auth.repository.sql'
+import { RoutesEnum } from '../constants/global'
 
-@Controller('auth')
-export class AuthController {
+@SkipThrottle()
+@Controller(RoutesEnum.auth)
+export class AuthSqlController {
   constructor(
-    private authRepository: AuthRepository,
+    private authSqlRepository: AuthSqlRepository,
     private JWTService: JWTService,
-    private usersRepository: UsersRepository,
+    private usersSqlRepository: UsersSQLRepository,
     private devicesRepository: DevicesRepository,
   ) {}
 
@@ -75,7 +79,7 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registration(@Body() data: CreateUserDto) {
-    const existedUserByLogin = await this.usersRepository.getUserByLoginOrEmail(data.login)
+    const existedUserByLogin = await this.usersSqlRepository.getUserByLoginOrEmail(data.login)
 
     if (existedUserByLogin) {
       throw new HttpException(
@@ -84,16 +88,16 @@ export class AuthController {
       )
     }
 
-    const existedUserByEmail = await this.usersRepository.getUserByLoginOrEmail(data.email)
+    const existedUserByEmail = await this.usersSqlRepository.getUserByLoginOrEmail(data.email)
 
     if (existedUserByEmail) {
       throw new HttpException(
-        { message: appMessages().info.emailIsUsedYet, field: 'email' },
+        { message: appMessages().info.emailIsUsedYet, field: appMessages().email },
         HttpStatus.BAD_REQUEST
       )
     }
 
-    const user = this.authRepository.register(data)
+    const user = await this.authSqlRepository.register(data)
 
     if (!user) {
       throw new HttpException(
@@ -108,20 +112,34 @@ export class AuthController {
   @Post('registration-confirmation')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registrationConfirmation(@Body() data: { code: string }) {
-    const isConfirmedYet = await this.authRepository.checkIsConfirmedEmail(data.code)
-
-    if (isConfirmedYet) {
+    if (!data.code) {
       throw new HttpException(
-        { message: appMessages().info.emailIsConfirmedYet, field: 'code' },
+        { message: appMessages(appMessages().code).errors.isRequiredParameter, field: appMessages().code},
         HttpStatus.BAD_REQUEST
       )
     }
 
-    const isConfirmed = await this.authRepository.confirmEmail(data.code)
+    const existedUser = await this.authSqlRepository.getUserByVerificationCode(data.code)
+
+    if (!existedUser) {
+      throw new HttpException(
+        { message: appMessages().errors.codeIsNotCorrect, field: appMessages().code },
+        HttpStatus.BAD_REQUEST
+      )
+    }
+
+    if (existedUser && existedUser.isConfirmed) {
+      throw new HttpException(
+        { message: appMessages().errors.emailIsConfirmed, field: appMessages().email },
+        HttpStatus.BAD_REQUEST
+      )
+    }
+
+    const isConfirmed = await this.authSqlRepository.confirmEmail(existedUser.id)
 
     if (!isConfirmed) {
       throw new HttpException(
-        { message: appMessages().errors.somethingIsWrong, field: 'code' },
+        { message: appMessages().errors.somethingIsWrong, field: appMessages().code },
         HttpStatus.BAD_REQUEST
       )
     }
@@ -130,7 +148,7 @@ export class AuthController {
   @Post('password-recovery')
   @HttpCode(HttpStatus.NO_CONTENT)
   async passwordRecovery(@Body() data: { email: string }) {
-    const passwordChangingResult = await this.authRepository.recoveryPassword(data.email)
+    const passwordChangingResult = await this.authSqlRepository.recoveryPassword(data.email)
 
     if (!passwordChangingResult) {
       throw new HttpException(
@@ -145,7 +163,7 @@ export class AuthController {
   @Post('new-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async newPassword(@Body() data: { newPassword: string, recoveryCode: string }) {
-    const passwordChangingResult = await this.authRepository.newPassword(
+    const passwordChangingResult = await this.authSqlRepository.newPassword(
       data.newPassword,
       data.recoveryCode
     )
@@ -165,28 +183,28 @@ export class AuthController {
   async registrationEmailResending(@Body() data: { email: string }) {
     if (!data.email) {
       throw new HttpException(
-        { message: appMessages(appMessages().email).errors.isRequiredParameter, field: 'email'},
+        { message: appMessages(appMessages().email).errors.isRequiredParameter, field: appMessages().email},
         HttpStatus.BAD_REQUEST
       )
     }
 
-    const existedUser = await this.usersRepository.getUserByEmail(data.email)
+    const existedUser = await this.usersSqlRepository.getUserByEmail(data.email)
 
     if (!existedUser) {
       throw new HttpException(
-        { message: appMessages().errors.emailDoesntExist, field: 'email' },
+        { message: appMessages().errors.emailDoesntExist, field: appMessages().email },
         HttpStatus.BAD_REQUEST
       )
     }
 
-    if (existedUser?.isConfirmed) {
+    if (existedUser.isConfirmed) {
       throw new HttpException(
-        { message: appMessages().errors.emailIsConfirmed, field: 'email' },
+        { message: appMessages().errors.emailIsConfirmed, field: appMessages().email },
         HttpStatus.BAD_REQUEST
       )
     }
 
-    await this.authRepository.resendConfirmationEmail(data.email)
+    await this.authSqlRepository.resendConfirmationEmail(data.email)
 
     return
   }
@@ -195,7 +213,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JWTAuthGuard)
   async getMe(@CurrentUserId() currentUseruserId: string) {
-    const user = await this.authRepository.getMe(currentUseruserId)
+    const user = await this.authSqlRepository.getMe(currentUseruserId)
 
     if (!user) {
       throw new HttpException(
@@ -223,7 +241,7 @@ export class AuthController {
       throw new UnauthorizedException()
     }
 
-    const existedUser = this.usersRepository.getById(userId)
+    const existedUser = await this.usersSqlRepository.getById(userId)
 
     if (!existedUser) {
       throw new UnauthorizedException()
@@ -267,7 +285,7 @@ export class AuthController {
       throw new UnauthorizedException()
     }
 
-    const existedUser = await this.usersRepository.getById(userId)
+    const existedUser = await this.usersSqlRepository.getById(userId)
 
     if (!existedUser) {
       throw new UnauthorizedException()

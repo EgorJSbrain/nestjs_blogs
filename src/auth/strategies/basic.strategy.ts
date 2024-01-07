@@ -2,13 +2,10 @@
 import { BasicStrategy as Strategy } from 'passport-http';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { UsersRepository } from '../../users/users.repository';
 
 @Injectable()
 export class BasicAuthStrategy extends PassportStrategy(Strategy) {
-    constructor(
-        private readonly usersRepository: UsersRepository,
-    ) {
+    constructor() {
         super();
     }
 

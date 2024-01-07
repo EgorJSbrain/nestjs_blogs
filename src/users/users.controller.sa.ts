@@ -15,7 +15,6 @@ import {
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { UsersRequestParams } from '../types/users'
-import { ResponseBody } from '../types/request'
 import { IUser } from '../types/users'
 import { RoutesEnum } from '../constants/global'
 import { appMessages } from '../constants/messages'
