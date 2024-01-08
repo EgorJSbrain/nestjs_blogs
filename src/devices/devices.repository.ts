@@ -1,27 +1,37 @@
+import { DataSource } from 'typeorm'
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-
-import { Device, DeviceDocument } from './devices.schema';
-import { IDevice } from '../types/devices';
-import { CreateDeviceDto } from '../dtos/devices/create-device.dto';
+import { InjectDataSource } from '@nestjs/typeorm';
 import add from 'date-fns/add';
+
+import { Device, DeviceDocument } from './devices.schema'
+import { IDevice } from '../types/devices'
+import { CreateDeviceDto } from '../dtos/devices/create-device.dto'
+
 
 @Injectable()
 export class DevicesRepository {
   constructor(
-    @InjectModel(Device.name) private devicesModel: Model<DeviceDocument>
+    @InjectDataSource() protected dataSource: DataSource,
   ) {}
 
   async getAllDevicesByUserId(
     userId: string | null,
   ): Promise<any> {
     try {
-      const devices = await this.devicesModel
-        .find({ userId }, { _id: 0, __v: 0, expiredDate: 0, userId: 0 })
-        .exec()
+      const query = `
+        SELECT "deviceId", "userId", ip, title, "lastActiveDate", "expiredDate"
+          FROM public.devices
+         WHERE "userId" = $1
+      `
+    const devices = await this.dataSource.query<IDevice[]>(query, [userId])
 
-      return devices
+    if (!devices[0]) {
+      return null
+    }
+
+    return devices
     } catch {
       return []
     }
@@ -29,12 +39,18 @@ export class DevicesRepository {
 
   async getDeviceByDate(lastActiveDate: string): Promise<IDevice | null> {
     try {
-      const device = await this.devicesModel.findOne(
-        { lastActiveDate },
-        { _id: 0 }
-      )
+      const query = `
+        SELECT "deviceId", "userId", ip, title, "lastActiveDate", "expiredDate"
+          FROM public.devices
+          WHERE "lastActiveDate" = $1
+      `
+      const device = await this.dataSource.query(query, [lastActiveDate])
 
-      return device
+      if (!device.length) {
+        return null
+      }
+
+      return device[0]
     } catch {
       return null
     }
@@ -42,9 +58,18 @@ export class DevicesRepository {
 
   async getDeviceByDeviceId(deviceId: string): Promise<IDevice | null> {
     try {
-      const device = await this.devicesModel.findOne({ deviceId }, { _id: 0, __v: 0 })
+      const query = `
+        SELECT "deviceId", "userId", ip, title, "lastActiveDate", "expiredDate"
+          FROM public.devices
+          WHERE "deviceId" = $1
+      `
+      const device = await this.dataSource.query(query, [deviceId])
 
-      return device
+      if (!device.length) {
+        return null
+      }
+
+      return device[0]
     } catch {
       return null
     }
@@ -52,13 +77,32 @@ export class DevicesRepository {
 
   async createDevice(device: CreateDeviceDto): Promise<IDevice | null> {
     try {
-      const newDevice = new this.devicesModel(device)
+      const date = new Date()
+      const lastActiveDate = date.toISOString()
 
-      newDevice.setDeviceId()
-      newDevice.setExpiredDate()
-      newDevice.setLastActiveDate()
+      const expiredDate = add(date, {
+        seconds: 20
+      }).toISOString()
 
-      const createdDevice = await newDevice.save()
+      const query = `
+        INSERT INTO public.devices(
+          "userId", ip, title, "lastActiveDate", "expiredDate")
+          VALUES ($1, $2, $3, $4, $5);
+        `
+
+      await this.dataSource.query(query, [
+        device.userId,
+        device.ip,
+        device.title,
+        lastActiveDate,
+        expiredDate
+      ])
+
+      const createdDevice = await this.getDeviceByDate(lastActiveDate)
+
+      if (!createdDevice) {
+        return null
+      }
 
       return {
         userId: createdDevice.userId,
@@ -77,20 +121,47 @@ export class DevicesRepository {
     currentLastActiveDate: string,
   ): Promise<IDevice | null> {
     try {
-      const device = await this.devicesModel.findOne(
-        { lastActiveDate: currentLastActiveDate }
-      )
+      const existedDevice = await this.getDeviceByDate(currentLastActiveDate)
 
-      if (!currentLastActiveDate) {
+      if (!existedDevice) {
         return null
       }
 
-      device?.setExpiredDate()
-      device?.setLastActiveDate()
+      const date = new Date()
+      const lastActiveDate = date.toISOString()
 
-      device?.save()
+      const expiredDate = add(date, {
+        seconds: 20
+      }).toISOString()
+
+      const query = `
+        UPDATE public.devices
+          SET "lastActiveDate"=$2, "expiredDate"=$3
+          WHERE id = $1;
+      `
+
+      await this.dataSource.query(query, [existedDevice.deviceId, lastActiveDate, expiredDate])
+
+      const device = await this.getDeviceByDeviceId(existedDevice.deviceId)
+
+      if (!existedDevice) {
+        return null
+      }
+      // const device = await this.devicesModel.findOne(
+      //   { lastActiveDate: currentLastActiveDate }
+      // )
+
+      // if (!currentLastActiveDate) {
+      //   return null
+      // }
+
+      // device?.setExpiredDate()
+      // device?.setLastActiveDate()
+
+      // device?.save()
 
       return device
+      return null
     } catch {
       return null
     }
@@ -101,12 +172,18 @@ export class DevicesRepository {
     lastActiveDate: string
   ): Promise<boolean> {
     try {
-      const response = await this.devicesModel.deleteMany({
-        userId,
-        $nor: [{ lastActiveDate }]
-      })
+      const query = `
+      DELETE FROM public.devices
+      WHERE id = $1
+    `
+    // return this.dataSource.query(query, [id])
+      // const response = await this.devicesModel.deleteMany({
+      //   userId,
+      //   $nor: [{ lastActiveDate }]
+      // })
 
-      return !!response.deletedCount
+      // return !!response.deletedCount
+      return false
     } catch {
       return false
     }
@@ -114,13 +191,14 @@ export class DevicesRepository {
 
   async deleteDevice(deviceId: string): Promise<boolean> {
     try {
-      return !!(await this.devicesModel.deleteOne({ deviceId })).deletedCount
+      const query = `
+        DELETE FROM public.devices
+        WHERE deviceId = $1
+      `
+      return this.dataSource.query(query, [deviceId])
     } catch {
       return false
     }
   }
 
-  save(device: DeviceDocument) {
-    return device.save()
-  }
 }
