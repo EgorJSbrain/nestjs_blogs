@@ -4,20 +4,21 @@ import { v4 } from 'uuid'
 import { UserDocument } from '../users/users.schema';
 import { EmailsRepository } from '../emails/emails.repository';
 import { CreateUserDto } from '../dtos/users/create-user.dto';
-import { UsersRepository } from '../users/users.repository';
 import { LoginDto } from '../dtos/auth/login.dto';
 import { HashService } from '../hash/hash.service';
+import { UsersSQLRepository } from 'src/users/users.sql.repository';
+import { IExtendedUser, IUser } from 'src/types/users';
 
 @Injectable()
 export class AuthRepository {
   constructor(
     private emailsRepository: EmailsRepository,
-    private usersRepository: UsersRepository,
+    private usersSqlRepository: UsersSQLRepository,
     private hashService: HashService,
   ) {}
 
-  async verifyUser(data: LoginDto): Promise<UserDocument | null> {
-    const user = await this.usersRepository.getUserByLoginOrEmail(data.loginOrEmail)
+  async verifyUser(data: LoginDto): Promise<IUser | null> {
+    const user = await this.usersSqlRepository.getUserByLoginOrEmail(data.loginOrEmail)
 
     if (!user) {
       return null
@@ -35,8 +36,8 @@ export class AuthRepository {
     return user
   }
 
-  async register(data: CreateUserDto): Promise<UserDocument> {
-    const user = await this.usersRepository.createUser(data)
+  async register(data: CreateUserDto): Promise<IExtendedUser> {
+    const user = await this.usersSqlRepository.createUser(data)
 
     this.emailsRepository.sendRegistrationConfirmationMail(
       user.email,
@@ -46,46 +47,34 @@ export class AuthRepository {
     return user
   }
 
-  async confirmEmail(code: string): Promise<boolean> {
-    const user = await this.usersRepository.getUserByVerificationCode(code)
+  async confirmEmail(userId: string): Promise<boolean> {
+    const confirmedUser = await this.usersSqlRepository.confirmEmailOfUser(userId)
 
-    if (!user) {
+    if (!confirmedUser) {
       return false
     }
-
-    if (user && user.isConfirmed) {
-      return false
-    }
-
-    user.isConfirmed = true
-    user.save()
 
     return true
   }
 
-  async checkIsConfirmedEmail(code: string): Promise<boolean> {
-    const user = await this.usersRepository.getUserByVerificationCode(code)
+  async getUserByVerificationCode(code: string): Promise<IExtendedUser | null> {
+    const user = await this.usersSqlRepository.getUserByVerificationCode(code)
 
     if (!user) {
-      return false
+      return null
     }
 
-    if (user && user.isConfirmed) {
-      return true
-    }
-
-    return false
+    return user
   }
 
   async recoveryPassword(email: string): Promise<boolean> {
-    const user = await this.usersRepository.getUserByEmail(email)
+    const user = await this.usersSqlRepository.getUserByEmail(email)
 
     if (!user) {
       return false
     }
 
-    user.confirmationCode = v4()
-    user.save()
+    await this.usersSqlRepository.setNewConfirmationCodeOfUser(v4(), user.id)
 
     return await this.emailsRepository.sendRecoveryPasswordMail(
       user.email,
@@ -98,7 +87,7 @@ export class AuthRepository {
     recoveryCode: string
   ): Promise<boolean> {
     const user =
-      await this.usersRepository.getUserByVerificationCode(recoveryCode)
+      await this.usersSqlRepository.getUserByVerificationCode(recoveryCode)
     const { passwordSalt, passwordHash } =
       await this.hashService.generateHash(newPassword)
 
@@ -106,15 +95,13 @@ export class AuthRepository {
       return false
     }
 
-    user.passwordHash = passwordHash
-    user.passwordSalt = passwordSalt
-    user.save()
+    await this.usersSqlRepository.setNewHashesOfUser(passwordHash, passwordSalt, user.id)
 
     return true
   }
 
   async getMe(userId: string): Promise<any> {
-    const user = await this.usersRepository.getById(userId)
+    const user = await this.usersSqlRepository.getById(userId)
 
     if (!user) {
       return null
@@ -128,7 +115,7 @@ export class AuthRepository {
   }
 
   async resendConfirmationEmail(email: string): Promise<any> {
-    const user = await this.usersRepository.getUserByEmail(email)
+    const user = await this.usersSqlRepository.getUserByEmail(email)
 
     if (!user) {
       return null
@@ -138,12 +125,13 @@ export class AuthRepository {
       return null
     }
 
-    user.confirmationCode = v4()
-    user.save()
+    const confirmationCode = v4()
+
+    await this.usersSqlRepository.setNewConfirmationCodeOfUser(confirmationCode, user.id)
 
     return await this.emailsRepository.sendRegistrationConfirmationMail(
       user.email,
-      user.confirmationCode
+      confirmationCode
     )
   }
 
