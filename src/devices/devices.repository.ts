@@ -1,11 +1,8 @@
 import { DataSource } from 'typeorm'
-import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { InjectDataSource } from '@nestjs/typeorm';
 import add from 'date-fns/add';
 
-import { Device, DeviceDocument } from './devices.schema'
 import { IDevice } from '../types/devices'
 import { CreateDeviceDto } from '../dtos/devices/create-device.dto'
 
@@ -21,9 +18,9 @@ export class DevicesRepository {
   ): Promise<any> {
     try {
       const query = `
-        SELECT "deviceId", "userId", ip, title, "lastActiveDate", "expiredDate"
+        SELECT "deviceId", ip, title, "lastActiveDate"
           FROM public.devices
-         WHERE "userId" = $1
+          WHERE "userId" = $1
       `
     const devices = await this.dataSource.query<IDevice[]>(query, [userId])
 
@@ -137,31 +134,16 @@ export class DevicesRepository {
       const query = `
         UPDATE public.devices
           SET "lastActiveDate"=$2, "expiredDate"=$3
-          WHERE id = $1;
+          WHERE "deviceId" = $1;
       `
-
       await this.dataSource.query(query, [existedDevice.deviceId, lastActiveDate, expiredDate])
-
       const device = await this.getDeviceByDeviceId(existedDevice.deviceId)
 
       if (!existedDevice) {
         return null
       }
-      // const device = await this.devicesModel.findOne(
-      //   { lastActiveDate: currentLastActiveDate }
-      // )
-
-      // if (!currentLastActiveDate) {
-      //   return null
-      // }
-
-      // device?.setExpiredDate()
-      // device?.setLastActiveDate()
-
-      // device?.save()
 
       return device
-      return null
     } catch {
       return null
     }
@@ -173,17 +155,13 @@ export class DevicesRepository {
   ): Promise<boolean> {
     try {
       const query = `
-      DELETE FROM public.devices
-      WHERE id = $1
-    `
-    // return this.dataSource.query(query, [id])
-      // const response = await this.devicesModel.deleteMany({
-      //   userId,
-      //   $nor: [{ lastActiveDate }]
-      // })
+        DELETE FROM public.devices
+        WHERE "userId" = $1
+          AND NOT "lastActiveDate"=$2
+      `
+      await this.dataSource.query(query, [userId, lastActiveDate])
 
-      // return !!response.deletedCount
-      return false
+      return true
     } catch {
       return false
     }
@@ -193,12 +171,11 @@ export class DevicesRepository {
     try {
       const query = `
         DELETE FROM public.devices
-        WHERE deviceId = $1
+        WHERE "deviceId" = $1
       `
       return this.dataSource.query(query, [deviceId])
     } catch {
       return false
     }
   }
-
 }
