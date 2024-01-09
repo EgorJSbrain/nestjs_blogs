@@ -4,10 +4,11 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { Blog, BlogDocument } from './blogs.schema';
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto';
-import { ResponseBody, SortDirections } from '../types/request';
+import { ResponseBody } from '../types/request';
 import { BlogsRequestParams } from '../types/blogs';
 import { IBlog } from '../types/blogs';
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto';
+import { SortDirectionsEnum } from '../constants/global';
 
 @Injectable()
 export class BlogsRepository {
@@ -17,7 +18,7 @@ export class BlogsRepository {
     try {
       const {
         sortBy = 'createdAt',
-        sortDirection = SortDirections.desc,
+        sortDirection = SortDirectionsEnum.desc,
         pageNumber = 1,
         pageSize = 10,
         searchNameTerm,
@@ -31,7 +32,7 @@ export class BlogsRepository {
       }
 
       if (sortBy && sortDirection) {
-        sort[sortBy] = sortDirection === SortDirections.asc ? 1 : -1
+        sort[sortBy] = sortDirection === SortDirectionsEnum.asc ? 1 : -1
       }
 
       const pageSizeNumber = Number(pageSize)

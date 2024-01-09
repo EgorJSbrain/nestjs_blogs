@@ -13,8 +13,9 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { Request, Response } from 'express'
+import { SkipThrottle } from '@nestjs/throttler'
+
 import { CreateUserDto } from '../dtos/users/create-user.dto'
-import { AuthRepository } from './auth.repository'
 import { LoginDto } from '../dtos/auth/login.dto'
 import { JWTService } from '../jwt/jwt.service'
 import { LocalGuard } from './guards/local-auth.guard'
@@ -23,13 +24,16 @@ import { CurrentUserId } from './current-user-id.param.decorator'
 import { UsersRepository } from '../users/users.repository'
 import { appMessages } from '../constants/messages'
 import { DevicesRepository } from '../devices/devices.repository'
+import { UsersSQLRepository } from '../users/users.sql.repository'
+import { AuthRepository } from './auth.repository'
+import { RoutesEnum } from '../constants/global'
 
-@Controller('auth')
+@Controller(RoutesEnum.auth)
 export class AuthController {
   constructor(
     private authRepository: AuthRepository,
     private JWTService: JWTService,
-    private usersRepository: UsersRepository,
+    private usersSqlRepository: UsersSQLRepository,
     private devicesRepository: DevicesRepository,
   ) {}
 
@@ -47,7 +51,9 @@ export class AuthController {
     const accessToken = this.JWTService.generateAcessToken(req.user?.userId)
 
     if (!accessToken) {
-      throw new UnauthorizedException({ message: 'Email or password aren\'t correct' })
+      throw new UnauthorizedException({
+        message: appMessages().errors.emailOrPasswordNotCorrect
+      })
     }
 
     const device = await this.devicesRepository.createDevice({
@@ -72,29 +78,29 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registration(@Body() data: CreateUserDto) {
-    const existedUserByLogin = await this.usersRepository.getUserByLoginOrEmail(data.login)
+    const existedUserByLogin = await this.usersSqlRepository.getUserByLoginOrEmail(data.login)
 
     if (existedUserByLogin) {
       throw new HttpException(
-        { message: 'Login is used yet', field: 'login' },
+        { message: appMessages().info.loginIsUsedYet, field: 'login' },
         HttpStatus.BAD_REQUEST
       )
     }
 
-    const existedUserByEmail = await this.usersRepository.getUserByLoginOrEmail(data.email)
+    const existedUserByEmail = await this.usersSqlRepository.getUserByLoginOrEmail(data.email)
 
     if (existedUserByEmail) {
       throw new HttpException(
-        { message: 'Email is used yet', field: 'email' },
+        { message: appMessages().info.emailIsUsedYet, field: appMessages().email },
         HttpStatus.BAD_REQUEST
       )
     }
 
-    const user = this.authRepository.register(data)
+    const user = await this.authRepository.register(data)
 
     if (!user) {
       throw new HttpException(
-        { message: 'Something wrong', field: '' },
+        { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.NOT_FOUND
       )
     }
@@ -105,20 +111,34 @@ export class AuthController {
   @Post('registration-confirmation')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registrationConfirmation(@Body() data: { code: string }) {
-    const isConfirmedYet = await this.authRepository.checkIsConfirmedEmail(data.code)
-
-    if (isConfirmedYet) {
+    if (!data.code) {
       throw new HttpException(
-        { message: 'Email is confirmed yet', field: 'code' },
+        { message: appMessages(appMessages().code).errors.isRequiredParameter, field: appMessages().code},
         HttpStatus.BAD_REQUEST
       )
     }
 
-    const isConfirmed = await this.authRepository.confirmEmail(data.code)
+    const existedUser = await this.authRepository.getUserByVerificationCode(data.code)
+
+    if (!existedUser) {
+      throw new HttpException(
+        { message: appMessages().errors.codeIsNotCorrect, field: appMessages().code },
+        HttpStatus.BAD_REQUEST
+      )
+    }
+
+    if (existedUser && existedUser.isConfirmed) {
+      throw new HttpException(
+        { message: appMessages().errors.emailIsConfirmed, field: appMessages().code },
+        HttpStatus.BAD_REQUEST
+      )
+    }
+
+    const isConfirmed = await this.authRepository.confirmEmail(existedUser.id)
 
     if (!isConfirmed) {
       throw new HttpException(
-        { message: 'Something wrong', field: 'code' },
+        { message: appMessages().errors.somethingIsWrong, field: appMessages().code },
         HttpStatus.BAD_REQUEST
       )
     }
@@ -131,7 +151,7 @@ export class AuthController {
 
     if (!passwordChangingResult) {
       throw new HttpException(
-        { message: 'Something wrong', field: '' },
+        { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.NOT_FOUND
       )
     }
@@ -149,7 +169,7 @@ export class AuthController {
 
     if (!passwordChangingResult) {
       throw new HttpException(
-        { message: 'Something wrong', field: '' },
+        { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.NOT_FOUND
       )
     }
@@ -162,23 +182,23 @@ export class AuthController {
   async registrationEmailResending(@Body() data: { email: string }) {
     if (!data.email) {
       throw new HttpException(
-        { message: 'Email is required field', field: 'email'},
+        { message: appMessages(appMessages().email).errors.isRequiredParameter, field: appMessages().email},
         HttpStatus.BAD_REQUEST
       )
     }
 
-    const existedUser = await this.usersRepository.getUserByEmail(data.email)
+    const existedUser = await this.usersSqlRepository.getUserByEmail(data.email)
 
     if (!existedUser) {
       throw new HttpException(
-        { message: 'This email doesn\'t exist', field: 'email' },
+        { message: appMessages().errors.emailDoesntExist, field: appMessages().email },
         HttpStatus.BAD_REQUEST
       )
     }
 
-    if (existedUser?.isConfirmed) {
+    if (existedUser.isConfirmed) {
       throw new HttpException(
-        { message: appMessages().errors.emailIsConfirmed, field: 'email' },
+        { message: appMessages().errors.emailIsConfirmed, field: appMessages().email },
         HttpStatus.BAD_REQUEST
       )
     }
@@ -196,7 +216,7 @@ export class AuthController {
 
     if (!user) {
       throw new HttpException(
-        { message: 'User doesn\'t found', field: '' },
+        { message: appMessages(appMessages().user).errors.notFound, field: '' },
         HttpStatus.NOT_FOUND
       )
     }
@@ -220,7 +240,7 @@ export class AuthController {
       throw new UnauthorizedException()
     }
 
-    const existedUser = this.usersRepository.getById(userId)
+    const existedUser = await this.usersSqlRepository.getById(userId)
 
     if (!existedUser) {
       throw new UnauthorizedException()
@@ -264,7 +284,7 @@ export class AuthController {
       throw new UnauthorizedException()
     }
 
-    const existedUser = await this.usersRepository.getById(userId)
+    const existedUser = await this.usersSqlRepository.getById(userId)
 
     if (!existedUser) {
       throw new UnauthorizedException()
@@ -276,11 +296,8 @@ export class AuthController {
       throw new UnauthorizedException()
     }
 
-    const deletedDevice = await this.devicesRepository.deleteDevice(deviceId)
-    console.log("deletedDevice:", deletedDevice)
+    await this.devicesRepository.deleteDevice(deviceId)
 
-    // TODO clear cookie
-    // response.clearCookie('refreshToken')
     return
   }
 }

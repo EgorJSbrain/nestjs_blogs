@@ -1,11 +1,8 @@
-export enum SortDirections {
-  asc = 'asc',
-  desc = 'desc'
-}
+import { SortDirectionsEnum } from '../constants/global'
 
 export type RequestParams = {
   sortBy?: string
-  sortDirection?: SortDirections
+  sortDirection?: SortDirectionsEnum
   pageNumber?: string
   pageSize?: string
 }

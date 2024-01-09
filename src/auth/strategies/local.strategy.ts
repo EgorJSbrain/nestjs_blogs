@@ -4,7 +4,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthRepository } from '../auth.repository';
 
 @Injectable()
-export class LocalStrategy extends PassportStrategy(Strategy) {
+export class LocalSqlStrategy extends PassportStrategy(Strategy) {
   constructor(private authRepository: AuthRepository) {
     super({
       usernameField: 'loginOrEmail'

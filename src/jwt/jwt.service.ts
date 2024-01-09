@@ -38,7 +38,6 @@ export class JWTService {
 
       return { userId, deviceId, lastActiveDate }
     } catch {
-      console.log('--verifyRefreshToken---EXPIRED--')
       throw new UnauthorizedException()
     }
   }

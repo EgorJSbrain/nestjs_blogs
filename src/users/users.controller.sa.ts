@@ -18,20 +18,19 @@ import { UsersRequestParams } from '../types/users'
 import { IUser } from '../types/users'
 import { RoutesEnum } from '../constants/global'
 import { appMessages } from '../constants/messages'
-import { UsersRepository } from './users.repository'
-import { UserDocument } from './users.schema'
+import { UsersSQLRepository } from './users.sql.repository'
 
 @SkipThrottle()
-@Controller(RoutesEnum.users)
-export class UsersController {
+@Controller(RoutesEnum.saUsers)
+export class UsersSqlController {
   constructor(
-    private usersRepository: UsersRepository,
+    private usersSqlRepository: UsersSQLRepository
   ) {}
 
   @Get()
   @UseGuards(BasicAuthGuard)
   async getAll(@Query() query: UsersRequestParams): Promise<any> {
-    const users = await this.usersRepository.getAll(query)
+    const users = await this.usersSqlRepository.getAll(query)
 
     return users
   }
@@ -39,7 +38,7 @@ export class UsersController {
   @Post()
   @UseGuards(BasicAuthGuard)
   async creatUser(@Body() data: CreateUserDto): Promise<IUser> {
-    const user = await this.usersRepository.createUser(data)
+    const user = await this.usersSqlRepository.createUser(data)
 
     return {
       id: user.id,
@@ -53,7 +52,7 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(BasicAuthGuard)
   async deleteUser(@Param() params: { id: string }): Promise<undefined> {
-    const user = await this.usersRepository.getById(params.id)
+    const user = await this.usersSqlRepository.getById(params.id)
 
     if (!user) {
       throw new HttpException(
@@ -62,21 +61,22 @@ export class UsersController {
       )
     }
 
-    await this.usersRepository.deleteUser(params.id)
+    await this.usersSqlRepository.deleteById(params.id)
   }
 
-  @Get(':id')
-  @UseGuards(BasicAuthGuard)
-  async getById(@Param() params: { id: string }): Promise<UserDocument | null> {
-    const user = await this.usersRepository.getById(params.id)
+  // TODO remove later if unnecessary
+  // @Get(':id')
+  // @UseGuards(BasicAuthGuard)
+  // async getById(@Param() params: { id: string }): Promise<UserDocument | null> {
+  //   const user = await this.usersSqlRepository.getById(params.id)
 
-    if (!user) {
-      throw new HttpException(
-        { message: appMessages(appMessages().user).errors.notFound },
-        HttpStatus.NOT_FOUND
-      )
-    }
+  //   if (!user) {
+  //     throw new HttpException(
+  //       { message: appMessages(appMessages().user).errors.notFound },
+  //       HttpStatus.NOT_FOUND
+  //     )
+  //   }
 
-    return user
-  }
+  //   return user
+  // }
 }
