@@ -6,7 +6,7 @@ import { EmailsRepository } from '../emails/emails.repository';
 import { CreateUserDto } from '../dtos/users/create-user.dto';
 import { LoginDto } from '../dtos/auth/login.dto';
 import { HashService } from '../hash/hash.service';
-import { UsersSQLRepository } from 'src/users/users.sql.repository';
+import { UsersSQLRepository } from 'src/users/users.repository.sql';
 import { IExtendedUser, IUser } from 'src/types/users';
 
 @Injectable()

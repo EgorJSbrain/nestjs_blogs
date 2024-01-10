@@ -24,7 +24,7 @@ import { CurrentUserId } from './current-user-id.param.decorator'
 import { UsersRepository } from '../users/users.repository'
 import { appMessages } from '../constants/messages'
 import { DevicesRepository } from '../devices/devices.repository'
-import { UsersSQLRepository } from '../users/users.sql.repository'
+import { UsersSQLRepository } from '../users/users.repository.sql'
 import { AuthRepository } from './auth.repository'
 import { RoutesEnum } from '../constants/global'
 

@@ -11,8 +11,10 @@ export class GeneralSqlRepository {
   async clearDB() {
     const query = `DELETE FROM public.users`
     const queryDevices = `DELETE FROM public.devices`
+    const queryBlogs = `DELETE FROM public.blogs`
     await this.dataSource.query(queryDevices)
     await this.dataSource.query(query)
+    await this.dataSource.query(queryBlogs)
     return true
   }
 }

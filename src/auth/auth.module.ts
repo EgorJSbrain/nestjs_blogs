@@ -14,7 +14,7 @@ import { DevicesRepository } from '../devices/devices.repository'
 import { Device, DeviceSchema } from '../devices/devices.schema'
 import { AuthRepository } from './auth.repository'
 import { AuthController } from './auth.controller'
-import { UsersSQLRepository } from '../users/users.sql.repository'
+import { UsersSQLRepository } from '../users/users.repository.sql'
 import { LocalSqlStrategy } from './strategies/local.strategy'
 
 @Module({

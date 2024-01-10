@@ -18,11 +18,11 @@ import { UsersRequestParams } from '../types/users'
 import { IUser } from '../types/users'
 import { RoutesEnum } from '../constants/global'
 import { appMessages } from '../constants/messages'
-import { UsersSQLRepository } from './users.sql.repository'
+import { UsersSQLRepository } from './users.repository.sql'
 
 @SkipThrottle()
 @Controller(RoutesEnum.saUsers)
-export class UsersSqlController {
+export class UsersSAController {
   constructor(
     private usersSqlRepository: UsersSQLRepository
   ) {}
