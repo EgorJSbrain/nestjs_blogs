@@ -126,23 +126,16 @@ export class UsersSQLRepository {
         "login", "email", "passwordHash", "passwordSalt", "confirmationCode"
       )
         VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, "login", "email", "createdAt", "confirmationCode"
       `
 
-    const selectQuery = `
-        SELECT id, "login", "email", "createdAt", "confirmationCode"
-        FROM public.users
-        WHERE email = $1
-      `
-
-    await this.dataSource.query(query, [
+    const users = await this.dataSource.query(query, [
       data.login,
       data.email,
       passwordHash,
       passwordSalt,
       confirmationCode
     ])
-
-    const users = await this.dataSource.query<IExtendedUser>(selectQuery, [data.email])
 
     return users[0]
   }

@@ -7,7 +7,9 @@ import {
 import { GeneralRepository } from './general.repository'
 import { RoutesEnum } from '../constants/global'
 import { GeneralSqlRepository } from './general.sql.repository'
+import { SkipThrottle } from '@nestjs/throttler'
 
+@SkipThrottle()
 @Controller(RoutesEnum.testing_all_data)
 export class GenerealController {
   constructor(
