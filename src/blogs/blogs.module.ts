@@ -13,6 +13,7 @@ import { Like, LikeSchema } from '../likes/likes.schema';
 import { JWTService } from '../jwt/jwt.service';
 import { BlogsSAController } from './blogs.controller.sa';
 import { BlogsSqlRepository } from './blogs.repository.sql';
+import { PostsSqlRepository } from 'src/posts/posts.repository.sql';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { BlogsSqlRepository } from './blogs.repository.sql';
     LikesRepository,
     BlogsRepository,
     PostsRepository,
+    PostsSqlRepository,
     JWTService,
     BlogsSqlRepository,
   ]

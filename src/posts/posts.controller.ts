@@ -35,12 +35,14 @@ import { CommentDto } from '../dtos/comments/create-comment.dto'
 import { CommentsRepository } from '../comments/comments.repository'
 import { LikeStatusEnum } from '../constants/likes'
 import { IComment } from '../types/comments'
+import { PostsSqlRepository } from './posts.repository.sql'
 
 @SkipThrottle()
 @Controller(RoutesEnum.posts)
 export class PostsController {
   constructor(
     private postsRepository: PostsRepository,
+    private postsSqlRepository: PostsSqlRepository,
     private blogsRepository: BlogsRepository,
     private usersRepository: UsersRepository,
     private JWTService: JWTService,
@@ -61,7 +63,8 @@ export class PostsController {
       currentUserId = userId || null
     }
 
-    const posts = await this.postsRepository.getAll(query, currentUserId)
+    const posts = await this.postsSqlRepository.getAll(query, currentUserId)
+    // const posts = await this.postsRepository.getAll(query, currentUserId)
 
     return posts
   }
