@@ -1,27 +1,24 @@
-import { FilterQuery, Model, SortOrder } from 'mongoose';
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { DataSource } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
 
-import { Blog, BlogDocument } from './blogs.schema';
+import { BlogDocument } from './blogs.schema';
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto';
 import { ResponseBody } from '../types/request';
 import { BlogsRequestParams } from '../types/blogs';
 import { IBlog } from '../types/blogs';
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto';
 import { SortDirectionsEnum } from '../constants/global';
-import { DataSource } from 'typeorm';
-import { InjectDataSource } from '@nestjs/typeorm';
 
 @Injectable()
 export class BlogsSqlRepository {
   constructor(
-    @InjectModel(Blog.name) private blogsModel: Model<BlogDocument>,
     @InjectDataSource() protected dataSource: DataSource
   ) {}
 
   async getAll(
     params: BlogsRequestParams
-  ): Promise<ResponseBody<BlogDocument> | []> {
+  ): Promise<ResponseBody<IBlog> | []> {
     try {
       const {
         sortBy = 'createdAt',

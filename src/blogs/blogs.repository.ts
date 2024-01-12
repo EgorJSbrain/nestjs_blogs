@@ -23,7 +23,7 @@ export class BlogsRepository {
         pageSize = 10,
         searchNameTerm,
       } = params
-
+console.log('??????')
       const filter: FilterQuery<BlogDocument> = {}
       const sort: Record<string, SortOrder> = {}
 
@@ -53,7 +53,7 @@ export class BlogsRepository {
         page: pageNumberNum,
         pageSize: pageSizeNumber,
         totalCount: count,
-        items: blogs
+        items: []
       }
     } catch {
       return []

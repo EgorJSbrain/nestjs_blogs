@@ -16,6 +16,7 @@ import { BlogIdValidator } from '../validators/blog-id.validator';
 import { CommentsRepository } from '../comments/comments.repository';
 import { Comment, CommentSchema } from '../comments/comments.schema';
 import { HashService } from '../hash/hash.service';
+import { PostsSqlRepository } from './posts.repository.sql';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { HashService } from '../hash/hash.service';
     JWTService,
     LikesRepository,
     PostsRepository,
+    PostsSqlRepository,
     JwtService,
     BlogsRepository,
     UsersRepository,
