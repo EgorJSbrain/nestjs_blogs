@@ -40,11 +40,4 @@ export class UpdatePostDto {
   @MinLength(POST_SHORT_DESCRIPTION_MIN_LENGTH)
   @MaxLength(POST_SHORT_DESCRIPTION_MAX_LENGTH)
   shortDescription: string
-
-  @IsString()
-  @IsNotEmpty()
-  @Transform(({ value }: TransformFnParams) => value?.trim())
-  @MaxLength(STRING_MAX_LENGTH)
-  @Validate(BlogIdValidator)
-  blogId: string
 }
