@@ -11,7 +11,7 @@ import { LikeStatusEnum } from '../constants/likes';
 import { formatLikes } from '../utils/formatLikes';
 import { ILike } from '../types/likes';
 import { ICreatePostType, IPost } from '../types/posts';
-import { SortDirectionsEnum } from 'src/constants/global';
+import { SortDirectionsEnum } from '../constants/global';
 
 @Injectable()
 export class PostsRepository {

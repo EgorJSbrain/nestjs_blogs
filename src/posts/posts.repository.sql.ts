@@ -11,22 +11,19 @@ import { LikeStatusEnum } from '../constants/likes';
 import { formatLikes } from '../utils/formatLikes';
 import { ILike } from '../types/likes';
 import { ICreatePostType, IPost } from '../types/posts';
-import { SortDirectionsEnum } from 'src/constants/global';
+import { SortDirectionsEnum } from '../constants/global';
 import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 
 @Injectable()
 export class PostsSqlRepository {
-  constructor(
-    @InjectDataSource() protected dataSource: DataSource
-  ) {}
+  constructor(@InjectDataSource() protected dataSource: DataSource) {}
 
   async getAll(
     params: RequestParams,
     userId: string | null,
     blogId?: string
   ): Promise<ResponseBody<IPost> | []> {
-    console.log("!!!!!! blogId:", blogId)
     try {
       const {
         sortBy = 'createdAt',
@@ -43,7 +40,7 @@ export class PostsSqlRepository {
         SELECT p.*, b."name" AS "blogName"
           FROM public.posts p
             LEFT JOIN public.blogs b
-              ON p."blogId" = $1
+              ON p."blogId" = b.id
           WHERE "blogId" = $1
           ORDER BY "${sortBy}" ${sortDirection.toLocaleUpperCase()}
           LIMIT $2 OFFSET $3
@@ -54,7 +51,7 @@ export class PostsSqlRepository {
         skip
       ])
 
-      const postsWithLikes = posts.map(post => ({
+      const postsWithLikes = posts.map((post) => ({
         ...post,
         extendedLikesInfo: {
           dislikesCount: 0,
@@ -65,9 +62,14 @@ export class PostsSqlRepository {
       }))
 
       const queryForCount = `
-        SELECT count(*) AS count FROM public.posts
+        SELECT count(*) AS count
+          FROM public.posts
+          WHERE "blogId" = $1
       `
-      const countResult = await this.dataSource.query(queryForCount)
+
+      const countResult = await this.dataSource.query(queryForCount, [
+        blogId,
+      ])
 
       const count = countResult[0] ? Number(countResult[0].count) : 0
       const pagesCount = Math.ceil(count / pageSizeNumber)
@@ -141,40 +143,54 @@ export class PostsSqlRepository {
     }
   }
 
-  // async getById(id: string, userId?: string): Promise<IPost | null> {
-  //   const post = await this.postsModel.findOne({ id }, { _id: 0, __v: 0 })
-  //   let myLike: ILike | null = null
+  async getById(id: string, blogId?: string, userId?: string): Promise<IPost | null> {
+    const query = `
+      SELECT p.*, b."name" AS "blogName"
+      FROM public.posts p
+        LEFT JOIN public.blogs b
+          ON p."blogId" = b.id
+      WHERE p.id = $1
+    `
+    const posts = await this.dataSource.query<IPost[]>(query, [id])
 
-  //   if (!post) {
-  //     return null
-  //   }
+    if (!posts[0]) {
+      return null
+    }
 
-  //   const likesCounts = await this.likeRepository.getLikesCountsBySourceId(post.id)
-  //   const newestLikes = await this.likeRepository.getSegmentOfLikesByParams(post.id, LENGTH_OF_NEWEST_LIKES_FOR_POST)
+    return posts[0]
+    // const post = await this.postsModel.findOne({ id }, { _id: 0, __v: 0 })
+    // let myLike: ILike | null = null
 
-  //   if (userId) {
-  //     myLike = await this.likeRepository.getLikeBySourceIdAndAuthorId({
-  //       sourceId: post.id,
-  //       authorId: userId
-  //     })
-  //   }
+    // if (!post) {
+    //   return null
+    // }
 
-  //   return {
-  //     id: post.id,
-  //     title: post.title,
-  //     shortDescription: post.shortDescription,
-  //     content: post.content,
-  //     blogId: post.blogId,
-  //     blogName: post.blogName,
-  //     createdAt: post.createdAt,
-  //     extendedLikesInfo: {
-  //       likesCount: likesCounts?.likesCount ?? 0,
-  //       dislikesCount: likesCounts?.dislikesCount ?? 0,
-  //       myStatus: myLike?.status ?? LikeStatusEnum.none,
-  //       newestLikes: formatLikes(newestLikes)
-  //     }
-  //   }
-  // }
+    // const likesCounts = await this.likeRepository.getLikesCountsBySourceId(post.id)
+    // const newestLikes = await this.likeRepository.getSegmentOfLikesByParams(post.id, LENGTH_OF_NEWEST_LIKES_FOR_POST)
+
+    // if (userId) {
+    //   myLike = await this.likeRepository.getLikeBySourceIdAndAuthorId({
+    //     sourceId: post.id,
+    //     authorId: userId
+    //   })
+    // }
+
+    //   return {
+    //     id: post.id,
+    //     title: post.title,
+    //     shortDescription: post.shortDescription,
+    //     content: post.content,
+    //     blogId: post.blogId,
+    //     blogName: post.blogName,
+    //     createdAt: post.createdAt,
+    //     extendedLikesInfo: {
+    //       likesCount: likesCounts?.likesCount ?? 0,
+    //       dislikesCount: likesCounts?.dislikesCount ?? 0,
+    //       myStatus: myLike?.status ?? LikeStatusEnum.none,
+    //       newestLikes: formatLikes(newestLikes)
+    //     }
+    //   }
+  }
 
   async createPost(data: ICreatePostType): Promise<IPost | null> {
     const query = `
@@ -185,62 +201,48 @@ export class PostsSqlRepository {
         RETURNING id, "blogId", title, "shortDescription", content, "createdAt"
     `
 
-  const posts = await this.dataSource.query(query, [
-    data.blogId,
-    data.title,
-    data.shortDescription,
-    data.content,
-  ])
+    const posts = await this.dataSource.query(query, [
+      data.blogId,
+      data.title,
+      data.shortDescription,
+      data.content
+    ])
 
-  return posts[0]
-    // const newPost = new this.postsModel(data)
-    // newPost.setDateOfCreatedAt()
-    // newPost.setId()
-
-    // const createdPost = await newPost.save()
-
-    // if (!createdPost) {
-    //   return null
-    // }
-
-    // return {
-    //   id: createdPost.id,
-    //   title: createdPost.title,
-    //   shortDescription: createdPost.shortDescription,
-    //   content: createdPost.content,
-    //   blogId: createdPost.blogId,
-    //   blogName: createdPost.blogName,
-    //   createdAt: createdPost.createdAt,
-    //   extendedLikesInfo: {
-    //     likesCount: 0,
-    //     dislikesCount: 0,
-    //     myStatus: LikeStatusEnum.none,
-    //     newestLikes: []
-    //   }
-    // }
+    return posts[0]
   }
 
-  // async updatePost(id: string, data: UpdatePostDto): Promise<any> {
-  //   const post = await this.postsModel.findOne({ id })
+  async updatePost(id: string, data: UpdatePostDto): Promise<any> {
+    const post = await this.getById(id)
 
-  //   if (!post) {
-  //     return null
-  //   }
+    if (!post) {
+      return false
+    }
 
-  //   post.title = data.title ?? post.title
-  //   post.content = data.content ?? post.content
-  //   post.shortDescription = data.shortDescription ?? post.shortDescription
+    const title = data.title ?? post.title
+    const content = data.content ?? post.content
+    const shortDescription = data.shortDescription ?? post.shortDescription
 
-  //   post.save()
+    const query = `
+      UPDATE public.posts
+        SET "title"=$2, "content"=$3, "shortDescription"=$4
+        WHERE id = $1;
+    `
 
-  //   return true
-  // }
+    await this.dataSource.query<IPost[]>(query, [
+      id,
+      title,
+      content,
+      shortDescription
+    ])
 
-  // deletePost(id: string) {
-  //   return this.postsModel.deleteOne({ id })
-  // }
+    return true
+  }
 
-  // save(post: PostDocument) {
-  //   return post.save()
-  // }
+  deletePost(id: string) {
+    const query = `
+      DELETE FROM public.posts
+      WHERE id = $1
+    `
+    return this.dataSource.query(query, [id])
+  }
 }

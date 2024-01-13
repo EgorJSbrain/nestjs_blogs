@@ -7,7 +7,7 @@ import { CreateUserDto } from '../dtos/users/create-user.dto';
 import { ResponseBody } from '../types/request';
 import { UsersRequestParams } from '../types/users';
 import { HashService } from '../hash/hash.service';
-import { SortDirectionsEnum } from 'src/constants/global';
+import { SortDirectionsEnum } from '../constants/global';
 
 @Injectable()
 export class UsersRepository {
