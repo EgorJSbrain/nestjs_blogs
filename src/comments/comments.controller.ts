@@ -24,6 +24,8 @@ import { LikeDto } from '../dtos/like/like.dto'
 import { UsersRepository } from '../users/users.repository'
 import { LikesRepository } from '../likes/likes.repository'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
+import { LikesSqlRepository } from 'src/likes/likes.repository.sql'
+import { LikeSourceTypeEnum } from 'src/constants/likes'
 
 @SkipThrottle()
 @Controller(RoutesEnum.comments)
@@ -33,6 +35,7 @@ export class CommentsController {
     private JWTService: JWTService,
     private usersRepository: UsersRepository,
     private likesRepository: LikesRepository,
+    private likesSqlRepository: LikesSqlRepository,
   ) {}
 
   @Get(':commentId')
@@ -112,11 +115,11 @@ export class CommentsController {
       )
     }
 
-    const like = await this.likesRepository.likeEntity(
+    const like = await this.likesSqlRepository.likeEntity(
       data.likeStatus,
       commentId,
+      LikeSourceTypeEnum.comments,
       existedUser?.id,
-      existedUser?.login
     )
 
     if(!like) {

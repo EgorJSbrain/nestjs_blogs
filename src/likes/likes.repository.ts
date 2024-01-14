@@ -107,7 +107,7 @@ export class LikesRepository {
   }
 
   async getLikeBySourceIdAndAuthorId(
-    params: LikesRequestParams
+    params: any
   ): Promise<LikeDocument | null> {
     try {
       const like = await this.likesModel.findOne(

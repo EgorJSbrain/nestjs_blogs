@@ -33,9 +33,11 @@ import { IPost } from '../types/posts'
 import { RoutesEnum } from '../constants/global'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
 import { CommentsRepository } from '../comments/comments.repository'
-import { LikeStatusEnum } from '../constants/likes'
+import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes'
 import { IComment } from '../types/comments'
 import { PostsSqlRepository } from './posts.repository.sql'
+import { LikesSqlRepository } from 'src/likes/likes.repository.sql'
+import { UsersSQLRepository } from 'src/users/users.repository.sql'
 
 @SkipThrottle()
 @Controller(RoutesEnum.posts)
@@ -45,8 +47,10 @@ export class PostsController {
     private postsSqlRepository: PostsSqlRepository,
     private blogsRepository: BlogsRepository,
     private usersRepository: UsersRepository,
+    private usersSqlRepository: UsersSQLRepository,
     private JWTService: JWTService,
     private likesRepository: LikesRepository,
+    private likesSqlRepository: LikesSqlRepository,
     private commentsRepository: CommentsRepository,
   ) {}
 
@@ -224,16 +228,16 @@ export class PostsController {
     @CurrentUserId() currentUserId: string,
     @Body() data: LikeDto
   ): Promise<undefined> {
-    const existedUser = await this.usersRepository.getById(currentUserId)
+    const existedUser = await this.usersSqlRepository.getById(currentUserId)
 
     if (!existedUser) {
       throw new HttpException(
-        { message: appMessages('User').errors.notFound, field: '' },
+        { message: appMessages(appMessages().user).errors.notFound, field: '' },
         HttpStatus.NOT_FOUND
       )
     }
 
-    const existedPost = await this.postsRepository.getById(params.postId)
+    const existedPost = await this.postsSqlRepository.getById(params.postId)
 
     if (!existedPost) {
       throw new HttpException(
@@ -242,11 +246,11 @@ export class PostsController {
       )
     }
 
-    const like = await this.likesRepository.likeEntity(
+    const like = await this.likesSqlRepository.likeEntity(
       data.likeStatus,
       params.postId,
+      LikeSourceTypeEnum.posts,
       existedUser?.id,
-      existedUser?.login
     )
 
     if (!like) {

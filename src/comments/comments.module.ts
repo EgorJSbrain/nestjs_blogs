@@ -11,6 +11,7 @@ import { JWTService } from '../jwt/jwt.service';
 import { UsersRepository } from '../users/users.repository';
 import { User, UserSchema } from '../users/users.schema';
 import { HashService } from '../hash/hash.service';
+import { LikesSqlRepository } from '../likes/likes.repository.sql';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { HashService } from '../hash/hash.service';
   providers: [
     JWTService,
     LikesRepository,
+    LikesSqlRepository,
     CommentsRepository,
     JwtService,
     UsersRepository,

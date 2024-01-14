@@ -71,8 +71,8 @@ export class BlogsSqlRepository {
   async getById(id: string): Promise<IBlog | null> {
     const query = `
       SELECT id, name, description, "createdAt", "websiteUrl", "isMembership"
-      FROM public.blogs
-      WHERE id = $1
+        FROM public.blogs
+        WHERE id = $1
     `
     const blogs = await this.dataSource.query<IBlog[]>(query, [id])
 
