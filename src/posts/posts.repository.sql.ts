@@ -6,7 +6,7 @@ import { Post, PostDocument } from './posts.schema';
 import { RequestParams, ResponseBody } from '../types/request';
 import { UpdatePostDto } from '../dtos/posts/update-post.dto';
 import { LikesRepository } from '../likes/likes.repository';
-import { LENGTH_OF_NEWEST_LIKES_FOR_POST } from '../constants/likes'
+import { LENGTH_OF_NEWEST_LIKES_FOR_POST, LikeSourceTypeEnum } from '../constants/likes'
 import { LikeStatusEnum } from '../constants/likes';
 import { formatLikes } from '../utils/formatLikes';
 import { ILike } from '../types/likes';
@@ -14,10 +14,14 @@ import { ICreatePostType, IPost } from '../types/posts';
 import { SortDirectionsEnum } from '../constants/global';
 import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { LikesSqlRepository } from 'src/likes/likes.repository.sql';
 
 @Injectable()
 export class PostsSqlRepository {
-  constructor(@InjectDataSource() protected dataSource: DataSource) {}
+  constructor(
+    @InjectDataSource() protected dataSource: DataSource,
+    private likeSqlRepository: LikesSqlRepository
+  ) {}
 
   async getAll(
     params: RequestParams,
@@ -98,45 +102,51 @@ export class PostsSqlRepository {
       //   .sort(sort)
       //   .lean()
 
-      // const postsWithInfoAboutLikes = await Promise.all(
-      //   posts.map(async (post) => {
-      //     const likesCounts = await this.likeRepository.getLikesCountsBySourceId(
-      //       post.id
-      //     )
-      //     const newestLikes = await this.likeRepository.getSegmentOfLikesByParams(
-      //       post.id,
-      //       LENGTH_OF_NEWEST_LIKES_FOR_POST
-      //     )
+      const postsWithInfoAboutLikes = await Promise.all(
+        posts.map(async (post) => {
+          const likesCounts = await this.likeSqlRepository.getLikesCountsBySourceId(
+            LikeSourceTypeEnum.posts,
+            post.id
+          )
 
-      //     let likesUserInfo
+          // TODO implemetn functionality for count newest likes
+          const newestLikes = await this.likeSqlRepository.getSegmentOfLikesByParams(
+            LikeSourceTypeEnum.posts,
+            post.id,
+            LENGTH_OF_NEWEST_LIKES_FOR_POST
+          )
 
-      //     if (userId) {
-      //       likesUserInfo =
-      //         await this.likeRepository.getLikeBySourceIdAndAuthorId({
-      //           sourceId: post.id,
-      //           authorId: userId
-      //         })
-      //     }
+          let likesUserInfo
 
-      //     return {
-      //       ...post,
-      //       extendedLikesInfo: {
-      //         likesCount: likesCounts?.likesCount ?? 0,
-      //         dislikesCount: likesCounts?.dislikesCount ?? 0,
-      //         myStatus: likesUserInfo ? likesUserInfo.status : LikeStatusEnum.none,
-      //         newestLikes: formatLikes(newestLikes)
-      //       }
-      //     }
-      //   })
-      // )
+          if (userId) {
+            likesUserInfo =
+              await this.likeSqlRepository.getLikeBySourceIdAndAuthorId({
+                sourceType: LikeSourceTypeEnum.posts,
+                sourceId: post.id,
+                authorId: userId
+              })
+          }
+
+          return {
+            ...post,
+            extendedLikesInfo: {
+              likesCount: likesCounts?.likesCount ?? 0,
+              dislikesCount: likesCounts?.dislikesCount ?? 0,
+              myStatus: likesUserInfo ? likesUserInfo.status : LikeStatusEnum.none,
+              newestLikes: []
+              // newestLikes: formatLikes(newestLikes)
+            }
+          }
+        })
+      )
 
       return {
         pagesCount,
         page: pageNumberNum,
         pageSize: pageSizeNumber,
         totalCount: count,
-        items: postsWithLikes
-        // items: postsWithInfoAboutLikes
+        // items: postsWithLikes
+        items: postsWithInfoAboutLikes
       }
     } catch {
       return []

@@ -17,6 +17,8 @@ import { CommentsRepository } from '../comments/comments.repository';
 import { Comment, CommentSchema } from '../comments/comments.schema';
 import { HashService } from '../hash/hash.service';
 import { PostsSqlRepository } from './posts.repository.sql';
+import { LikesSqlRepository } from '../likes/likes.repository.sql';
+import { UsersSQLRepository } from 'src/users/users.repository.sql';
 
 @Module({
   imports: [
@@ -32,11 +34,13 @@ import { PostsSqlRepository } from './posts.repository.sql';
   providers: [
     JWTService,
     LikesRepository,
+    LikesSqlRepository,
     PostsRepository,
     PostsSqlRepository,
     JwtService,
     BlogsRepository,
     UsersRepository,
+    UsersSQLRepository,
     BlogIdValidator,
     CommentsRepository,
     HashService,
