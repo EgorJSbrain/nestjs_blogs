@@ -22,7 +22,6 @@ import { ResponseBody, RequestParams } from '../types/request'
 import { BlogsRepository } from '../blogs/blogs.repository'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
-import { UsersRepository } from '../users/users.repository'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { appMessages } from '../constants/messages'
 import { JWTService } from '../jwt/jwt.service'
@@ -47,7 +46,6 @@ export class PostsController {
     private postsRepository: PostsRepository,
     private postsSqlRepository: PostsSqlRepository,
     private blogsRepository: BlogsRepository,
-    private usersRepository: UsersRepository,
     private usersSqlRepository: UsersSQLRepository,
     private JWTService: JWTService,
     private likesRepository: LikesRepository,

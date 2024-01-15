@@ -63,20 +63,4 @@ export class UsersSAController {
 
     await this.usersSqlRepository.deleteById(params.id)
   }
-
-  // TODO remove later if unnecessary
-  // @Get(':id')
-  // @UseGuards(BasicAuthGuard)
-  // async getById(@Param() params: { id: string }): Promise<UserDocument | null> {
-  //   const user = await this.usersSqlRepository.getById(params.id)
-
-  //   if (!user) {
-  //     throw new HttpException(
-  //       { message: appMessages(appMessages().user).errors.notFound },
-  //       HttpStatus.NOT_FOUND
-  //     )
-  //   }
-
-  //   return user
-  // }
 }

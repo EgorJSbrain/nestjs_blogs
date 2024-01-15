@@ -8,8 +8,6 @@ import { Comment, CommentSchema } from './comments.schema';
 import { LikesRepository } from '../likes/likes.repository';
 import { Like, LikeSchema } from '../likes/likes.schema';
 import { JWTService } from '../jwt/jwt.service';
-import { UsersRepository } from '../users/users.repository';
-import { User, UserSchema } from '../users/users.schema';
 import { HashService } from '../hash/hash.service';
 import { LikesSqlRepository } from '../likes/likes.repository.sql';
 import { CommentsSqlRepository } from './comments.repository.sql';
@@ -20,7 +18,6 @@ import { UsersSQLRepository } from 'src/users/users.repository.sql';
     MongooseModule.forFeature([
       { name: Comment.name, schema: CommentSchema },
       { name: Like.name, schema: LikeSchema },
-      { name: User.name, schema: UserSchema },
     ])],
   controllers: [CommentsController],
   providers: [
@@ -30,7 +27,6 @@ import { UsersSQLRepository } from 'src/users/users.repository.sql';
     CommentsRepository,
     CommentsSqlRepository,
     JwtService,
-    UsersRepository,
     UsersSQLRepository,
     HashService,
   ]

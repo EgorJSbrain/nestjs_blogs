@@ -7,8 +7,6 @@ import { PostsController } from './posts.controller';
 import { Post, PostSchema } from './posts.schema';
 import { BlogsRepository } from '../blogs/blogs.repository';
 import { Blog, BlogSchema } from '../blogs/blogs.schema';
-import { UsersRepository } from '../users/users.repository';
-import { User, UserSchema } from '../users/users.schema';
 import { LikesRepository } from '../likes/likes.repository';
 import { Like, LikeSchema } from '../likes/likes.schema';
 import { JWTService } from '../jwt/jwt.service';
@@ -27,7 +25,6 @@ import { CommentsSqlRepository } from 'src/comments/comments.repository.sql';
     { name: Like.name, schema: LikeSchema },
     { name: Post.name, schema: PostSchema },
     { name: Blog.name, schema: BlogSchema },
-    { name: User.name, schema: UserSchema },
     { name: Comment.name, schema: CommentSchema },
   ]),
 ],
@@ -40,7 +37,6 @@ import { CommentsSqlRepository } from 'src/comments/comments.repository.sql';
     PostsSqlRepository,
     JwtService,
     BlogsRepository,
-    UsersRepository,
     UsersSQLRepository,
     BlogIdValidator,
     CommentsRepository,
