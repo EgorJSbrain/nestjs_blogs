@@ -15,14 +15,12 @@ import {
   Req
 } from '@nestjs/common'
 import { Request } from 'express'
-import { BlogsRepository } from './blogs.repository'
-import { BlogDocument } from './blogs.schema'
+
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto'
 import { BlogsRequestParams } from '../types/blogs'
 import { RequestParams, ResponseBody } from '../types/request'
 import { CreatePostDto } from '../dtos/posts/create-post.dto'
 import { IBlog } from '../types/blogs'
-import { PostsRepository } from '../posts/posts.repository'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { appMessages } from '../constants/messages'
@@ -37,9 +35,7 @@ import { PostsSqlRepository } from '../posts/posts.repository.sql'
 @Controller(RoutesEnum.saBlogs)
 export class BlogsSAController {
   constructor(
-    private blogsRepository: BlogsRepository,
     private blogsSqlRepository: BlogsSqlRepository,
-    private postsRepository: PostsRepository,
     private postsSqlRepository: PostsSqlRepository,
     private JWTService: JWTService
   ) {}

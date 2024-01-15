@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 
-import { BlogDocument } from './blogs.schema';
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto';
 import { ResponseBody } from '../types/request';
 import { BlogsRequestParams } from '../types/blogs';
@@ -134,9 +133,5 @@ export class BlogsSqlRepository {
       WHERE id = $1
     `
     return this.dataSource.query(query, [id])
-  }
-
-  save(blog: BlogDocument) {
-    return blog.save()
   }
 }

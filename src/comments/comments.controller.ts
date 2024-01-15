@@ -14,7 +14,6 @@ import {
 } from '@nestjs/common'
 import { Request } from 'express'
 
-import { CommentsRepository } from './comments.repository'
 import { RoutesEnum } from '../constants/global'
 import { JWTService } from '../jwt/jwt.service'
 import { IComment } from '../types/comments'
@@ -22,7 +21,6 @@ import { appMessages } from '../constants/messages'
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { LikeDto } from '../dtos/like/like.dto'
-import { LikesRepository } from '../likes/likes.repository'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
 import { LikesSqlRepository } from '../likes/likes.repository.sql'
 import { LikeSourceTypeEnum } from '../constants/likes'
@@ -33,11 +31,9 @@ import { UsersSQLRepository } from '../users/users.repository.sql'
 @Controller(RoutesEnum.comments)
 export class CommentsController {
   constructor(
-    private commentsRepository: CommentsRepository,
     private commentsSqlRepository: CommentsSqlRepository,
     private JWTService: JWTService,
     private usersSqlRepository: UsersSQLRepository,
-    private likesRepository: LikesRepository,
     private likesSqlRepository: LikesSqlRepository,
   ) {}
 
@@ -106,7 +102,7 @@ export class CommentsController {
       )
     }
 
-    const comment = await this.commentsRepository.getById(commentId)
+    const comment = await this.commentsSqlRepository.getById(commentId)
 
     if (!comment) {
       throw new HttpException(

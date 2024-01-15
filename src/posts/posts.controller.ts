@@ -15,42 +15,33 @@ import {
   Req
 } from '@nestjs/common'
 import { Request } from 'express'
-import { PostsRepository } from './posts.repository'
-import { Post as PostSchema } from './posts.schema'
 import { CreatePostByBlogIdDto, CreatePostDto } from '../dtos/posts/create-post.dto'
 import { ResponseBody, RequestParams } from '../types/request'
-import { BlogsRepository } from '../blogs/blogs.repository'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { appMessages } from '../constants/messages'
 import { JWTService } from '../jwt/jwt.service'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
-import { LikesRepository } from '../likes/likes.repository'
 import { LikeDto } from '../dtos/like/like.dto'
 import { IPost } from '../types/posts'
 import { RoutesEnum } from '../constants/global'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
-import { CommentsRepository } from '../comments/comments.repository'
 import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes'
 import { IComment } from '../types/comments'
 import { PostsSqlRepository } from './posts.repository.sql'
 import { LikesSqlRepository } from '../likes/likes.repository.sql'
 import { UsersSQLRepository } from '../users/users.repository.sql'
-import { CommentsSqlRepository } from 'src/comments/comments.repository.sql'
+import { CommentsSqlRepository } from '../comments/comments.repository.sql'
 
 @SkipThrottle()
 @Controller(RoutesEnum.posts)
 export class PostsController {
   constructor(
-    private postsRepository: PostsRepository,
     private postsSqlRepository: PostsSqlRepository,
-    private blogsRepository: BlogsRepository,
     private usersSqlRepository: UsersSQLRepository,
     private JWTService: JWTService,
-    private likesRepository: LikesRepository,
     private likesSqlRepository: LikesSqlRepository,
-    private commentsRepository: CommentsRepository,
     private commentsSqlRepository: CommentsSqlRepository,
   ) {}
 
@@ -69,7 +60,7 @@ export class PostsController {
 
     const posts = await this.postsSqlRepository.getAll(query, currentUserId)
     // console.log("-----posts:", posts)
-    // const posts = await this.postsRepository.getAll(query, currentUserId)
+    // const posts = await this.postsSqlRepository.getAll(query, currentUserId)
 
     return posts
   }
@@ -146,7 +137,7 @@ export class PostsController {
       )
     }
 
-    const blog = await this.blogsRepository.getById(data.blogId)
+    const blog: any = {}
 
     if (!blog) {
       throw new HttpException(
@@ -161,7 +152,7 @@ export class PostsController {
       blogName: blog.name
     }
 
-    return this.postsRepository.createPost(creatingData)
+    return this.postsSqlRepository.createPost(creatingData)
   }
 
   @Put(':id')
@@ -178,7 +169,7 @@ export class PostsController {
       )
     }
 
-    const post = await this.postsRepository.getById(params.id)
+    const post = await this.postsSqlRepository.getById(params.id)
 
     if (!post) {
       throw new HttpException(
@@ -187,7 +178,7 @@ export class PostsController {
       )
     }
 
-    const updatedPost = await this.postsRepository.updatePost(params.id, data)
+    const updatedPost = await this.postsSqlRepository.updatePost(params.id, data)
 
     if (!updatedPost) {
       throw new HttpException({ message: appMessages(appMessages().post).errors.notFound }, HttpStatus.NOT_FOUND)
@@ -198,27 +189,27 @@ export class PostsController {
   @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deletePost(@Param() params: { id: string }): Promise<any> {
-    const post = await this.postsRepository.getById(params.id)
+    const post = await this.postsSqlRepository.getById(params.id)
 
     if (!post) {
       throw new HttpException({ message: appMessages(appMessages().post).errors.notFound }, HttpStatus.NOT_FOUND)
     }
 
-    await this.postsRepository.deletePost(params.id)
+    await this.postsSqlRepository.deletePost(params.id)
   }
 
   @Get(':id/posts')
   async getPostsByPostId(
     @Param() params: { id: string }
-  ): Promise<PostSchema | null> {
-    const post = await this.postsRepository.getById(params.id)
+  ): Promise<IPost | null> {
+    const post = await this.postsSqlRepository.getById(params.id)
 
     return null
   }
 
   @Post()
   async creatPostByPostId(@Body() data: CreatePostDto): Promise<any> {
-    return this.postsRepository.createPost(data)
+    return this.postsSqlRepository.createPost(data)
   }
 
   @Put('/:postId/like-status')

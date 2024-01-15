@@ -2,11 +2,9 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
-import { Comment, CommentDocument } from './comments.schema';
 import { RequestParams, ResponseBody } from '../types/request';
 import { IComment, ICreateCommentType, ICreatedComment, IUpdateCommentType } from '../types/comments';
 import { ILike } from '../types/likes';
-import { LikesRepository } from '../likes/likes.repository';
 import { LENGTH_OF_NEWEST_LIKES_FOR_POST, LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes';
 import { SortDirectionsEnum } from '../constants/global';
 import { LikesSqlRepository } from '../likes/likes.repository.sql';
@@ -35,7 +33,6 @@ export class CommentsSqlRepository {
       const pageNumberNum = Number(pageNumber)
       const skip = (pageNumberNum - 1) * pageSizeNumber
 
-      // TODO implement search with likes like in blogs
       const query = `
         SELECT c.*, u."login" AS "userLogin"
           FROM public.comments c
@@ -159,37 +156,6 @@ export class CommentsSqlRepository {
         myStatus: myLike?.status ?? LikeStatusEnum.none
       }
     }
-
-    return comments[0]
-    // const comment = await this.commentsModel.findOne({ id }, { _id: 0, __v: 0 })
-
-    // if (!comment) {
-    //   return null
-    // }
-
-    // const likesCounts = await this.likeRepository.getLikesCountsBySourceId(id)
-
-    // if (userId) {
-    //   myLike = await this.likeRepository.getLikeBySourceIdAndAuthorId({
-    //     sourceId: id,
-    //     authorId: userId
-    //   })
-    // }
-
-    // return {
-    //   id: comment.id,
-    //   commentatorInfo: {
-    //     userId: comment.authorInfo.userId,
-    //     userLogin: comment.authorInfo.userLogin,
-    //   },
-    //   content: comment.content,
-    //   createdAt: comment.createdAt,
-    //   likesInfo: {
-    //     likesCount: likesCounts?.likesCount ?? 0,
-    //     dislikesCount: likesCounts?.dislikesCount ?? 0,
-    //     myStatus: myLike?.status ?? LikeStatusEnum.none
-    //   }
-    // }
   }
 
   async createComment(data: ICreateCommentType): Promise<ICreatedComment> {
@@ -231,9 +197,5 @@ export class CommentsSqlRepository {
       WHERE id = $1
     `
     return this.dataSource.query(query, [id])
-  }
-
-  save(comment: CommentDocument) {
-    return comment.save()
   }
 }
