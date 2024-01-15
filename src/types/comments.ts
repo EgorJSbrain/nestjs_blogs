@@ -15,7 +15,7 @@ export interface IComment {
 
 export interface ICreateCommentType {
   readonly content: string
-  readonly authorInfo: CommentAuthorInfo
+  readonly userId: string
   readonly sourceId: string
 }
 

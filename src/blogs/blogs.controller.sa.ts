@@ -197,7 +197,6 @@ export class BlogsSAController {
     }
 
     const post = await this.postsSqlRepository.getById(params.postId, params.blogId)
-    console.log("-----post:", post)
 
     if (!post) {
       throw new HttpException(

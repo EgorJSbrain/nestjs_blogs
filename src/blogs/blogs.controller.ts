@@ -47,7 +47,6 @@ export class BlogsController {
   async getAll(
     @Query() query: BlogsRequestParams
   ): Promise<ResponseBody<IBlog> | []> {
-    console.log('--!!!!---')
     const blogs = await this.blogsSqlRepository.getAll(query)
 
     return blogs
@@ -105,7 +104,6 @@ export class BlogsController {
     }
 
     const posts = await this.postsSqlRepository.getAll(query, currentUserId, blog.id)
-    console.log("------posts:", posts)
 
     return posts
   }

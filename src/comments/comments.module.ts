@@ -12,6 +12,8 @@ import { UsersRepository } from '../users/users.repository';
 import { User, UserSchema } from '../users/users.schema';
 import { HashService } from '../hash/hash.service';
 import { LikesSqlRepository } from '../likes/likes.repository.sql';
+import { CommentsSqlRepository } from './comments.repository.sql';
+import { UsersSQLRepository } from 'src/users/users.repository.sql';
 
 @Module({
   imports: [
@@ -26,8 +28,10 @@ import { LikesSqlRepository } from '../likes/likes.repository.sql';
     LikesRepository,
     LikesSqlRepository,
     CommentsRepository,
+    CommentsSqlRepository,
     JwtService,
     UsersRepository,
+    UsersSQLRepository,
     HashService,
   ]
 })

@@ -13,6 +13,7 @@ import {
   UseGuards
 } from '@nestjs/common'
 import { Request } from 'express'
+
 import { CommentsRepository } from './comments.repository'
 import { RoutesEnum } from '../constants/global'
 import { JWTService } from '../jwt/jwt.service'
@@ -24,16 +25,20 @@ import { LikeDto } from '../dtos/like/like.dto'
 import { UsersRepository } from '../users/users.repository'
 import { LikesRepository } from '../likes/likes.repository'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
-import { LikesSqlRepository } from 'src/likes/likes.repository.sql'
-import { LikeSourceTypeEnum } from 'src/constants/likes'
+import { LikesSqlRepository } from '../likes/likes.repository.sql'
+import { LikeSourceTypeEnum } from '../constants/likes'
+import { CommentsSqlRepository } from './comments.repository.sql'
+import { UsersSQLRepository } from '../users/users.repository.sql'
 
 @SkipThrottle()
 @Controller(RoutesEnum.comments)
 export class CommentsController {
   constructor(
     private commentsRepository: CommentsRepository,
+    private commentsSqlRepository: CommentsSqlRepository,
     private JWTService: JWTService,
     private usersRepository: UsersRepository,
+    private usersSqlRepository: UsersSQLRepository,
     private likesRepository: LikesRepository,
     private likesSqlRepository: LikesSqlRepository,
   ) {}
@@ -59,7 +64,7 @@ export class CommentsController {
       currentUserId = userId || null
     }
 
-    const comment = await this.commentsRepository.getById(
+    const comment = await this.commentsSqlRepository.getById(
       commentId,
       currentUserId
     )
@@ -78,8 +83,8 @@ export class CommentsController {
   }
 
   @Put(':commentId/like-status')
-  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JWTAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
   async likeComment(
     @Param() params: { commentId: string },
     @CurrentUserId() currentUserId: string,
@@ -152,7 +157,7 @@ export class CommentsController {
       )
     }
 
-    const existedComment = await this.commentsRepository.getById(commentId)
+    const existedComment = await this.commentsSqlRepository.getById(commentId)
 
     if (!existedComment) {
       throw new HttpException(
@@ -161,7 +166,7 @@ export class CommentsController {
       )
     }
 
-    const existedUser = await this.usersRepository.getById(currentUserId)
+    const existedUser = await this.usersSqlRepository.getById(currentUserId)
 
     if (!existedUser) {
       throw new HttpException(
@@ -170,14 +175,14 @@ export class CommentsController {
       )
     }
 
-    if (existedComment?.commentatorInfo.userId !== existedUser?.id) {
+    if (existedComment?.authorId !== existedUser?.id) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.FORBIDDEN
       )
     }
 
-    const updatedComment = await this.commentsRepository.updateComment({
+    const updatedComment = await this.commentsSqlRepository.updateComment({
       id: commentId,
       content: data.content
     })
@@ -193,8 +198,8 @@ export class CommentsController {
   }
 
   @Delete(':commentId')
-  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JWTAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteComment(
     @Param() params: { commentId: string },
     @CurrentUserId() currentUserId: string,
@@ -208,7 +213,7 @@ export class CommentsController {
       )
     }
 
-    const existedUser = await this.usersRepository.getById(currentUserId)
+    const existedUser = await this.usersSqlRepository.getById(currentUserId)
 
     if (!existedUser) {
       throw new HttpException(
@@ -217,7 +222,7 @@ export class CommentsController {
       )
     }
 
-    const existedComment = await this.commentsRepository.getById(commentId)
+    const existedComment = await this.commentsSqlRepository.getById(commentId)
 
     if (!existedComment) {
       throw new HttpException(
@@ -226,13 +231,13 @@ export class CommentsController {
       )
     }
 
-    if (existedComment?.commentatorInfo.userId !== existedUser?.id) {
+    if (existedComment?.authorId !== existedUser?.id) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.FORBIDDEN
       )
     }
 
-    return this.commentsRepository.deleteComment(commentId)
+    return this.commentsSqlRepository.deleteComment(commentId)
   }
 }

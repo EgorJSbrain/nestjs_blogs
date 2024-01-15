@@ -23,7 +23,7 @@ export class BlogsRepository {
         pageSize = 10,
         searchNameTerm,
       } = params
-console.log('??????')
+
       const filter: FilterQuery<BlogDocument> = {}
       const sort: Record<string, SortOrder> = {}
 
