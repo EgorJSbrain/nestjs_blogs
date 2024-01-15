@@ -22,7 +22,6 @@ import { appMessages } from '../constants/messages'
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { LikeDto } from '../dtos/like/like.dto'
-import { UsersRepository } from '../users/users.repository'
 import { LikesRepository } from '../likes/likes.repository'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
 import { LikesSqlRepository } from '../likes/likes.repository.sql'
@@ -37,7 +36,6 @@ export class CommentsController {
     private commentsRepository: CommentsRepository,
     private commentsSqlRepository: CommentsSqlRepository,
     private JWTService: JWTService,
-    private usersRepository: UsersRepository,
     private usersSqlRepository: UsersSQLRepository,
     private likesRepository: LikesRepository,
     private likesSqlRepository: LikesSqlRepository,
@@ -99,7 +97,7 @@ export class CommentsController {
       )
     }
 
-    const existedUser = await this.usersRepository.getById(currentUserId)
+    const existedUser = await this.usersSqlRepository.getById(currentUserId)
 
     if (!existedUser) {
       throw new HttpException(
