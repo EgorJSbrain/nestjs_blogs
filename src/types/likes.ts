@@ -13,7 +13,7 @@ export interface ILikeInfo {
 }
 
 export interface ILikeForPost {
-  // login: string
+  login: string
   userId: string
   addedAt: string
 }
@@ -43,4 +43,5 @@ export interface ILike {
   sourceId: string
   status: LikeStatusEnum
   createdAt: string
+  login: string
 }
