@@ -28,6 +28,7 @@ import { UsersSQLRepository } from '../users/users.repository.sql'
 import { AuthRepository } from './auth.repository'
 import { RoutesEnum } from '../constants/global'
 
+@SkipThrottle()
 @Controller(RoutesEnum.auth)
 export class AuthController {
   constructor(

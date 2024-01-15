@@ -79,7 +79,6 @@ export class PostsSqlRepository {
       }
 
       const posts = await this.dataSource.query(query, queryParams)
-      console.log("🚀 ~ PostsSqlRepository ~ posts:", posts)
 
       const postsWithLikes = posts.map((post) => ({
         ...post,
@@ -90,12 +89,8 @@ export class PostsSqlRepository {
           newestLikes: []
         }
       }))
-      console.log("----postsWithLikes:", postsWithLikes)
-
-
 
       const countResult = await this.dataSource.query(queryForCount, queryCountParams)
-      console.log("!!!!countResult:", countResult)
 
       const count = countResult[0] ? Number(countResult[0].count) : 0
       const pagesCount = Math.ceil(count / pageSizeNumber)
@@ -161,7 +156,6 @@ export class PostsSqlRepository {
           }
         })
       )
-      // console.log("--------postsWithInfoAboutLikes:", postsWithInfoAboutLikes)
 
       return {
         pagesCount,

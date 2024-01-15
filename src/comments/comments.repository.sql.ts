@@ -1,17 +1,15 @@
-import { FilterQuery, Model, SortOrder } from 'mongoose';
+import { InjectDataSource } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { DataSource } from 'typeorm';
 
 import { Comment, CommentDocument } from './comments.schema';
 import { RequestParams, ResponseBody } from '../types/request';
-import { IComment, ICreateCommentType, IUpdateCommentType } from '../types/comments';
+import { IComment, ICreateCommentType, ICreatedComment, IUpdateCommentType } from '../types/comments';
 import { ILike } from '../types/likes';
 import { LikesRepository } from '../likes/likes.repository';
-import { LikeStatusEnum } from '../constants/likes';
+import { LENGTH_OF_NEWEST_LIKES_FOR_POST, LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes';
 import { SortDirectionsEnum } from '../constants/global';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
-import { LikesSqlRepository } from 'src/likes/likes.repository.sql';
+import { LikesSqlRepository } from '../likes/likes.repository.sql';
 
 @Injectable()
 export class CommentsSqlRepository {
@@ -39,101 +37,130 @@ export class CommentsSqlRepository {
 
       // TODO implement search with likes like in blogs
       const query = `
-      SELECT c.*, u."login" AS "userLogin"
-        FROM public.comments c
-          LEFT JOIN public.users u
-            ON c."authorId" = u.id
-        WHERE "sourceId" = $1
-        ORDER BY "${sortBy}" ${sortDirection.toLocaleUpperCase()}
-        LIMIT $2 OFFSET $3
-    `
-    const comments = await this.dataSource.query(query, [
-      sourceId,
-      pageSizeNumber,
-      skip
-    ])
+        SELECT c.*, u."login" AS "userLogin"
+          FROM public.comments c
+            LEFT JOIN public.users u
+              ON c."authorId" = u.id
+          WHERE "sourceId" = $1
+          ORDER BY "${sortBy}" ${sortDirection.toLocaleUpperCase()}
+          LIMIT $2 OFFSET $3
+      `
 
-      // const sort: Record<string, SortOrder> = {}
-      // let filter: FilterQuery<CommentDocument> = { sourceId }
+      let queryForCount = `
+        SELECT count(*) AS count
+          FROM public.comments
+            WHERE "sourceId" = $1
+      `
 
-      // if (sortBy && sortDirection) {
-      //   sort[sortBy] = sortDirection === SortDirectionsEnum.asc ? 1 : -1
-      // }
+      const comments = await this.dataSource.query(query, [
+        sourceId,
+        pageSizeNumber,
+        skip
+      ])
 
-      // if (userId) {
-      //   filter = {
-      //     ...filter,
-      //    'authorInfo.userId': userId
-      //   }
-      // }
+      const countResult = await this.dataSource.query(queryForCount, [sourceId])
+      const count = countResult[0] ? Number(countResult[0].count) : 0
+      const pagesCount = Math.ceil(count / pageSizeNumber)
 
-      // const pageSizeNumber = Number(pageSize)
-      // const pageNumberNum = Number(pageNumber)
-      // const skip = (pageNumberNum - 1) * pageSizeNumber
-      // const count = await this.commentsModel.countDocuments(filter)
-      // const pagesCount = Math.ceil(count / pageSizeNumber)
+        const commentsWithInfoAboutLikes = await Promise.all(comments.map(async (comment) => {
+          const likesCounts =
+            await this.likeSqlRepository.getLikesCountsBySourceId(
+              LikeSourceTypeEnum.comments,
+              comment.id
+            )
 
-      // const comments = await this.commentsModel
-      //   .find(filter, { _id: 0, __v: 0 })
-      //   .skip(skip)
-      //   .limit(pageSizeNumber)
-      //   .sort(sort)
-      //   .exec()
+          let likesUserInfo
 
-      //   const commentsWithInfoAboutLikes = await Promise.all(comments.map(async (comment) => {
-      //     const likesCounts = await this.likeRepository.getLikesCountsBySourceId(comment.id)
+          if (userId) {
+            likesUserInfo = await this.likeSqlRepository.getLikeBySourceIdAndAuthorId({
+              sourceType: LikeSourceTypeEnum.comments,
+              sourceId: comment.id,
+              authorId: userId})
+          }
 
-      //     let likesUserInfo
-
-      //     if (userId) {
-      //       likesUserInfo = await this.likeRepository.getLikeBySourceIdAndAuthorId({
-      //         sourceId: comment.id,
-      //         authorId: userId})
-      //     }
-
-      //     return {
-      //       id: comment.id,
-      //       content: comment.content,
-      //       createdAt: comment.createdAt,
-      //       commentatorInfo: {
-      //         userId: comment.authorInfo.userId,
-      //         userLogin: comment.authorInfo.userLogin,
-      //       },
-      //       likesInfo: {
-      //         likesCount: likesCounts?.likesCount ?? 0,
-      //         dislikesCount: likesCounts?.dislikesCount ?? 0,
-      //         myStatus: likesUserInfo ? likesUserInfo.status : LikeStatusEnum.none
-      //       }
-      //     }
-      //   }))
+          return {
+            id: comment.id,
+            content: comment.content,
+            createdAt: comment.createdAt,
+            commentatorInfo: {
+              userId: comment.authorId,
+              userLogin: comment.userLogin,
+            },
+            likesInfo: {
+              likesCount: likesCounts?.likesCount ?? 0,
+              dislikesCount: likesCounts?.dislikesCount ?? 0,
+              myStatus: likesUserInfo ? likesUserInfo.status : LikeStatusEnum.none
+            }
+          }
+        }))
 
       return {
-        pagesCount: 1,
+        pagesCount,
         page: pageNumberNum,
         pageSize: pageSizeNumber,
-        totalCount: 1,
-        // items: commentsWithInfoAboutLikes
-        items: []
+        totalCount: count,
+        // items: comments
+        items: commentsWithInfoAboutLikes
       }
     } catch {
       return []
     }
   }
 
-  async getById(id: string, userId?: string | null): Promise<any> {
-    const query = `
-      SELECT *
-        FROM public.comments
-        WHERE id = $1
-    `
-    const comments = await this.dataSource.query(query, [id])
+  async getById(id: string, userId?: string | null): Promise<IComment | null> {
+    let myLike: ILike | null = null
 
-    if (!comments[0]) {
+    const query = `
+      SELECT c.*, u."login" AS "userLogin"
+        FROM public.comments c
+          LEFT JOIN public.users u
+            ON c."authorId" = u.id
+            WHERE c.id = $1
+    `
+
+    const comments = await this.dataSource.query(query, [id])
+    const comment = comments[0]
+
+    if (!comment) {
       return null
     }
 
+    const likesCounts = await this.likeSqlRepository.getLikesCountsBySourceId(
+      LikeSourceTypeEnum.posts,
+      comment.id
+    )
+
+    // TODO newst likes
+    const newestLikes = await this.likeSqlRepository.getSegmentOfLikesByParams(
+      LikeSourceTypeEnum.posts,
+      comment.id,
+      LENGTH_OF_NEWEST_LIKES_FOR_POST
+    )
+
+    if (userId) {
+      myLike = await this.likeSqlRepository.getLikeBySourceIdAndAuthorId({
+        sourceType: LikeSourceTypeEnum.posts,
+        sourceId: comment.id,
+        authorId: userId
+      })
+    }
+
+    return {
+      id: comment.id,
+      commentatorInfo: {
+        userId: comment.authorId,
+        userLogin: comment.userLogin,
+      },
+      content: comment.content,
+      createdAt: comment.createdAt,
+      likesInfo: {
+        likesCount: likesCounts?.likesCount ?? 0,
+        dislikesCount: likesCounts?.dislikesCount ?? 0,
+        myStatus: myLike?.status ?? LikeStatusEnum.none
+      }
+    }
+
     return comments[0]
-    // let myLike: ILike | null = null
     // const comment = await this.commentsModel.findOne({ id }, { _id: 0, __v: 0 })
 
     // if (!comment) {
@@ -165,13 +192,13 @@ export class CommentsSqlRepository {
     // }
   }
 
-  async createComment(data: ICreateCommentType) {
+  async createComment(data: ICreateCommentType): Promise<ICreatedComment> {
     const query = `
       INSERT INTO public.comments(
         "content", "authorId", "sourceId"
       )
         VALUES ($1, $2, $3)
-        RETURNING "content", "authorId", "sourceId", "createdAt"
+        RETURNING id, "content", "authorId", "sourceId", "createdAt"
     `
 
     const comments = await this.dataSource.query(query, [

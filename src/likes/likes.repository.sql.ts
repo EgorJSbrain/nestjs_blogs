@@ -107,6 +107,7 @@ export class LikesSqlRepository {
         "authorId", "sourceId", "status"
       )
         VALUES ($1, $2, $3)
+        RETURNING "authorId", "sourceId", "status", "createdAt"
     `
 
     const likes = await this.dataSource.query(query, [
