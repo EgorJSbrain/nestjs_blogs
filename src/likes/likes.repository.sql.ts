@@ -32,8 +32,8 @@ export class LikesSqlRepository {
 
     return {
       sourceId,
-      dislikesCount: dislikesCount[0].count,
-      likesCount: likesCount[0].count,
+      dislikesCount: Number(dislikesCount[0].count),
+      likesCount: Number(likesCount[0].count),
     }
   }
 
@@ -44,7 +44,8 @@ export class LikesSqlRepository {
     authorId?: string
   ) {
 
-    let params = [sourceId]
+    let countParams = [sourceId]
+    let params = [sourceId, limit]
     let countQuery = `
       SELECT count(*) AS count
         FROM public.${sourceType}_likes
@@ -55,6 +56,7 @@ export class LikesSqlRepository {
       SELECT *
         FROM public.${sourceType}_likes
         WHERE "sourceId" = $1 AND "status" = '${LikeStatusEnum.like}'
+        LIMIT $2
     `
 
     if (authorId) {
@@ -64,19 +66,34 @@ export class LikesSqlRepository {
           WHERE "sourceId" = $1 AND "authorId"=$2 AND "status" = '${LikeStatusEnum.like}'
       `
 
-      params = [sourceId, authorId]
+      countParams = [sourceId, authorId]
+      params = [sourceId, authorId, limit]
 
       query = `
         SELECT *
           FROM public.${sourceType}_likes
           WHERE "sourceId" = $1 AND "authorId"=$2 AND "status" = '${LikeStatusEnum.like}'
+          LIMIT $3
       `
     }
 
 
-    const count = await this.dataSource.query(countQuery, params)
-    const likes = await this.dataSource.query(query, params)
-    // TODO implemetn functionality for count newest likes
+    const count = await this.dataSource.query(countQuery, countParams)
+    const newLikes = await this.dataSource.query(query, params)
+
+    const sortedNewsetLikes = newLikes.sort((a, b) => {
+      if (Number(new Date(a.createdAt)) > Number(new Date(b.createdAt))) return -1
+      return 1
+    })
+
+    return sortedNewsetLikes.map(like => ({
+      id: like.id,
+      login: like.login,
+      authorId: like.authorId,
+      sourceId: like.sourceId,
+      status: like.status,
+      createdAt: like.createdAt,
+    }))
   }
 
   async createLike(

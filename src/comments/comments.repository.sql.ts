@@ -36,7 +36,6 @@ export class CommentsSqlRepository {
       const pageSizeNumber = Number(pageSize)
       const pageNumberNum = Number(pageNumber)
       const skip = (pageNumberNum - 1) * pageSizeNumber
-      console.log("sourceId:", sourceId)
 
       // TODO implement search with likes like in blogs
       const query = `
@@ -53,7 +52,6 @@ export class CommentsSqlRepository {
       pageSizeNumber,
       skip
     ])
-    console.log("comments:", comments)
 
       // const sort: Record<string, SortOrder> = {}
       // let filter: FilterQuery<CommentDocument> = { sourceId }
