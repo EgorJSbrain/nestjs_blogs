@@ -15,8 +15,7 @@ import {
   Req
 } from '@nestjs/common'
 import { Request } from 'express'
-import { BlogsRepository } from './blogs.repository'
-import { BlogDocument } from './blogs.schema'
+
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto'
 import { BlogsRequestParams } from '../types/blogs'
 import { RequestParams, ResponseBody } from '../types/request'
@@ -37,7 +36,6 @@ import { PostsSqlRepository } from '../posts/posts.repository.sql'
 @Controller(RoutesEnum.saBlogs)
 export class BlogsSAController {
   constructor(
-    private blogsRepository: BlogsRepository,
     private blogsSqlRepository: BlogsSqlRepository,
     private postsRepository: PostsRepository,
     private postsSqlRepository: PostsSqlRepository,

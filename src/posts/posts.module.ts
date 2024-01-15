@@ -5,8 +5,6 @@ import { JwtService } from '@nestjs/jwt';
 import { PostsRepository } from './posts.repository';
 import { PostsController } from './posts.controller';
 import { Post, PostSchema } from './posts.schema';
-import { BlogsRepository } from '../blogs/blogs.repository';
-import { Blog, BlogSchema } from '../blogs/blogs.schema';
 import { LikesRepository } from '../likes/likes.repository';
 import { Like, LikeSchema } from '../likes/likes.schema';
 import { JWTService } from '../jwt/jwt.service';
@@ -16,15 +14,15 @@ import { Comment, CommentSchema } from '../comments/comments.schema';
 import { HashService } from '../hash/hash.service';
 import { PostsSqlRepository } from './posts.repository.sql';
 import { LikesSqlRepository } from '../likes/likes.repository.sql';
-import { UsersSQLRepository } from 'src/users/users.repository.sql';
-import { CommentsSqlRepository } from 'src/comments/comments.repository.sql';
+import { UsersSQLRepository } from '../users/users.repository.sql';
+import { CommentsSqlRepository } from '../comments/comments.repository.sql';
+import { BlogsSqlRepository } from '../blogs/blogs.repository.sql';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
     { name: Like.name, schema: LikeSchema },
     { name: Post.name, schema: PostSchema },
-    { name: Blog.name, schema: BlogSchema },
     { name: Comment.name, schema: CommentSchema },
   ]),
 ],
@@ -36,9 +34,9 @@ import { CommentsSqlRepository } from 'src/comments/comments.repository.sql';
     PostsRepository,
     PostsSqlRepository,
     JwtService,
-    BlogsRepository,
     UsersSQLRepository,
     BlogIdValidator,
+    BlogsSqlRepository,
     CommentsRepository,
     CommentsSqlRepository,
     HashService,

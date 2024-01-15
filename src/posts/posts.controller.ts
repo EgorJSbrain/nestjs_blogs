@@ -19,7 +19,6 @@ import { PostsRepository } from './posts.repository'
 import { Post as PostSchema } from './posts.schema'
 import { CreatePostByBlogIdDto, CreatePostDto } from '../dtos/posts/create-post.dto'
 import { ResponseBody, RequestParams } from '../types/request'
-import { BlogsRepository } from '../blogs/blogs.repository'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
@@ -45,7 +44,6 @@ export class PostsController {
   constructor(
     private postsRepository: PostsRepository,
     private postsSqlRepository: PostsSqlRepository,
-    private blogsRepository: BlogsRepository,
     private usersSqlRepository: UsersSQLRepository,
     private JWTService: JWTService,
     private likesRepository: LikesRepository,
@@ -146,7 +144,7 @@ export class PostsController {
       )
     }
 
-    const blog = await this.blogsRepository.getById(data.blogId)
+    const blog: any = {}
 
     if (!blog) {
       throw new HttpException(
