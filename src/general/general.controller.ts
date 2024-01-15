@@ -4,7 +4,6 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common'
-import { GeneralRepository } from './general.repository'
 import { RoutesEnum } from '../constants/global'
 import { GeneralSqlRepository } from './general.sql.repository'
 import { SkipThrottle } from '@nestjs/throttler'
@@ -14,13 +13,11 @@ import { SkipThrottle } from '@nestjs/throttler'
 export class GenerealController {
   constructor(
     private generalSqlRepository: GeneralSqlRepository,
-    // private generalRepository: GeneralRepository,
   ) {}
 
   @Delete()
   @HttpCode(HttpStatus.NO_CONTENT)
   async clearDB(): Promise<boolean> {
-    // return this.generalRepository.clearDB()
     return this.generalSqlRepository.clearDB()
   }
 }

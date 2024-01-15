@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { v4 } from 'uuid'
 
-import { UserDocument } from '../users/users.schema';
 import { EmailsRepository } from '../emails/emails.repository';
 import { CreateUserDto } from '../dtos/users/create-user.dto';
 import { LoginDto } from '../dtos/auth/login.dto';
@@ -133,9 +132,5 @@ export class AuthRepository {
       user.email,
       confirmationCode
     )
-  }
-
-  save(user: UserDocument) {
-    return user.save()
   }
 }
