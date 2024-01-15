@@ -43,7 +43,6 @@ export class LikesSqlRepository {
     limit: number,
     authorId?: string
   ) {
-
     let countParams = [sourceId]
     let params = [sourceId, limit]
     let countQuery = `
@@ -53,17 +52,22 @@ export class LikesSqlRepository {
     `
 
     let query = `
-      SELECT *
-        FROM public.${sourceType}_likes
+      SELECT l.*, u."login" AS "userLogin"
+        FROM public.${sourceType}_likes l
+          LEFT JOIN public.users u
+            ON l."authorId" = u.id
         WHERE "sourceId" = $1 AND "status" = '${LikeStatusEnum.like}'
-        LIMIT $2
+        ORDER BY "createdAt" DESC
+        LIMIT $2 OFFSET 0
     `
 
     if (authorId) {
       countQuery = `
-        SELECT count(*) AS count
-          FROM public.${sourceType}_likes
-          WHERE "sourceId" = $1 AND "authorId"=$2 AND "status" = '${LikeStatusEnum.like}'
+        SELECT l.*, u."login" AS "userLogin"
+        FROM public.${sourceType}_likes l
+          LEFT JOIN public.users u
+            ON l."authorId" = u.id
+        WHERE "sourceId" = $1 AND "authorId"=$2 AND "status" = '${LikeStatusEnum.like}'
       `
 
       countParams = [sourceId, authorId]
@@ -73,7 +77,8 @@ export class LikesSqlRepository {
         SELECT *
           FROM public.${sourceType}_likes
           WHERE "sourceId" = $1 AND "authorId"=$2 AND "status" = '${LikeStatusEnum.like}'
-          LIMIT $3
+          ORDER BY "createdAt" DESC
+          LIMIT $3 OFFSET 0
       `
     }
 
@@ -88,7 +93,7 @@ export class LikesSqlRepository {
 
     return sortedNewsetLikes.map(like => ({
       id: like.id,
-      login: like.login,
+      login: like.userLogin,
       authorId: like.authorId,
       sourceId: like.sourceId,
       status: like.status,
