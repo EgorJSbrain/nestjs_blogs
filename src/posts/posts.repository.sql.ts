@@ -1,20 +1,16 @@
-import { FilterQuery, Model, SortOrder } from 'mongoose';
+import { DataSource } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectDataSource } from '@nestjs/typeorm';
 
-import { Post, PostDocument } from './posts.schema';
 import { RequestParams, ResponseBody } from '../types/request';
 import { UpdatePostDto } from '../dtos/posts/update-post.dto';
-import { LikesRepository } from '../likes/likes.repository';
 import { LENGTH_OF_NEWEST_LIKES_FOR_POST, LikeSourceTypeEnum } from '../constants/likes'
 import { LikeStatusEnum } from '../constants/likes';
 import { formatLikes } from '../utils/formatLikes';
 import { ILike } from '../types/likes';
 import { ICreatePostType, ICreatedPost, IPost } from '../types/posts';
 import { SortDirectionsEnum } from '../constants/global';
-import { DataSource } from 'typeorm';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { LikesSqlRepository } from 'src/likes/likes.repository.sql';
+import { LikesSqlRepository } from '../likes/likes.repository.sql';
 
 @Injectable()
 export class PostsSqlRepository {
@@ -80,44 +76,10 @@ export class PostsSqlRepository {
 
       const posts = await this.dataSource.query(query, queryParams)
 
-      const postsWithLikes = posts.map((post) => ({
-        ...post,
-        extendedLikesInfo: {
-          dislikesCount: 0,
-          likesCount: 0,
-          myStatus: 'None',
-          newestLikes: []
-        }
-      }))
-
       const countResult = await this.dataSource.query(queryForCount, queryCountParams)
 
       const count = countResult[0] ? Number(countResult[0].count) : 0
       const pagesCount = Math.ceil(count / pageSizeNumber)
-
-      // let filter: FilterQuery<PostDocument> = {}
-      // const sort: Record<string, SortOrder> = {}
-
-      // if (blogId) {
-      //   filter = { blogId }
-      // }
-
-      // if (sortBy && sortDirection) {
-      //   sort[sortBy] = sortDirection === SortDirectionsEnum.asc ? 1 : -1
-      // }
-
-      // const pageSizeNumber = Number(pageSize)
-      // const pageNumberNum = Number(pageNumber)
-      // const skip = (pageNumberNum - 1) * pageSizeNumber
-      // const count = await this.postsModel.countDocuments(filter)
-      // const pagesCount = Math.ceil(count / pageSizeNumber)
-
-      // const posts = await this.postsModel
-      //   .find(filter, { _id: 0, __v: 0 })
-      //   .skip(skip)
-      //   .limit(pageSizeNumber)
-      //   .sort(sort)
-      //   .lean()
 
       const postsWithInfoAboutLikes = await Promise.all(
         posts.map(async (post) => {
@@ -126,7 +88,6 @@ export class PostsSqlRepository {
             post.id
           )
 
-          // TODO implemetn functionality for count newest likes
           const newestLikes = await this.likeSqlRepository.getSegmentOfLikesByParams(
             LikeSourceTypeEnum.posts,
             post.id,
@@ -150,8 +111,7 @@ export class PostsSqlRepository {
               likesCount: likesCounts?.likesCount ?? 0,
               dislikesCount: likesCounts?.dislikesCount ?? 0,
               myStatus: likesUserInfo ? likesUserInfo.status : LikeStatusEnum.none,
-              newestLikes: []
-              // newestLikes: formatLikes(newestLikes)
+              newestLikes: formatLikes(newestLikes)
             }
           }
         })
@@ -162,8 +122,7 @@ export class PostsSqlRepository {
         page: pageNumberNum,
         pageSize: pageSizeNumber,
         totalCount: count,
-        items: postsWithLikes
-        // items: postsWithInfoAboutLikes
+        items: postsWithInfoAboutLikes
       }
     } catch {
       return []
@@ -193,13 +152,11 @@ export class PostsSqlRepository {
       post.id
     )
 
-    // TODO newst likes
     const newestLikes = await this.likeSqlRepository.getSegmentOfLikesByParams(
       LikeSourceTypeEnum.posts,
       post.id,
       LENGTH_OF_NEWEST_LIKES_FOR_POST
     )
-    console.log("---newestLikes:", newestLikes)
 
     if (userId) {
       myLike = await this.likeSqlRepository.getLikeBySourceIdAndAuthorId({
@@ -208,7 +165,6 @@ export class PostsSqlRepository {
         authorId: userId
       })
     }
-    console.log("🚀 ~ PostsSqlRepository ~ getById ~ myLike:", myLike)
 
     return {
       ...post,

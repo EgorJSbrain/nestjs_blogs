@@ -43,15 +43,6 @@ export class LikesSqlRepository {
     limit: number,
     authorId?: string
   ) {
-
-  `
-    SELECT c.*, u."login" AS "userLogin"
-    FROM public.comments c
-      LEFT JOIN public.users u
-        ON c."authorId" = u.id
-    WHERE "sourceId" = $1
-  `
-
     let countParams = [sourceId]
     let params = [sourceId, limit]
     let countQuery = `
@@ -66,7 +57,8 @@ export class LikesSqlRepository {
           LEFT JOIN public.users u
             ON l."authorId" = u.id
         WHERE "sourceId" = $1 AND "status" = '${LikeStatusEnum.like}'
-        LIMIT $2
+        ORDER BY "createdAt" DESC
+        LIMIT $2 OFFSET 0
     `
 
     if (authorId) {
@@ -85,7 +77,8 @@ export class LikesSqlRepository {
         SELECT *
           FROM public.${sourceType}_likes
           WHERE "sourceId" = $1 AND "authorId"=$2 AND "status" = '${LikeStatusEnum.like}'
-          LIMIT $3
+          ORDER BY "createdAt" DESC
+          LIMIT $3 OFFSET 0
       `
     }
 
