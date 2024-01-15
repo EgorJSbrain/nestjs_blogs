@@ -29,28 +29,32 @@ import { appMessages } from '../constants/messages'
 import { IPost } from '../types/posts'
 import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
+import { BlogsSqlRepository } from './blogs.repository.sql'
+import { PostsSqlRepository } from '../posts/posts.repository.sql'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogs)
 export class BlogsController {
   constructor(
     private blogsRepository: BlogsRepository,
+    private blogsSqlRepository: BlogsSqlRepository,
     private postsRepository: PostsRepository,
+    private postsSqlRepository: PostsSqlRepository,
     private JWTService: JWTService,
   ) {}
 
   @Get()
   async getAll(
     @Query() query: BlogsRequestParams
-  ): Promise<ResponseBody<BlogDocument> | []> {
-    const blogs = await this.blogsRepository.getAll(query)
+  ): Promise<ResponseBody<IBlog> | []> {
+    const blogs = await this.blogsSqlRepository.getAll(query)
 
     return blogs
   }
 
   @Get(':id')
   async getBlogById(@Param() params: { id: string }): Promise<IBlog | null> {
-    const blog = await this.blogsRepository.getById(params.id)
+    const blog = await this.blogsSqlRepository.getById(params.id)
 
     if (!blog) {
       throw new HttpException(
@@ -60,61 +64,6 @@ export class BlogsController {
     }
 
     return blog
-  }
-
-  @Post()
-  @UseGuards(BasicAuthGuard)
-  async creatBlog(@Body() data: CreateBlogDto): Promise<IBlog> {
-    return this.blogsRepository.createBlog(data)
-  }
-
-  @Put(':id')
-  @UseGuards(BasicAuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async updateBlog(
-    @Param() params: { id: string },
-    @Body() data: UpdateBlogDto
-  ): Promise<any> {
-    if (!params.id) {
-      throw new HttpException(
-        { message: appMessages(appMessages().blogId).errors.isRequiredField },
-        HttpStatus.NOT_FOUND
-      )
-    }
-
-    const blog = await this.blogsRepository.getById(params.id)
-
-    if (!blog) {
-      throw new HttpException(
-        { message: appMessages(appMessages().blog).errors.notFound },
-        HttpStatus.NOT_FOUND
-      )
-    }
-
-    const updatedBlog = await this.blogsRepository.updateBlog(params.id, data)
-
-    if (!updatedBlog) {
-      throw new HttpException(
-        { message: appMessages(appMessages().blog).errors.notFound },
-        HttpStatus.NOT_FOUND
-      )
-    }
-  }
-
-  @Delete(':id')
-  @UseGuards(BasicAuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteBlog(@Param() params: { id: string }): Promise<any> {
-    const blog = await this.blogsRepository.getById(params.id)
-
-    if (!blog) {
-      throw new HttpException(
-        { message: appMessages(appMessages().blog).errors.notFound },
-        HttpStatus.NOT_FOUND
-      )
-    }
-
-    await this.blogsRepository.deleteBlog(params.id)
   }
 
   @Get(':blogId/posts')
@@ -135,7 +84,7 @@ export class BlogsController {
       )
     }
 
-    const blog = await this.blogsRepository.getById(params.blogId)
+    const blog = await this.blogsSqlRepository.getById(params.blogId)
 
     if (!blog) {
       throw new HttpException(
@@ -154,32 +103,38 @@ export class BlogsController {
       }
     }
 
-    const posts = await this.postsRepository.getAll(query, currentUserId, blog.id)
+    const posts = await this.postsSqlRepository.getAll(query, currentUserId, blog.id)
 
     return posts
   }
 
-  @Post(':blogId/posts')
-  @UseGuards(BasicAuthGuard)
-  async creatPostByBlogId(
-    @Param() params: { blogId: string },
-    @Body() data: CreatePostDto
-  ): Promise<IPost | null> {
-    const blog = await this.blogsRepository.getById(params.blogId)
+  // @Post()
+  // @UseGuards(BasicAuthGuard)
+  // async creatBlog(@Body() data: CreateBlogDto): Promise<IBlog> {
+  //   return this.blogsRepository.createBlog(data)
+  // }
 
-    if (!blog) {
-      throw new HttpException(
-        { message: appMessages(appMessages().blog).errors.notFound, field: '' },
-        HttpStatus.NOT_FOUND
-      )
-    }
+  // @Post(':blogId/posts')
+  // @UseGuards(BasicAuthGuard)
+  // async creatPostByBlogId(
+  //   @Param() params: { blogId: string },
+  //   @Body() data: CreatePostDto
+  // ): Promise<IPost | null> {
+  //   const blog = await this.blogsRepository.getById(params.blogId)
 
-    const creatingData = {
-      ...data,
-      blogId: blog.id,
-      blogName: blog.name
-    }
+  //   if (!blog) {
+  //     throw new HttpException(
+  //       { message: appMessages(appMessages().blog).errors.notFound, field: '' },
+  //       HttpStatus.NOT_FOUND
+  //     )
+  //   }
 
-    return this.postsRepository.createPost(creatingData)
-  }
+  //   const creatingData = {
+  //     ...data,
+  //     blogId: blog.id,
+  //     blogName: blog.name
+  //   }
+
+  //   return this.postsRepository.createPost(creatingData)
+  // }
 }

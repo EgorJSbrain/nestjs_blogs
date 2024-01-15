@@ -53,7 +53,7 @@ export class BlogsRepository {
         page: pageNumberNum,
         pageSize: pageSizeNumber,
         totalCount: count,
-        items: blogs
+        items: []
       }
     } catch {
       return []

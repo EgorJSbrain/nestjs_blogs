@@ -1,4 +1,4 @@
-import { LikeStatusEnum } from "../constants/likes"
+import { LikeSourceTypeEnum, LikeStatusEnum } from "../constants/likes"
 
 export interface ILikesInfo {
   sourceId: string
@@ -13,7 +13,7 @@ export interface ILikeInfo {
 }
 
 export interface ILikeForPost {
-  login: string
+  // login: string
   userId: string
   addedAt: string
 }
@@ -32,13 +32,13 @@ export interface ILikeShortType {
 }
 
 export type LikesRequestParams = {
+  sourceType: LikeSourceTypeEnum
   sourceId?: string
   authorId?: string
 }
 
 export interface ILike {
   id: string
-  login: string
   authorId: string
   sourceId: string
   status: LikeStatusEnum

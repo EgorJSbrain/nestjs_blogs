@@ -16,6 +16,10 @@ import { BlogIdValidator } from '../validators/blog-id.validator';
 import { CommentsRepository } from '../comments/comments.repository';
 import { Comment, CommentSchema } from '../comments/comments.schema';
 import { HashService } from '../hash/hash.service';
+import { PostsSqlRepository } from './posts.repository.sql';
+import { LikesSqlRepository } from '../likes/likes.repository.sql';
+import { UsersSQLRepository } from 'src/users/users.repository.sql';
+import { CommentsSqlRepository } from 'src/comments/comments.repository.sql';
 
 @Module({
   imports: [
@@ -31,12 +35,16 @@ import { HashService } from '../hash/hash.service';
   providers: [
     JWTService,
     LikesRepository,
+    LikesSqlRepository,
     PostsRepository,
+    PostsSqlRepository,
     JwtService,
     BlogsRepository,
     UsersRepository,
+    UsersSQLRepository,
     BlogIdValidator,
     CommentsRepository,
+    CommentsSqlRepository,
     HashService,
   ]
 })

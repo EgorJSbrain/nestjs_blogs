@@ -33,19 +33,27 @@ import { IPost } from '../types/posts'
 import { RoutesEnum } from '../constants/global'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
 import { CommentsRepository } from '../comments/comments.repository'
-import { LikeStatusEnum } from '../constants/likes'
+import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes'
 import { IComment } from '../types/comments'
+import { PostsSqlRepository } from './posts.repository.sql'
+import { LikesSqlRepository } from '../likes/likes.repository.sql'
+import { UsersSQLRepository } from '../users/users.repository.sql'
+import { CommentsSqlRepository } from 'src/comments/comments.repository.sql'
 
 @SkipThrottle()
 @Controller(RoutesEnum.posts)
 export class PostsController {
   constructor(
     private postsRepository: PostsRepository,
+    private postsSqlRepository: PostsSqlRepository,
     private blogsRepository: BlogsRepository,
     private usersRepository: UsersRepository,
+    private usersSqlRepository: UsersSQLRepository,
     private JWTService: JWTService,
     private likesRepository: LikesRepository,
+    private likesSqlRepository: LikesSqlRepository,
     private commentsRepository: CommentsRepository,
+    private commentsSqlRepository: CommentsSqlRepository,
   ) {}
 
   @Get()
@@ -61,18 +69,20 @@ export class PostsController {
       currentUserId = userId || null
     }
 
-    const posts = await this.postsRepository.getAll(query, currentUserId)
+    const posts = await this.postsSqlRepository.getAll(query, currentUserId)
+    // console.log("-----posts:", posts)
+    // const posts = await this.postsRepository.getAll(query, currentUserId)
 
     return posts
   }
 
-  @Get(':id/comments')
+  @Get(':postId/comments')
   async getCommentsByPostId(
-    @Param() params: { id: string },
+    @Param() params: { postId: string },
     @Query() query: RequestParams,
     @Req() req: Request,
   ): Promise<ResponseBody<IComment> | []> {
-    const postId = params.id
+    const postId = params.postId
 
     if (!postId) {
       throw new HttpException(
@@ -81,7 +91,7 @@ export class PostsController {
       )
     }
 
-    const post = await this.postsRepository.getById(params.id)
+    const post = await this.postsSqlRepository.getById(postId)
 
     if (!post) {
       throw new HttpException(
@@ -98,7 +108,7 @@ export class PostsController {
       currentUserId = userId || null
     }
 
-    const comments = await this.commentsRepository.getAll(query, postId, currentUserId)
+    const comments = await this.commentsSqlRepository.getAll(query, postId, currentUserId)
 
     return comments
   }
@@ -116,7 +126,7 @@ export class PostsController {
       currentUserId = userId
     }
 
-    const post = await this.postsRepository.getById(params.id, currentUserId)
+    const post = await this.postsSqlRepository.getById(params.id, currentUserId)
 
     if (!post) {
       throw new HttpException(
@@ -221,16 +231,16 @@ export class PostsController {
     @CurrentUserId() currentUserId: string,
     @Body() data: LikeDto
   ): Promise<undefined> {
-    const existedUser = await this.usersRepository.getById(currentUserId)
+    const existedUser = await this.usersSqlRepository.getById(currentUserId)
 
     if (!existedUser) {
       throw new HttpException(
-        { message: appMessages('User').errors.notFound, field: '' },
+        { message: appMessages(appMessages().user).errors.notFound, field: '' },
         HttpStatus.NOT_FOUND
       )
     }
 
-    const existedPost = await this.postsRepository.getById(params.postId)
+    const existedPost = await this.postsSqlRepository.getById(params.postId)
 
     if (!existedPost) {
       throw new HttpException(
@@ -239,11 +249,11 @@ export class PostsController {
       )
     }
 
-    const like = await this.likesRepository.likeEntity(
+    const like = await this.likesSqlRepository.likeEntity(
       data.likeStatus,
       params.postId,
+      LikeSourceTypeEnum.posts,
       existedUser?.id,
-      existedUser?.login
     )
 
     if (!like) {
@@ -261,8 +271,8 @@ export class PostsController {
     @Param() params: { postId: string },
     @CurrentUserId() currentUseruserId: string,
     @Body() data: CommentDto
-  ): Promise<IComment> {
-    const existedUser = await this.usersRepository.getById(currentUseruserId)
+  ): Promise<any> {
+    const existedUser = await this.usersSqlRepository.getById(currentUseruserId)
 
     if (!existedUser) {
       throw new HttpException(
@@ -271,7 +281,7 @@ export class PostsController {
       )
     }
 
-    const existedPost = await this.postsRepository.getById(params.postId)
+    const existedPost = await this.postsSqlRepository.getById(params.postId)
 
     if (!existedPost) {
       throw new HttpException(
@@ -280,12 +290,9 @@ export class PostsController {
       )
     }
 
-    const comment = await this.commentsRepository.createComment({
+    const comment = await this.commentsSqlRepository.createComment({
       content: data.content,
-      authorInfo: {
-        userId: existedUser.id,
-        userLogin: existedUser.login
-      },
+      userId: existedUser.id,
       sourceId: existedPost.id
     })
 
@@ -300,8 +307,8 @@ export class PostsController {
       id: comment.id,
       content: comment.content,
       commentatorInfo: {
-        userId: comment.authorInfo.userId,
-        userLogin: comment.authorInfo.userLogin
+        userId: comment.authorId,
+        userLogin: existedUser.login
       },
       createdAt: comment.createdAt,
       likesInfo: {

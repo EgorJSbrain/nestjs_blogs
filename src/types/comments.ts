@@ -5,6 +5,14 @@ export type CommentAuthorInfo = {
   userLogin: string
 }
 
+export interface ICreatedComment {
+  id: string
+  authorId: string
+  content: string
+  createdAt: string
+  likesInfo: ILikeInfo
+}
+
 export interface IComment {
   id: string
   commentatorInfo: CommentAuthorInfo
@@ -15,7 +23,7 @@ export interface IComment {
 
 export interface ICreateCommentType {
   readonly content: string
-  readonly authorInfo: CommentAuthorInfo
+  readonly userId: string
   readonly sourceId: string
 }
 
