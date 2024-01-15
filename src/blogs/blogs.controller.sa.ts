@@ -127,13 +127,21 @@ export class BlogsSAController {
       )
     }
 
-    const creatingData = {
+    const newPost = await  this.postsSqlRepository.createPost({
       ...data,
-      blogId: blog.id,
-      blogName: blog.name
+      blogId: blog.id
+    })
+
+    if (!newPost) {
+      throw new HttpException(
+        { message: appMessages().errors.somethingIsWrong, field: '' },
+        HttpStatus.NOT_FOUND
+      )
     }
 
-    return this.postsSqlRepository.createPost(creatingData)
+    const post = await this.postsSqlRepository.getById(newPost.id)
+
+    return post
   }
 
   @Get(':blogId/posts')
@@ -196,7 +204,23 @@ export class BlogsSAController {
       )
     }
 
-    const post = await this.postsSqlRepository.getById(params.postId, params.blogId)
+    if (!params.blogId) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blogId).errors.isRequiredField },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const blog = await this.blogsSqlRepository.getById(params.blogId)
+
+    if (!blog) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const post = await this.postsSqlRepository.getById(params.postId)
 
     if (!post) {
       throw new HttpException(
@@ -216,6 +240,29 @@ export class BlogsSAController {
   @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deletePost(@Param() params: { blogId: string, postId: string }): Promise<any> {
+    if (!params.postId) {
+      throw new HttpException(
+        { message: appMessages(appMessages().postId).errors.isRequiredField },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    if (!params.blogId) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blogId).errors.isRequiredField },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const blog = await this.blogsSqlRepository.getById(params.blogId)
+
+    if (!blog) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
     const post = await this.postsSqlRepository.getById(params.postId)
 
     if (!post) {

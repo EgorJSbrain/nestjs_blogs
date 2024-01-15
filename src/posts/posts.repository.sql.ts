@@ -10,7 +10,7 @@ import { LENGTH_OF_NEWEST_LIKES_FOR_POST, LikeSourceTypeEnum } from '../constant
 import { LikeStatusEnum } from '../constants/likes';
 import { formatLikes } from '../utils/formatLikes';
 import { ILike } from '../types/likes';
-import { ICreatePostType, IPost } from '../types/posts';
+import { ICreatePostType, ICreatedPost, IPost } from '../types/posts';
 import { SortDirectionsEnum } from '../constants/global';
 import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -40,40 +40,62 @@ export class PostsSqlRepository {
       const pageNumberNum = Number(pageNumber)
       const skip = (pageNumberNum - 1) * pageSizeNumber
 
-      const query = `
+      let query = `
         SELECT p.*, b."name" AS "blogName"
           FROM public.posts p
             LEFT JOIN public.blogs b
               ON p."blogId" = b.id
-          WHERE "blogId" = $1
           ORDER BY "${sortBy}" ${sortDirection.toLocaleUpperCase()}
-          LIMIT $2 OFFSET $3
+          LIMIT $1 OFFSET $2
       `
-      const posts = await this.dataSource.query(query, [
-        blogId,
-        pageSizeNumber,
-        skip
-      ])
 
-      // const postsWithLikes = posts.map((post) => ({
-      //   ...post,
-      //   extendedLikesInfo: {
-      //     dislikesCount: 0,
-      //     likesCount: 0,
-      //     myStatus: 'None',
-      //     newestLikes: []
-      //   }
-      // }))
-
-      const queryForCount = `
+      let queryForCount = `
         SELECT count(*) AS count
           FROM public.posts
-          WHERE "blogId" = $1
       `
 
-      const countResult = await this.dataSource.query(queryForCount, [
-        blogId,
-      ])
+      let queryParams: any[] = [ pageSizeNumber, skip ]
+      let queryCountParams: any[] = []
+
+      if (blogId) {
+        query = `
+          SELECT p.*, b."name" AS "blogName"
+            FROM public.posts p
+              LEFT JOIN public.blogs b
+                ON p."blogId" = b.id
+            WHERE "blogId" = $1
+            ORDER BY "${sortBy}" ${sortDirection.toLocaleUpperCase()}
+            LIMIT $2 OFFSET $3
+        `
+
+        queryParams = [ blogId, pageSizeNumber, skip ]
+        queryCountParams = [ blogId ]
+
+        queryForCount = `
+          SELECT count(*) AS count
+            FROM public.posts
+            WHERE "blogId" = $1
+        `
+      }
+
+      const posts = await this.dataSource.query(query, queryParams)
+      console.log("🚀 ~ PostsSqlRepository ~ posts:", posts)
+
+      const postsWithLikes = posts.map((post) => ({
+        ...post,
+        extendedLikesInfo: {
+          dislikesCount: 0,
+          likesCount: 0,
+          myStatus: 'None',
+          newestLikes: []
+        }
+      }))
+      console.log("----postsWithLikes:", postsWithLikes)
+
+
+
+      const countResult = await this.dataSource.query(queryForCount, queryCountParams)
+      console.log("!!!!countResult:", countResult)
 
       const count = countResult[0] ? Number(countResult[0].count) : 0
       const pagesCount = Math.ceil(count / pageSizeNumber)
@@ -139,14 +161,15 @@ export class PostsSqlRepository {
           }
         })
       )
+      // console.log("--------postsWithInfoAboutLikes:", postsWithInfoAboutLikes)
 
       return {
         pagesCount,
         page: pageNumberNum,
         pageSize: pageSizeNumber,
         totalCount: count,
-        // items: postsWithLikes
-        items: postsWithInfoAboutLikes
+        items: postsWithLikes
+        // items: postsWithInfoAboutLikes
       }
     } catch {
       return []
@@ -154,6 +177,8 @@ export class PostsSqlRepository {
   }
 
   async getById(id: string, blogId?: string, userId?: string): Promise<IPost | null> {
+    let myLike: ILike | null = null
+
     const query = `
       SELECT p.*, b."name" AS "blogName"
       FROM public.posts p
@@ -163,26 +188,46 @@ export class PostsSqlRepository {
     `
     const posts = await this.dataSource.query<IPost[]>(query, [id])
 
-    if (!posts[0]) {
+    const post = posts[0]
+
+    if (!post) {
       return null
     }
 
-    return posts[0]
+    const likesCounts = await this.likeSqlRepository.getLikesCountsBySourceId(
+      LikeSourceTypeEnum.posts,
+      post.id
+    )
+
+    // TODO newst likes
+    const newestLikes = await this.likeSqlRepository.getSegmentOfLikesByParams(
+      LikeSourceTypeEnum.posts,
+      post.id,
+      LENGTH_OF_NEWEST_LIKES_FOR_POST
+    )
+
+    if (userId) {
+      myLike = await this.likeSqlRepository.getLikeBySourceIdAndAuthorId({
+        sourceType: LikeSourceTypeEnum.posts,
+        sourceId: post.id,
+        authorId: userId
+      })
+    }
+
+    return {
+      ...post,
+      extendedLikesInfo: {
+        likesCount: likesCounts?.likesCount ?? 0,
+        dislikesCount: likesCounts?.dislikesCount ?? 0,
+        myStatus: myLike?.status ?? LikeStatusEnum.none,
+        // newestLikes: formatLikes(newestLikes)
+        newestLikes: []
+      }
+    }
     // const post = await this.postsModel.findOne({ id }, { _id: 0, __v: 0 })
-    // let myLike: ILike | null = null
 
     // if (!post) {
     //   return null
-    // }
-
-    // const likesCounts = await this.likeRepository.getLikesCountsBySourceId(post.id)
-    // const newestLikes = await this.likeRepository.getSegmentOfLikesByParams(post.id, LENGTH_OF_NEWEST_LIKES_FOR_POST)
-
-    // if (userId) {
-    //   myLike = await this.likeRepository.getLikeBySourceIdAndAuthorId({
-    //     sourceId: post.id,
-    //     authorId: userId
-    //   })
     // }
 
     //   return {
@@ -202,7 +247,7 @@ export class PostsSqlRepository {
     //   }
   }
 
-  async createPost(data: ICreatePostType): Promise<IPost | null> {
+  async createPost(data: ICreatePostType): Promise<ICreatedPost | null> {
     const query = `
       INSERT INTO public.posts(
         "blogId", title, "shortDescription", content

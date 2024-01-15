@@ -70,6 +70,7 @@ export class PostsController {
     }
 
     const posts = await this.postsSqlRepository.getAll(query, currentUserId)
+    // console.log("-----posts:", posts)
     // const posts = await this.postsRepository.getAll(query, currentUserId)
 
     return posts
@@ -82,7 +83,7 @@ export class PostsController {
     @Req() req: Request,
   ): Promise<ResponseBody<IComment> | []> {
     const postId = params.postId
-    console.log('--!!!!---')
+
     if (!postId) {
       throw new HttpException(
         { message: appMessages(appMessages().postId).errors.isRequiredField },
@@ -91,7 +92,6 @@ export class PostsController {
     }
 
     const post = await this.postsSqlRepository.getById(postId)
-    console.log("🚀 ~ PostsController ~ post:", post)
 
     if (!post) {
       throw new HttpException(
@@ -126,7 +126,7 @@ export class PostsController {
       currentUserId = userId
     }
 
-    const post = await this.postsRepository.getById(params.id, currentUserId)
+    const post = await this.postsSqlRepository.getById(params.id, currentUserId)
 
     if (!post) {
       throw new HttpException(
