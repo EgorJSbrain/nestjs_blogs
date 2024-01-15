@@ -2,9 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 
-import { BlogsRepository } from './blogs.repository';
 import { BlogsController } from './blogs.controller';
-import { Blog, BlogSchema } from './blogs.schema';
 import { PostsRepository } from '../posts/posts.repository';
 import { Post, PostSchema } from '../posts/posts.schema';
 import { LikesRepository } from '../likes/likes.repository';
@@ -19,7 +17,6 @@ import { LikesSqlRepository } from '../likes/likes.repository.sql';
 @Module({
   imports: [
   MongooseModule.forFeature([
-    { name: Blog.name, schema: BlogSchema },
     { name: Post.name, schema: PostSchema },
     { name: Like.name, schema: LikeSchema },
   ]),
@@ -29,7 +26,6 @@ import { LikesSqlRepository } from '../likes/likes.repository.sql';
   providers: [
     JwtService,
     LikesRepository,
-    BlogsRepository,
     PostsRepository,
     PostsSqlRepository,
     JWTService,
