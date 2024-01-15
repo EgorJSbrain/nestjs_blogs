@@ -19,6 +19,7 @@ import { HashService } from '../hash/hash.service';
 import { PostsSqlRepository } from './posts.repository.sql';
 import { LikesSqlRepository } from '../likes/likes.repository.sql';
 import { UsersSQLRepository } from 'src/users/users.repository.sql';
+import { CommentsSqlRepository } from 'src/comments/comments.repository.sql';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { UsersSQLRepository } from 'src/users/users.repository.sql';
     UsersSQLRepository,
     BlogIdValidator,
     CommentsRepository,
+    CommentsSqlRepository,
     HashService,
   ]
 })

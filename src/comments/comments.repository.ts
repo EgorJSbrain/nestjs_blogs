@@ -132,10 +132,10 @@ export class CommentsRepository {
   createComment(data: ICreateCommentType) {
     const newComment = new this.commentsModel(data)
     newComment.sourceId = data.sourceId
-    newComment.authorInfo = {
-      userId: data.authorInfo.userId,
-      userLogin: data.authorInfo.userLogin
-    }
+    // newComment.authorInfo = {
+    //   userId: data.authorInfo.userId,
+    //   userLogin: data.authorInfo.userLogin
+    // }
     newComment.setDateOfCreatedAt()
     newComment.setId()
 

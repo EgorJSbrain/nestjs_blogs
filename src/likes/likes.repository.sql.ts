@@ -1,10 +1,7 @@
-import { FilterQuery, Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 
-import { Like, LikeDocument } from './likes.schema';
 import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes';
 import { ILike, ILikesInfo, LikesRequestParams } from '../types/likes';
 import { CreateLikeDto } from '../dtos/like/create-like.dto';
@@ -124,8 +121,6 @@ export class LikesSqlRepository {
   }
 
   async getLikeBySourceIdAndAuthorId(params: LikesRequestParams) {
-    console.log("userId:", params)
-
     const query = `
       SELECT *
         FROM public.${params.sourceType}_likes
@@ -135,7 +130,6 @@ export class LikesSqlRepository {
       params.authorId,
       params.sourceId
     ])
-    console.log("!!!!!!likes:", likes)
 
     if (!likes[0]) {
       return null

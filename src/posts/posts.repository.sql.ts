@@ -55,15 +55,15 @@ export class PostsSqlRepository {
         skip
       ])
 
-      const postsWithLikes = posts.map((post) => ({
-        ...post,
-        extendedLikesInfo: {
-          dislikesCount: 0,
-          likesCount: 0,
-          myStatus: 'None',
-          newestLikes: []
-        }
-      }))
+      // const postsWithLikes = posts.map((post) => ({
+      //   ...post,
+      //   extendedLikesInfo: {
+      //     dislikesCount: 0,
+      //     likesCount: 0,
+      //     myStatus: 'None',
+      //     newestLikes: []
+      //   }
+      // }))
 
       const queryForCount = `
         SELECT count(*) AS count
