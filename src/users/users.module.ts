@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 
 import { BasicAuthStrategy } from '../auth/strategies/basic.strategy';
 import { HashService } from '../hash/hash.service';
