@@ -21,7 +21,6 @@ import { BlogsRequestParams } from '../types/blogs'
 import { RequestParams, ResponseBody } from '../types/request'
 import { CreatePostDto } from '../dtos/posts/create-post.dto'
 import { IBlog } from '../types/blogs'
-import { PostsRepository } from '../posts/posts.repository'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { appMessages } from '../constants/messages'
@@ -37,7 +36,6 @@ import { PostsSqlRepository } from '../posts/posts.repository.sql'
 export class BlogsSAController {
   constructor(
     private blogsSqlRepository: BlogsSqlRepository,
-    private postsRepository: PostsRepository,
     private postsSqlRepository: PostsSqlRepository,
     private JWTService: JWTService
   ) {}

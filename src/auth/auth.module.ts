@@ -1,5 +1,4 @@
 import { Module, forwardRef } from '@nestjs/common'
-import { MongooseModule } from '@nestjs/mongoose'
 import { JwtModule } from '@nestjs/jwt'
 
 import { EmailsRepository } from '../emails/emails.repository'
