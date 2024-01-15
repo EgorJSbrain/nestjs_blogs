@@ -170,15 +170,15 @@ export class PostsSqlRepository {
     }
   }
 
-  async getById(id: string, blogId?: string, userId?: string): Promise<IPost | null> {
+  async getById(id: string, userId?: string): Promise<IPost | null> {
     let myLike: ILike | null = null
 
     const query = `
       SELECT p.*, b."name" AS "blogName"
-      FROM public.posts p
-        LEFT JOIN public.blogs b
-          ON p."blogId" = b.id
-      WHERE p.id = $1
+        FROM public.posts p
+          LEFT JOIN public.blogs b
+            ON p."blogId" = b.id
+        WHERE p.id = $1
     `
     const posts = await this.dataSource.query<IPost[]>(query, [id])
 
@@ -199,6 +199,7 @@ export class PostsSqlRepository {
       post.id,
       LENGTH_OF_NEWEST_LIKES_FOR_POST
     )
+    console.log("---newestLikes:", newestLikes)
 
     if (userId) {
       myLike = await this.likeSqlRepository.getLikeBySourceIdAndAuthorId({
@@ -207,6 +208,7 @@ export class PostsSqlRepository {
         authorId: userId
       })
     }
+    console.log("🚀 ~ PostsSqlRepository ~ getById ~ myLike:", myLike)
 
     return {
       ...post,
@@ -214,8 +216,7 @@ export class PostsSqlRepository {
         likesCount: likesCounts?.likesCount ?? 0,
         dislikesCount: likesCounts?.dislikesCount ?? 0,
         myStatus: myLike?.status ?? LikeStatusEnum.none,
-        // newestLikes: formatLikes(newestLikes)
-        newestLikes: []
+        newestLikes: formatLikes(newestLikes)
       }
     }
     // const post = await this.postsModel.findOne({ id }, { _id: 0, __v: 0 })
