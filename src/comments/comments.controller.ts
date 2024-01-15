@@ -175,7 +175,7 @@ export class CommentsController {
       )
     }
 
-    if (existedComment?.authorId !== existedUser?.id) {
+    if (existedComment?.commentatorInfo.userId !== existedUser?.id) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.FORBIDDEN
@@ -231,7 +231,7 @@ export class CommentsController {
       )
     }
 
-    if (existedComment?.authorId !== existedUser?.id) {
+    if (existedComment?.commentatorInfo.userId !== existedUser?.id) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.FORBIDDEN

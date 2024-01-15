@@ -307,7 +307,7 @@ export class PostsController {
       id: comment.id,
       content: comment.content,
       commentatorInfo: {
-        userId: comment.userId,
+        userId: comment.authorId,
         userLogin: existedUser.login
       },
       createdAt: comment.createdAt,
