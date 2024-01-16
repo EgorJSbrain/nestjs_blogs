@@ -18,19 +18,19 @@ import { UsersRequestParams } from '../types/users'
 import { IUser } from '../types/users'
 import { RoutesEnum } from '../constants/global'
 import { appMessages } from '../constants/messages'
-import { UsersSQLRepository } from './users.repository.sql'
+import { UsersRepository } from './users.repository'
 
 @SkipThrottle()
 @Controller(RoutesEnum.saUsers)
 export class UsersSAController {
   constructor(
-    private usersSqlRepository: UsersSQLRepository
+    private usersRepository: UsersRepository
   ) {}
 
   @Get()
   @UseGuards(BasicAuthGuard)
   async getAll(@Query() query: UsersRequestParams): Promise<any> {
-    const users = await this.usersSqlRepository.getAll(query)
+    const users = await this.usersRepository.getAll(query)
 
     return users
   }
@@ -38,7 +38,7 @@ export class UsersSAController {
   @Post()
   @UseGuards(BasicAuthGuard)
   async creatUser(@Body() data: CreateUserDto): Promise<IUser> {
-    const user = await this.usersSqlRepository.createUser(data)
+    const user = await this.usersRepository.createUser(data)
 
     return {
       id: user.id,
@@ -52,7 +52,7 @@ export class UsersSAController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(BasicAuthGuard)
   async deleteUser(@Param() params: { id: string }): Promise<undefined> {
-    const user = await this.usersSqlRepository.getById(params.id)
+    const user = await this.usersRepository.getById(params.id)
 
     if (!user) {
       throw new HttpException(
@@ -61,6 +61,6 @@ export class UsersSAController {
       )
     }
 
-    await this.usersSqlRepository.deleteById(params.id)
+    await this.usersRepository.deleteById(params.id)
   }
 }

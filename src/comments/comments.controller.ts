@@ -25,7 +25,7 @@ import { CommentDto } from '../dtos/comments/create-comment.dto'
 import { LikesSqlRepository } from '../likes/likes.repository.sql'
 import { LikeSourceTypeEnum } from '../constants/likes'
 import { CommentsSqlRepository } from './comments.repository.sql'
-import { UsersSQLRepository } from '../users/users.repository.sql'
+import { UsersRepository } from '../users/users.repository'
 
 @SkipThrottle()
 @Controller(RoutesEnum.comments)
@@ -33,7 +33,7 @@ export class CommentsController {
   constructor(
     private commentsSqlRepository: CommentsSqlRepository,
     private JWTService: JWTService,
-    private usersSqlRepository: UsersSQLRepository,
+    private usersRepository: UsersRepository,
     private likesSqlRepository: LikesSqlRepository,
   ) {}
 
@@ -93,7 +93,7 @@ export class CommentsController {
       )
     }
 
-    const existedUser = await this.usersSqlRepository.getById(currentUserId)
+    const existedUser = await this.usersRepository.getById(currentUserId)
 
     if (!existedUser) {
       throw new HttpException(
@@ -103,6 +103,7 @@ export class CommentsController {
     }
 
     const comment = await this.commentsSqlRepository.getById(commentId)
+    console.log("!!!!!!!comment:", comment)
 
     if (!comment) {
       throw new HttpException(
@@ -160,7 +161,7 @@ export class CommentsController {
       )
     }
 
-    const existedUser = await this.usersSqlRepository.getById(currentUserId)
+    const existedUser = await this.usersRepository.getById(currentUserId)
 
     if (!existedUser) {
       throw new HttpException(
@@ -207,7 +208,7 @@ export class CommentsController {
       )
     }
 
-    const existedUser = await this.usersSqlRepository.getById(currentUserId)
+    const existedUser = await this.usersRepository.getById(currentUserId)
 
     if (!existedUser) {
       throw new HttpException(

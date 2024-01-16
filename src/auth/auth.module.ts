@@ -11,7 +11,7 @@ import { HashService } from '../hash/hash.service'
 import { DevicesRepository } from '../devices/devices.repository'
 import { AuthRepository } from './auth.repository'
 import { AuthController } from './auth.controller'
-import { UsersSQLRepository } from '../users/users.repository.sql'
+import { UsersRepository } from '../users/users.repository'
 import { LocalSqlStrategy } from './strategies/local.strategy'
 
 @Module({
@@ -28,7 +28,7 @@ import { LocalSqlStrategy } from './strategies/local.strategy'
     JWTService,
     EmailsRepository,
     AuthRepository,
-    UsersSQLRepository,
+    UsersRepository,
     LocalSqlStrategy,
     JWTStrategy,
     HashService,

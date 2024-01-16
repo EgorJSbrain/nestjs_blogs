@@ -31,7 +31,7 @@ import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes'
 import { IComment } from '../types/comments'
 import { PostsSqlRepository } from './posts.repository.sql'
 import { LikesSqlRepository } from '../likes/likes.repository.sql'
-import { UsersSQLRepository } from '../users/users.repository.sql'
+import { UsersRepository } from '../users/users.repository'
 import { CommentsSqlRepository } from '../comments/comments.repository.sql'
 
 @SkipThrottle()
@@ -39,7 +39,7 @@ import { CommentsSqlRepository } from '../comments/comments.repository.sql'
 export class PostsController {
   constructor(
     private postsSqlRepository: PostsSqlRepository,
-    private usersSqlRepository: UsersSQLRepository,
+    private usersRepository: UsersRepository,
     private JWTService: JWTService,
     private likesSqlRepository: LikesSqlRepository,
     private commentsSqlRepository: CommentsSqlRepository,
@@ -220,7 +220,7 @@ export class PostsController {
     @CurrentUserId() currentUserId: string,
     @Body() data: LikeDto
   ): Promise<undefined> {
-    const existedUser = await this.usersSqlRepository.getById(currentUserId)
+    const existedUser = await this.usersRepository.getById(currentUserId)
 
     if (!existedUser) {
       throw new HttpException(
@@ -261,7 +261,7 @@ export class PostsController {
     @CurrentUserId() currentUseruserId: string,
     @Body() data: CommentDto
   ): Promise<any> {
-    const existedUser = await this.usersSqlRepository.getById(currentUseruserId)
+    const existedUser = await this.usersRepository.getById(currentUseruserId)
 
     if (!existedUser) {
       throw new HttpException(

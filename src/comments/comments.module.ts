@@ -6,7 +6,7 @@ import { JWTService } from '../jwt/jwt.service';
 import { HashService } from '../hash/hash.service';
 import { LikesSqlRepository } from '../likes/likes.repository.sql';
 import { CommentsSqlRepository } from './comments.repository.sql';
-import { UsersSQLRepository } from '../users/users.repository.sql';
+import { UsersRepository } from '../users/users.repository';
 
 @Module({
   controllers: [CommentsController],
@@ -15,7 +15,7 @@ import { UsersSQLRepository } from '../users/users.repository.sql';
     LikesSqlRepository,
     CommentsSqlRepository,
     JwtService,
-    UsersSQLRepository,
+    UsersRepository,
     HashService,
   ]
 })

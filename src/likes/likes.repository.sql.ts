@@ -153,6 +153,7 @@ export class LikesSqlRepository {
       params.authorId,
       params.sourceId
     ])
+    console.log("🚀 ~ LikesSqlRepository ~ getLikeBySourceIdAndAuthorId ~ likes:", likes)
 
     if (!likes[0]) {
       return null
