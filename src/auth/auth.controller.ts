@@ -23,7 +23,7 @@ import { JWTAuthGuard } from './guards/jwt-auth.guard'
 import { CurrentUserId } from './current-user-id.param.decorator'
 import { appMessages } from '../constants/messages'
 import { DevicesRepository } from '../devices/devices.repository'
-import { UsersSQLRepository } from '../users/users.repository.sql'
+import { UsersRepository } from '../users/users.repository'
 import { AuthRepository } from './auth.repository'
 import { RoutesEnum } from '../constants/global'
 
@@ -33,7 +33,7 @@ export class AuthController {
   constructor(
     private authRepository: AuthRepository,
     private JWTService: JWTService,
-    private usersSqlRepository: UsersSQLRepository,
+    private usersRepository: UsersRepository,
     private devicesRepository: DevicesRepository,
   ) {}
 
@@ -78,7 +78,7 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   async registration(@Body() data: CreateUserDto) {
-    const existedUserByLogin = await this.usersSqlRepository.getUserByLoginOrEmail(data.login)
+    const existedUserByLogin = await this.usersRepository.getUserByLoginOrEmail(data.login)
 
     if (existedUserByLogin) {
       throw new HttpException(
@@ -87,7 +87,7 @@ export class AuthController {
       )
     }
 
-    const existedUserByEmail = await this.usersSqlRepository.getUserByLoginOrEmail(data.email)
+    const existedUserByEmail = await this.usersRepository.getUserByLoginOrEmail(data.email)
 
     if (existedUserByEmail) {
       throw new HttpException(
@@ -187,7 +187,7 @@ export class AuthController {
       )
     }
 
-    const existedUser = await this.usersSqlRepository.getUserByEmail(data.email)
+    const existedUser = await this.usersRepository.getUserByEmail(data.email)
 
     if (!existedUser) {
       throw new HttpException(
@@ -240,7 +240,7 @@ export class AuthController {
       throw new UnauthorizedException()
     }
 
-    const existedUser = await this.usersSqlRepository.getById(userId)
+    const existedUser = await this.usersRepository.getById(userId)
 
     if (!existedUser) {
       throw new UnauthorizedException()
@@ -284,7 +284,7 @@ export class AuthController {
       throw new UnauthorizedException()
     }
 
-    const existedUser = await this.usersSqlRepository.getById(userId)
+    const existedUser = await this.usersRepository.getById(userId)
 
     if (!existedUser) {
       throw new UnauthorizedException()

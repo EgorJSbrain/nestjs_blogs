@@ -9,7 +9,7 @@ import { HashService } from '../hash/hash.service'
 import { IExtendedUser, IUser, UsersRequestParams } from '../types/users'
 
 @Injectable()
-export class UsersSQLRepository {
+export class UsersRepository {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
     private hashService: HashService

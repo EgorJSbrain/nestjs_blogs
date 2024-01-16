@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common'
-import { MongooseModule } from '@nestjs/mongoose'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { APP_GUARD } from '@nestjs/core'
@@ -40,12 +39,6 @@ import { DeviceModule } from './devices/devices.module'
       envFilePath: `${process.env.NODE_ENV}.env`,
       isGlobal: true,
       load: [configuration]
-    }),
-    MongooseModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.get<string>('DATABASE_URL')
-      })
     }),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],

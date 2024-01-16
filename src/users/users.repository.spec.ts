@@ -1,9 +1,7 @@
-import { UsersRepository } from './users.repository';
 import { AppModule } from '../app.module';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from './users.schema';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
@@ -15,7 +13,7 @@ dotenv.config({
 
 describe('UsersRepository', () => {
   let app: INestApplication
-  let service: UsersRepository
+  let service: any
   let mongoServer: MongoMemoryServer
   let mongoUri: string
   let db: typeof mongoose
@@ -46,9 +44,8 @@ describe('UsersRepository', () => {
       imports: [
         AppModule,
         ConfigModule,
-        MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])
       ],
-      providers: [UsersRepository],
+      providers: [],
     }).compile();
 
     configService = new ConfigService()
@@ -59,9 +56,6 @@ describe('UsersRepository', () => {
     app = module.createNestApplication()
 
     await app.init()
-
-    service = module.get<UsersRepository>(UsersRepository);
-
   });
 
   afterAll(async () => {

@@ -7,7 +7,7 @@ import { BlogIdValidator } from '../validators/blog-id.validator';
 import { HashService } from '../hash/hash.service';
 import { PostsSqlRepository } from './posts.repository.sql';
 import { LikesSqlRepository } from '../likes/likes.repository.sql';
-import { UsersSQLRepository } from '../users/users.repository.sql';
+import { UsersRepository } from '../users/users.repository';
 import { CommentsSqlRepository } from '../comments/comments.repository.sql';
 import { BlogsSqlRepository } from '../blogs/blogs.repository.sql';
 
@@ -18,7 +18,7 @@ import { BlogsSqlRepository } from '../blogs/blogs.repository.sql';
     LikesSqlRepository,
     PostsSqlRepository,
     JwtService,
-    UsersSQLRepository,
+    UsersRepository,
     BlogIdValidator,
     BlogsSqlRepository,
     CommentsSqlRepository,
