@@ -96,7 +96,6 @@ export class CommentsSqlRepository {
         page: pageNumberNum,
         pageSize: pageSizeNumber,
         totalCount: count,
-        // items: comments
         items: commentsWithInfoAboutLikes
       }
     } catch {
@@ -123,24 +122,25 @@ export class CommentsSqlRepository {
     }
 
     const likesCounts = await this.likeSqlRepository.getLikesCountsBySourceId(
-      LikeSourceTypeEnum.posts,
+      LikeSourceTypeEnum.comments,
       comment.id
     )
 
     // TODO newst likes
     const newestLikes = await this.likeSqlRepository.getSegmentOfLikesByParams(
-      LikeSourceTypeEnum.posts,
+      LikeSourceTypeEnum.comments,
       comment.id,
       LENGTH_OF_NEWEST_LIKES_FOR_POST
     )
 
     if (userId) {
       myLike = await this.likeSqlRepository.getLikeBySourceIdAndAuthorId({
-        sourceType: LikeSourceTypeEnum.posts,
+        sourceType: LikeSourceTypeEnum.comments,
         sourceId: comment.id,
         authorId: userId
       })
     }
+    console.log("🚀 ~ CommentsSqlRepository ~ getById ~ myLike:", myLike)
 
     return {
       id: comment.id,
