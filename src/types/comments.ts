@@ -1,4 +1,4 @@
-import { ILikeInfo } from './likes'
+import { IExtendedLikeInfo } from './likes'
 
 export type CommentAuthorInfo = {
   userId: string
@@ -10,15 +10,23 @@ export interface ICreatedComment {
   authorId: string
   content: string
   createdAt: string
-  likesInfo: ILikeInfo
+  likesInfo: IExtendedLikeInfo
 }
 
 export interface IComment {
   id: string
+  content: string
+  sourceId: string
+  authorId: string
+  createdAt: string
+}
+
+export interface IExtendedComment {
+  id: string
   commentatorInfo: CommentAuthorInfo
   content: string
   createdAt: string
-  likesInfo: ILikeInfo
+  likesInfo: IExtendedLikeInfo
 }
 
 export interface ICreateCommentType {

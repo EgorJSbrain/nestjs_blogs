@@ -7,8 +7,8 @@ import { UpdatePostDto } from '../dtos/posts/update-post.dto';
 import { LENGTH_OF_NEWEST_LIKES_FOR_POST, LikeSourceTypeEnum } from '../constants/likes'
 import { LikeStatusEnum } from '../constants/likes';
 import { formatLikes } from '../utils/formatLikes';
-import { ILike } from '../types/likes';
-import { ICreatePostType, ICreatedPost, IPost } from '../types/posts';
+import { IExtendedLike } from '../types/likes';
+import { ICreatePostType, IPost, IExtendedPost } from '../types/posts';
 import { SortDirectionsEnum } from '../constants/global';
 import { LikesSqlRepository } from '../likes/likes.repository.sql';
 
@@ -23,7 +23,7 @@ export class PostsSqlRepository {
     params: RequestParams,
     userId: string | null,
     blogId?: string
-  ): Promise<ResponseBody<IPost> | []> {
+  ): Promise<ResponseBody<IExtendedPost> | []> {
     try {
       const {
         sortBy = 'createdAt',
@@ -129,8 +129,8 @@ export class PostsSqlRepository {
     }
   }
 
-  async getById(id: string, userId?: string): Promise<IPost | null> {
-    let myLike: ILike | null = null
+  async getById(id: string, userId?: string): Promise<IExtendedPost | null> {
+    let myLike: IExtendedLike | null = null
 
     const query = `
       SELECT p.*, b."name" AS "blogName"
@@ -139,7 +139,7 @@ export class PostsSqlRepository {
             ON p."blogId" = b.id
         WHERE p.id = $1
     `
-    const posts = await this.dataSource.query<IPost[]>(query, [id])
+    const posts = await this.dataSource.query<IExtendedPost[]>(query, [id])
 
     const post = posts[0]
 
@@ -198,7 +198,7 @@ export class PostsSqlRepository {
     //   }
   }
 
-  async createPost(data: ICreatePostType): Promise<ICreatedPost | null> {
+  async createPost(data: ICreatePostType): Promise<IPost | null> {
     const query = `
       INSERT INTO public.posts(
         "blogId", title, "shortDescription", content
@@ -234,7 +234,7 @@ export class PostsSqlRepository {
         WHERE id = $1;
     `
 
-    await this.dataSource.query<IPost[]>(query, [
+    await this.dataSource.query<IExtendedPost[]>(query, [
       id,
       title,
       content,

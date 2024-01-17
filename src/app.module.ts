@@ -18,6 +18,13 @@ import { JWTModule } from './jwt/jwt.module'
 import { LikesModule } from './likes/likes.module'
 import { HashModule } from './hash/hash.module'
 import { DeviceModule } from './devices/devices.module'
+import { UserEntity } from './entities/user'
+import { BlogEntity } from './entities/blog'
+import { PostEntity } from './entities/post'
+import { DeviceEntity } from './entities/devices'
+import { CommentLikeEntity } from './entities/comment-like'
+import { CommentEntity } from './entities/comment'
+import { PostLikeEntity } from './entities/post-like'
 
 @Module({
   imports: [
@@ -30,7 +37,15 @@ import { DeviceModule } from './devices/devices.module'
         username: config.get('DB.USER'),
         password: config.get('DB.PASS'),
         database: config.get('DB.NAME'),
-        entities: [],
+        entities: [
+          UserEntity,
+          BlogEntity,
+          PostEntity,
+          DeviceEntity,
+          CommentEntity,
+          CommentLikeEntity,
+          PostLikeEntity,
+        ],
         autoLoadEntities: false,
         synchronize: false
       })

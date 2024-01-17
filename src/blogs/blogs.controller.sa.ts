@@ -24,7 +24,7 @@ import { IBlog } from '../types/blogs'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { appMessages } from '../constants/messages'
-import { IPost } from '../types/posts'
+import { IExtendedPost } from '../types/posts'
 import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
@@ -113,7 +113,7 @@ export class BlogsSAController {
   async creatPostByBlogId(
     @Param() params: { blogId: string },
     @Body() data: CreatePostDto
-  ): Promise<IPost | null> {
+  ): Promise<IExtendedPost | null> {
     const blog = await this.blogsSqlRepository.getById(params.blogId)
 
     if (!blog) {
@@ -145,7 +145,7 @@ export class BlogsSAController {
     @Query() query: RequestParams,
     @Param() params: { blogId: string },
     @Req() req: Request
-  ): Promise<ResponseBody<IPost> | []> {
+  ): Promise<ResponseBody<IExtendedPost> | []> {
     let currentUserId: string | null = null
 
     if (!params.blogId) {

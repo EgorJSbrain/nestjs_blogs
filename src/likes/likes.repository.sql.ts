@@ -3,7 +3,7 @@ import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 
 import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes';
-import { ILike, ILikesInfo, LikesRequestParams } from '../types/likes';
+import { IExtendedLike, IExtendedLikesInfo, LikesRequestParams } from '../types/likes';
 import { CreateLikeDto } from '../dtos/like/create-like.dto';
 
 @Injectable()
@@ -131,7 +131,7 @@ export class LikesSqlRepository {
         WHERE id = $1;
     `
 
-    const likes = await this.dataSource.query<ILike[]>(query, [
+    const likes = await this.dataSource.query<IExtendedLike[]>(query, [
       id,
       likeStatus
     ])
@@ -149,7 +149,7 @@ export class LikesSqlRepository {
         FROM public.${params.sourceType}_likes
         WHERE "authorId" = $1 AND "sourceId" = $2
     `
-    const likes = await this.dataSource.query<ILike[]>(query, [
+    const likes = await this.dataSource.query<IExtendedLike[]>(query, [
       params.authorId,
       params.sourceId
     ])

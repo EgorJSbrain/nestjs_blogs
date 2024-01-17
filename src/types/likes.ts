@@ -1,32 +1,32 @@
 import { LikeSourceTypeEnum, LikeStatusEnum } from "../constants/likes"
 
-export interface ILikesInfo {
+export interface IExtendedLikesInfo {
   sourceId: string
   dislikesCount: number
   likesCount: number
 }
 
-export interface ILikeInfo {
+export interface IExtendedLikeInfo {
   likesCount: number
   dislikesCount: number
   myStatus: LikeStatusEnum
 }
 
-export interface ILikeForPost {
+export interface IExtendedLikeForPost {
   login: string
   userId: string
   addedAt: string
 }
 
-export interface IExtendedLikesInfo extends ILikeInfo {
-  newestLikes: ILike[]
+export interface IExtendedLikesInfo extends IExtendedLikeInfo {
+  newestLikes: IExtendedLike[]
 }
 
-export interface IExtendedLikesForPostInfo extends ILikeInfo {
-  newestLikes: ILikeForPost[]
+export interface IExtendedLikesForPostInfo extends IExtendedLikeInfo {
+  newestLikes: IExtendedLikeForPost[]
 }
 
-export interface ILikeShortType {
+export interface IExtendedLikeShortType {
   authorId: number
   status: LikeStatusEnum
 }
@@ -43,5 +43,8 @@ export interface ILike {
   sourceId: string
   status: LikeStatusEnum
   createdAt: string
+}
+
+export interface IExtendedLike extends ILike {
   login: string
 }
