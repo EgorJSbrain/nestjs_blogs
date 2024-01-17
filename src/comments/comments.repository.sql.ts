@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 import { RequestParams, ResponseBody } from '../types/request';
-import { IComment, ICreateCommentType, ICreatedComment, IUpdateCommentType } from '../types/comments';
-import { ILike } from '../types/likes';
+import { IExtendedComment, ICreateCommentType, ICreatedComment, IUpdateCommentType } from '../types/comments';
+import { IExtendedLike } from '../types/likes';
 import { LENGTH_OF_NEWEST_LIKES_FOR_POST, LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes';
 import { SortDirectionsEnum } from '../constants/global';
 import { LikesSqlRepository } from '../likes/likes.repository.sql';
@@ -20,7 +20,7 @@ export class CommentsSqlRepository {
     params: RequestParams,
     sourceId: string,
     userId: string | null
-  ): Promise<ResponseBody<IComment> | []> {
+  ): Promise<ResponseBody<IExtendedComment> | []> {
     try {
       const {
         sortBy = 'createdAt',
@@ -103,8 +103,8 @@ export class CommentsSqlRepository {
     }
   }
 
-  async getById(id: string, userId?: string | null): Promise<IComment | null> {
-    let myLike: ILike | null = null
+  async getById(id: string, userId?: string | null): Promise<IExtendedComment | null> {
+    let myLike: IExtendedLike | null = null
 
     const query = `
       SELECT c.*, u."login" AS "userLogin"

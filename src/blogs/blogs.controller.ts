@@ -14,7 +14,7 @@ import { BlogsRequestParams } from '../types/blogs'
 import { RequestParams, ResponseBody } from '../types/request'
 import { IBlog } from '../types/blogs'
 import { appMessages } from '../constants/messages'
-import { IPost } from '../types/posts'
+import { IExtendedPost } from '../types/posts'
 import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
 import { BlogsSqlRepository } from './blogs.repository.sql'
@@ -57,7 +57,7 @@ export class BlogsController {
     @Query() query: RequestParams,
     @Param() params: { blogId: string },
     @Req() req: Request
-  ): Promise<ResponseBody<IPost> | []> {
+  ): Promise<ResponseBody<IExtendedPost> | []> {
     let currentUserId: string | null = null
 
     if (!params.blogId) {

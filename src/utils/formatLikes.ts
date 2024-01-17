@@ -1,6 +1,6 @@
-import { ILikeForPost, ILike } from '../types/likes'
+import { IExtendedLikeForPost, IExtendedLike } from '../types/likes'
 
-export const formatLikes = (likes: ILike[]): ILikeForPost[] =>
+export const formatLikes = (likes: IExtendedLike[]): IExtendedLikeForPost[] =>
   likes.map((newestLike) => ({
     addedAt: newestLike.createdAt,
     userId: newestLike.authorId,

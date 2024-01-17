@@ -1,4 +1,4 @@
-export interface ICreatedPost {
+export interface IPost {
   id: string
   blogId: string
   title: string
@@ -7,7 +7,7 @@ export interface ICreatedPost {
   createdAt: string
 }
 
-export interface IPost extends ICreatedPost{
+export interface IExtendedPost extends IPost{
   blogName: string
   extendedLikesInfo?: any
 }
