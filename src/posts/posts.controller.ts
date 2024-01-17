@@ -24,11 +24,11 @@ import { appMessages } from '../constants/messages'
 import { JWTService } from '../jwt/jwt.service'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { LikeDto } from '../dtos/like/like.dto'
-import { IPost } from '../types/posts'
+import { IExtendedPost } from '../types/posts'
 import { RoutesEnum } from '../constants/global'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
 import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes'
-import { IComment } from '../types/comments'
+import { IExtendedComment } from '../types/comments'
 import { PostsSqlRepository } from './posts.repository.sql'
 import { LikesSqlRepository } from '../likes/likes.repository.sql'
 import { UsersRepository } from '../users/users.repository'
@@ -49,7 +49,7 @@ export class PostsController {
   async getAll(
     @Query() query: RequestParams,
     @Req() req: Request,
-  ): Promise<ResponseBody<IPost> | []> {
+  ): Promise<ResponseBody<IExtendedPost> | []> {
     let currentUserId: string | null = null
 
     if (req.headers.authorization) {
@@ -70,7 +70,7 @@ export class PostsController {
     @Param() params: { postId: string },
     @Query() query: RequestParams,
     @Req() req: Request,
-  ): Promise<ResponseBody<IComment> | []> {
+  ): Promise<ResponseBody<IExtendedComment> | []> {
     const postId = params.postId
 
     if (!postId) {
@@ -106,7 +106,7 @@ export class PostsController {
   async getPostById(
     @Param() params: { id: string },
     @Req() req: Request,
-  ): Promise<IPost | null> {
+  ): Promise<IExtendedPost | null> {
     let currentUserId: string | undefined
 
     if (req.headers.authorization) {
@@ -201,7 +201,7 @@ export class PostsController {
   @Get(':id/posts')
   async getPostsByPostId(
     @Param() params: { id: string }
-  ): Promise<IPost | null> {
+  ): Promise<IExtendedPost | null> {
     const post = await this.postsSqlRepository.getById(params.id)
 
     return null

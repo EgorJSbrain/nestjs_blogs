@@ -16,7 +16,7 @@ import { Request } from 'express'
 
 import { RoutesEnum } from '../constants/global'
 import { JWTService } from '../jwt/jwt.service'
-import { IComment } from '../types/comments'
+import { IExtendedComment } from '../types/comments'
 import { appMessages } from '../constants/messages'
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
@@ -41,7 +41,7 @@ export class CommentsController {
   async getById(
     @Param() params: { commentId: string },
     @Req() req: Request
-  ): Promise<IComment | null> {
+  ): Promise<IExtendedComment | null> {
     const commentId = params.commentId
     let currentUserId: string | null = null
 
