@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { PostsController } from './posts.controller';
 import { JWTService } from '../jwt/jwt.service';
@@ -10,8 +11,10 @@ import { LikesSqlRepository } from '../likes/likes.repository.sql';
 import { UsersRepository } from '../users/users.repository';
 import { CommentsSqlRepository } from '../comments/comments.repository.sql';
 import { BlogsSqlRepository } from '../blogs/blogs.repository.sql';
+import { UserEntity } from '../entities/user';
 
 @Module({
+  imports: [TypeOrmModule.forFeature([UserEntity])],
   controllers: [PostsController],
   providers: [
     JWTService,

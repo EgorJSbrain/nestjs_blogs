@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common'
 import { JwtModule } from '@nestjs/jwt'
+import { TypeOrmModule } from '@nestjs/typeorm'
 
 import { EmailsRepository } from '../emails/emails.repository'
 import { EmailsModule } from '../emails/emails.module'
@@ -13,9 +14,11 @@ import { AuthRepository } from './auth.repository'
 import { AuthController } from './auth.controller'
 import { UsersRepository } from '../users/users.repository'
 import { LocalSqlStrategy } from './strategies/local.strategy'
+import { UserEntity } from '../entities/user'
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([UserEntity]),
     forwardRef(() => EmailsModule),
     forwardRef(() => JwtModule)
   ],

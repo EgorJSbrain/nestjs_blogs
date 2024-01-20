@@ -1,8 +1,8 @@
-import { SortDirectionsEnum } from '../constants/global'
+import { SortDirectionsEnum, SortType } from '../constants/global'
 
 export type RequestParams = {
   sortBy?: string
-  sortDirection?: SortDirectionsEnum
+  sortDirection?: SortType
   pageNumber?: string
   pageSize?: string
 }

@@ -1,24 +1,36 @@
 import { Injectable } from '@nestjs/common'
-import { InjectDataSource } from '@nestjs/typeorm'
-import { DataSource } from 'typeorm'
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
+import { DataSource, ILike, Repository } from 'typeorm'
 import { v4 } from 'uuid'
 
-import { SortDirectionsEnum } from '../constants/global'
+import { SortDirections, SortDirectionsEnum } from '../constants/global'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { HashService } from '../hash/hash.service'
 import { IExtendedUser, IUser, UsersRequestParams } from '../types/users'
+import { UserEntity } from '../entities/user'
+
+const writeSql = async (sql: string) => {
+  const fs = require('fs/promises')
+  try {
+    await fs.writeFile('sql.txt', sql)
+  } catch (err) {
+  console. log (err)
+}
+}
 
 @Injectable()
 export class UsersRepository {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
+    @InjectRepository(UserEntity)
+    private readonly usersRepo: Repository<UserEntity>,
     private hashService: HashService
   ) {}
 
   async getAll(params: UsersRequestParams) {
     const {
       sortBy = 'createdAt',
-      sortDirection = SortDirectionsEnum.desc,
+      sortDirection = SortDirections.desc,
       pageNumber = 1,
       pageSize = 10,
       searchLoginTerm = '',
@@ -27,58 +39,71 @@ export class UsersRepository {
 
     const pageSizeNumber = Number(pageSize)
     const pageNumberNum = Number(pageNumber)
-    const skip = (pageNumberNum - 1) * pageSizeNumber
+    const skip = ((pageNumberNum || 1) - 1) * pageSizeNumber
 
-    const query = `
-      SELECT "createdAt", login, email, id
-      FROM public.users
-      WHERE "email" ILIKE $1 OR
-        "login" ILIKE $2
-      ORDER BY "${sortBy}" ${sortDirection.toLocaleUpperCase()}
-      LIMIT $3 OFFSET $4
-    `
-    const users = await this.dataSource.query(query, [
-      `%${searchEmailTerm}%`,
-      `%${searchLoginTerm}%`,
-      pageSizeNumber,
-      skip
-    ])
+    let whereFilter = ''
 
-    const queryForCount = `
-      SELECT count(*) AS count FROM public.users
-      WHERE "email" ILIKE $1 OR
-        "login" ILIKE $2
-    `
-    const countResult = await this.dataSource.query(queryForCount, [
-      `%${searchEmailTerm}%`,
-      `%${searchLoginTerm}%`
-    ])
+    if (searchEmailTerm) {
+      whereFilter = 'user.email ILIKE :email'
+    }
 
-    const count = countResult[0] ? Number(countResult[0].count) : 0
+    if (searchLoginTerm) {
+      whereFilter = 'user.login ILIKE :login'
+    }
+
+    if (searchLoginTerm && searchEmailTerm) {
+      whereFilter = 'user.email ILIKE :email OR user.login ILIKE :login'
+    }
+
+    console.log("----whereFilter:", whereFilter)
+    console.log("----!!!-----:", `user.${sortBy}`, sortDirection)
+
+    const query = this.usersRepo.createQueryBuilder('user')
+    const searchObject = query
+      .where(whereFilter, {
+        email: searchEmailTerm
+          ? `%${searchEmailTerm.toLocaleLowerCase()}%`
+          : undefined,
+        login: searchLoginTerm
+          ? `%${searchLoginTerm.toLocaleLowerCase()}%`
+          : undefined
+      })
+      .select([
+        'user.id',
+        'user.login',
+        'user.email',
+        'user.createdAt',
+      ])
+      .orderBy(`user.${sortBy}`, sortDirection)
+      .addOrderBy(`user.${sortBy}`)
+      .skip(skip)
+      .take(pageSizeNumber)
+
+    const users = await searchObject.take(pageSizeNumber).getMany()
+    const count = await searchObject.getCount()
+
     const pagesCount = Math.ceil(count / pageSizeNumber)
 
     return {
       pagesCount,
-      page: pageNumberNum,
+      page: pageNumberNum || 1,
       pageSize: pageSizeNumber,
       totalCount: count,
       items: users
     }
   }
 
-  async getById(id: string): Promise<IUser | null> {
-    const query = `
-      SELECT id, "login", "email", "createdAt", "isConfirmed"
-      FROM public.users
-      WHERE id = $1
-    `
-    const users = await this.dataSource.query<IUser[]>(query, [id])
+  async getById(id: string): Promise<UserEntity | null> {
+    const user = this.usersRepo
+      .createQueryBuilder('user')
+      .where('user.id = :id', { id })
+      .getOne()
 
-    if (!users[0]) {
+    if (!user) {
       return null
     }
 
-    return users[0]
+    return user
   }
 
   async getUserByLoginOrEmail(
@@ -90,7 +115,9 @@ export class UsersRepository {
       WHERE "email" = $1 OR
         "login" = $1
     `
-    const users = await this.dataSource.query<IExtendedUser[]>(query, [loginOrEmail])
+    const users = await this.dataSource.query<IExtendedUser[]>(query, [
+      loginOrEmail
+    ])
 
     if (!users[0]) {
       return null
@@ -114,30 +141,42 @@ export class UsersRepository {
     return users[0]
   }
 
-  async createUser(data: CreateUserDto): Promise<IExtendedUser> {
+  async createUser(data: CreateUserDto): Promise<UserEntity | null> {
     const { passwordSalt, passwordHash } = await this.hashService.generateHash(
       data.password
     )
 
     const confirmationCode = v4()
 
-    const query = `
-      INSERT INTO public.users(
-        "login", "email", "passwordHash", "passwordSalt", "confirmationCode"
-      )
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, "login", "email", "createdAt", "confirmationCode"
-      `
+    const query = this.usersRepo.createQueryBuilder('user')
 
-    const users = await this.dataSource.query(query, [
-      data.login,
-      data.email,
-      passwordHash,
-      passwordSalt,
-      confirmationCode
-    ])
+    const newUser = await query
+      .insert()
+      .values({
+        login: data.login,
+        email: data.email,
+        passwordHash,
+        passwordSalt,
+        confirmationCode
+      })
+      .execute()
 
-    return users[0]
+    const user = await query
+      .select([
+        'user.id',
+        'user.login',
+        'user.email',
+        'user.createdAt',
+        'user.confirmationCode'
+      ])
+      .where('user.id = :id', { id: newUser.raw[0].id })
+      .getOne()
+
+    if (!user) {
+      return null
+    }
+
+    return user
   }
 
   async getUserByVerificationCode(code: string): Promise<IExtendedUser | null> {
@@ -170,13 +209,19 @@ export class UsersRepository {
     return users[0]
   }
 
-  async setNewConfirmationCodeOfUser(code: string, id: string): Promise<IExtendedUser | null> {
+  async setNewConfirmationCodeOfUser(
+    code: string,
+    id: string
+  ): Promise<IExtendedUser | null> {
     const query = `
       UPDATE public.users
       SET "confirmationCode"=$1
       WHERE id = $2
     `
-    const users = await this.dataSource.query<IExtendedUser[]>(query, [code, id])
+    const users = await this.dataSource.query<IExtendedUser[]>(query, [
+      code,
+      id
+    ])
 
     if (!users[0]) {
       return null
@@ -184,13 +229,21 @@ export class UsersRepository {
 
     return users[0]
   }
-  async setNewHashesOfUser(passwordHash: string, passwordSalt: string, id: string): Promise<IExtendedUser | null> {
+  async setNewHashesOfUser(
+    passwordHash: string,
+    passwordSalt: string,
+    id: string
+  ): Promise<IExtendedUser | null> {
     const query = `
       UPDATE public.users
       SET "passwordHash"=$1, "passwordSalt"=$2
       WHERE id = $3
     `
-    const users = await this.dataSource.query<IExtendedUser[]>(query, [passwordHash, passwordSalt, id])
+    const users = await this.dataSource.query<IExtendedUser[]>(query, [
+      passwordHash,
+      passwordSalt,
+      id
+    ])
 
     if (!users[0]) {
       return null
@@ -199,11 +252,13 @@ export class UsersRepository {
     return users[0]
   }
 
-  deleteById(id: string) {
-    const query = `
-      DELETE FROM public.users
-      WHERE id = $1
-    `
-    return this.dataSource.query(query, [id])
+  async deleteById(id: string) {
+    const user = await this.usersRepo
+      .createQueryBuilder('user')
+      .delete()
+      .where('id = :id', { id })
+      .execute()
+
+    return !!user.affected
   }
 }
