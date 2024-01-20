@@ -35,8 +35,12 @@ export class AuthRepository {
     return user
   }
 
-  async register(data: CreateUserDto): Promise<IExtendedUser> {
+  async register(data: CreateUserDto): Promise<IExtendedUser | null> {
     const user = await this.usersRepository.createUser(data)
+
+    if (!user) {
+      return null
+    }
 
     this.emailsRepository.sendRegistrationConfirmationMail(
       user.email,

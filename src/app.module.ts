@@ -46,7 +46,7 @@ import { PostLikeEntity } from './entities/post-like'
           CommentLikeEntity,
           PostLikeEntity,
         ],
-        autoLoadEntities: false,
+        autoLoadEntities: true,
         synchronize: false
       })
     }),

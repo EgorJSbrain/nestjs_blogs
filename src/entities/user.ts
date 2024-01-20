@@ -10,7 +10,7 @@ import { STRING_MAX_LENGTH } from '../constants/global'
 import { IExtendedUser } from '../types/users'
 import { DeviceEntity } from './devices'
 
-@Entity()
+@Entity({ name: 'users' })
 export class UserEntity extends BaseEntity implements IExtendedUser {
   @PrimaryGeneratedColumn('uuid')
   id: string

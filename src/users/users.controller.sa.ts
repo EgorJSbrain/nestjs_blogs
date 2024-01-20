@@ -19,18 +19,21 @@ import { IUser } from '../types/users'
 import { RoutesEnum } from '../constants/global'
 import { appMessages } from '../constants/messages'
 import { UsersRepository } from './users.repository'
+import { UsersService } from './users.service'
 
 @SkipThrottle()
 @Controller(RoutesEnum.saUsers)
 export class UsersSAController {
   constructor(
-    private usersRepository: UsersRepository
+    private usersRepository: UsersRepository,
+    private usersService: UsersService,
   ) {}
 
   @Get()
   @UseGuards(BasicAuthGuard)
   async getAll(@Query() query: UsersRequestParams): Promise<any> {
-    const users = await this.usersRepository.getAll(query)
+    const users = await this.usersService.getAll(query)
+    // const users = await this.usersRepository.getAll(query)
 
     return users
   }
@@ -41,10 +44,10 @@ export class UsersSAController {
     const user = await this.usersRepository.createUser(data)
 
     return {
-      id: user.id,
-      login: user.login,
-      email: user.email,
-      createdAt: user.createdAt
+      id: user!.id,
+      login: user!.login,
+      email: user!.email,
+      createdAt: user!.createdAt
     }
   }
 
