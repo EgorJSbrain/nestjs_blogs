@@ -26,3 +26,10 @@ export enum SortDirectionsEnum {
   asc = 'asc',
   desc = 'desc'
 }
+
+export const SortDirections: Record<SortDirectionsEnum, SortType> = {
+  asc: 'ASC',
+  desc: 'DESC'
+}
+
+export type SortType = 'ASC' | 'DESC' | undefined
