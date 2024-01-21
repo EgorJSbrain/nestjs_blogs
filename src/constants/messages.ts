@@ -10,6 +10,7 @@ export const appMessages = (data?: string | number) => ({
   device: 'Device',
   email: 'email',
   code: 'code',
+  login: 'login',
   info: {
     userRegistred: 'User was registered successfully.',
     emailIsUsedYet: 'Email is used yet',

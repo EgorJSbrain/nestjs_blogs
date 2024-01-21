@@ -1,19 +1,13 @@
 import { Injectable } from '@nestjs/common'
-import { InjectDataSource } from '@nestjs/typeorm'
-import { DataSource } from 'typeorm'
-import { v4 } from 'uuid'
 
-import { SortDirectionsEnum } from '../constants/global'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
-import { HashService } from '../hash/hash.service'
-import { IExtendedUser, IUser, UsersRequestParams } from '../types/users'
+import { UsersRequestParams } from '../types/users'
 import { UsersRepository } from './users.repository'
 
 @Injectable()
 export class UsersService {
   constructor(
     private usersRepository: UsersRepository,
-    private hashService: HashService
   ) {}
 
   async getAll(params: UsersRequestParams) {
