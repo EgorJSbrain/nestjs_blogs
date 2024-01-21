@@ -1,22 +1,25 @@
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
-import { DataSource, ILike, Repository } from 'typeorm'
+import { DataSource, Repository } from 'typeorm'
 import { v4 } from 'uuid'
 
-import { SortDirections, SortDirectionsEnum } from '../constants/global'
+import { SortDirections, SortType } from '../constants/global'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { HashService } from '../hash/hash.service'
-import { IExtendedUser, IUser, UsersRequestParams } from '../types/users'
+import { IExtendedUser, UsersRequestParams } from '../types/users'
 import { UserEntity } from '../entities/user'
 
-const writeSql = async (sql: string) => {
-  const fs = require('fs/promises')
-  try {
-    await fs.writeFile('sql.txt', sql)
-  } catch (err) {
-  console. log (err)
-}
-}
+// const writeSql = async (sql: string) => {
+//   const fs = require('fs/promises')
+//   try {
+//     await fs.writeFile('sql.txt', sql)
+//   } catch (err) {
+//     console.log(err)
+//   }
+// }
+
+// const sql = await writeSql(searchObject.getSql())
+
 
 @Injectable()
 export class UsersRepository {
@@ -39,7 +42,7 @@ export class UsersRepository {
 
     const pageSizeNumber = Number(pageSize)
     const pageNumberNum = Number(pageNumber)
-    const skip = ((pageNumberNum || 1) - 1) * pageSizeNumber
+    const skip = (pageNumberNum - 1) * pageSizeNumber
 
     let whereFilter = ''
 
@@ -55,9 +58,6 @@ export class UsersRepository {
       whereFilter = 'user.email ILIKE :email OR user.login ILIKE :login'
     }
 
-    console.log("----whereFilter:", whereFilter)
-    console.log("----!!!-----:", `user.${sortBy}`, sortDirection)
-
     const query = this.usersRepo.createQueryBuilder('user')
     const searchObject = query
       .where(whereFilter, {
@@ -68,14 +68,11 @@ export class UsersRepository {
           ? `%${searchLoginTerm.toLocaleLowerCase()}%`
           : undefined
       })
-      .select([
-        'user.id',
-        'user.login',
-        'user.email',
-        'user.createdAt',
-      ])
-      .orderBy(`user.${sortBy}`, sortDirection)
-      .addOrderBy(`user.${sortBy}`)
+      .select(['user.id', 'user.login', 'user.email', 'user.createdAt'])
+      .addOrderBy(
+        `user.${sortBy}`,
+        sortDirection?.toLocaleUpperCase() as SortType
+      )
       .skip(skip)
       .take(pageSizeNumber)
 
