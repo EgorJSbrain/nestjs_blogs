@@ -44,7 +44,6 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
     @Req() req: Request,
     @Ip() ip: string,
-    @Body() data: LoginDto
   ) {
     const deviceTitle = req.headers['user-agent']
 
@@ -82,7 +81,7 @@ export class AuthController {
 
     if (existedUserByLogin) {
       throw new HttpException(
-        { message: appMessages().info.loginIsUsedYet, field: 'login' },
+        { message: appMessages().info.loginIsUsedYet, field: appMessages().login },
         HttpStatus.BAD_REQUEST
       )
     }

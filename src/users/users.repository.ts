@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
-import { DataSource, ILike, Repository } from 'typeorm'
+import { DataSource, Repository } from 'typeorm'
 import { v4 } from 'uuid'
 
-import { SortDirections, SortDirectionsEnum } from '../constants/global'
+import { SortDirections, SortType } from '../constants/global'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { HashService } from '../hash/hash.service'
-import { IExtendedUser, IUser, UsersRequestParams } from '../types/users'
+import { IExtendedUser, UsersRequestParams } from '../types/users'
 import { UserEntity } from '../entities/user'
 
 const writeSql = async (sql: string) => {
@@ -14,16 +14,18 @@ const writeSql = async (sql: string) => {
   try {
     await fs.writeFile('sql.txt', sql)
   } catch (err) {
-  console. log (err)
-}
+    console.log(err)
+  }
 }
 
 @Injectable()
 export class UsersRepository {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
+
     @InjectRepository(UserEntity)
     private readonly usersRepo: Repository<UserEntity>,
+
     private hashService: HashService
   ) {}
 
@@ -39,7 +41,7 @@ export class UsersRepository {
 
     const pageSizeNumber = Number(pageSize)
     const pageNumberNum = Number(pageNumber)
-    const skip = ((pageNumberNum || 1) - 1) * pageSizeNumber
+    const skip = (pageNumberNum - 1) * pageSizeNumber
 
     let whereFilter = ''
 
@@ -55,9 +57,6 @@ export class UsersRepository {
       whereFilter = 'user.email ILIKE :email OR user.login ILIKE :login'
     }
 
-    console.log("----whereFilter:", whereFilter)
-    console.log("----!!!-----:", `user.${sortBy}`, sortDirection)
-
     const query = this.usersRepo.createQueryBuilder('user')
     const searchObject = query
       .where(whereFilter, {
@@ -68,14 +67,11 @@ export class UsersRepository {
           ? `%${searchLoginTerm.toLocaleLowerCase()}%`
           : undefined
       })
-      .select([
-        'user.id',
-        'user.login',
-        'user.email',
-        'user.createdAt',
-      ])
-      .orderBy(`user.${sortBy}`, sortDirection)
-      .addOrderBy(`user.${sortBy}`)
+      .select(['user.id', 'user.login', 'user.email', 'user.createdAt'])
+      .addOrderBy(
+        `user.${sortBy}`,
+        sortDirection?.toLocaleUpperCase() as SortType
+      )
       .skip(skip)
       .take(pageSizeNumber)
 
@@ -109,36 +105,42 @@ export class UsersRepository {
   async getUserByLoginOrEmail(
     loginOrEmail: string
   ): Promise<IExtendedUser | null> {
-    const query = `
-      SELECT "createdAt", login, email, id, "passwordHash"
-      FROM public.users
-      WHERE "email" = $1 OR
-        "login" = $1
-    `
-    const users = await this.dataSource.query<IExtendedUser[]>(query, [
-      loginOrEmail
-    ])
+    const user = await this.usersRepo
+      .createQueryBuilder('user')
+      .where('user.login = :login OR user.email = :email', {
+        login: loginOrEmail,
+        email: loginOrEmail
+      })
+      .getOne()
 
-    if (!users[0]) {
+    if (!user) {
       return null
     }
 
-    return users[0]
+    return user
   }
 
   async getUserByEmail(email: string): Promise<IExtendedUser | null> {
-    const query = `
-      SELECT "createdAt", login, email, id, "passwordHash", "isConfirmed"
-      FROM public.users
-      WHERE "email" = $1
-    `
-    const users = await this.dataSource.query<IExtendedUser[]>(query, [email])
+    const user = await this.usersRepo
+      .createQueryBuilder('user')
+      .select([
+        'user.createdAt',
+        'user.login',
+        'user.email',
+        'user.id',
+        'user.passwordHash',
+        'user.isConfirmed'
+      ])
+      .where('user.email = :email', {
+        email: email
+      })
+      .getOne()
 
-    if (!users[0]) {
+    if (!user) {
       return null
     }
 
-    return users[0]
+    return user
   }
 
   async createUser(data: CreateUserDto): Promise<UserEntity | null> {
@@ -180,76 +182,90 @@ export class UsersRepository {
   }
 
   async getUserByVerificationCode(code: string): Promise<IExtendedUser | null> {
-    const query = `
-      SELECT "createdAt", login, email, id, "passwordHash", "isConfirmed"
-      FROM public.users
-      WHERE "confirmationCode" = $1
-    `
-    const users = await this.dataSource.query<IExtendedUser[]>(query, [code])
+    const user = await this.usersRepo
+      .createQueryBuilder('user')
+      .select([
+        'user.createdAt',
+        'user.login',
+        'user.email',
+        'user.id',
+        'user.passwordHash',
+        'user.isConfirmed'
+      ])
+      .where('user.confirmationCode = :confirmationCode', {
+        confirmationCode: code
+      })
+      .getOne()
 
-    if (!users[0]) {
+    if (!user) {
       return null
     }
 
-    return users[0]
+    return user
   }
 
-  async confirmEmailOfUser(id: string): Promise<IExtendedUser | null> {
-    const query = `
-      UPDATE public.users
-        SET "isConfirmed"=true
-        WHERE id = $1;
-      `
-    const users = await this.dataSource.query<IExtendedUser[]>(query, [id])
+  async confirmEmailOfUser(id: string): Promise<any | null> {
+    await this.usersRepo
+      .createQueryBuilder('user')
+      .update()
+      .set({ isConfirmed: true })
+      .where('id = :id', {
+        id
+      })
+      .execute()
 
-    if (!users[0]) {
+    const user = await this.getById(id)
+
+    if (!user) {
       return null
     }
 
-    return users[0]
+    return user
   }
 
   async setNewConfirmationCodeOfUser(
     code: string,
     id: string
   ): Promise<IExtendedUser | null> {
-    const query = `
-      UPDATE public.users
-      SET "confirmationCode"=$1
-      WHERE id = $2
-    `
-    const users = await this.dataSource.query<IExtendedUser[]>(query, [
-      code,
-      id
-    ])
+    await this.usersRepo
+      .createQueryBuilder('user')
+      .update()
+      .set({ confirmationCode: code })
+      .where('id = :id', {
+        id
+      })
+      .execute()
 
-    if (!users[0]) {
+    const user = await this.getById(id)
+
+    if (!user) {
       return null
     }
 
-    return users[0]
+    return user
   }
+
   async setNewHashesOfUser(
     passwordHash: string,
     passwordSalt: string,
     id: string
   ): Promise<IExtendedUser | null> {
-    const query = `
-      UPDATE public.users
-      SET "passwordHash"=$1, "passwordSalt"=$2
-      WHERE id = $3
-    `
-    const users = await this.dataSource.query<IExtendedUser[]>(query, [
-      passwordHash,
-      passwordSalt,
-      id
-    ])
+    await this.usersRepo
+      .createQueryBuilder('user')
+      .update()
+      .set({ passwordHash, passwordSalt })
+      .where('id = :id', {
+        id
+      })
+      .execute()
 
-    if (!users[0]) {
+    const user = await this.getById(id)
+
+    if (!user) {
       return null
     }
 
-    return users[0]
+    return user
   }
 
   async deleteById(id: string) {
