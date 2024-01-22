@@ -10,7 +10,7 @@ import { STRING_MAX_LENGTH } from '../constants/global'
 import { IDevice } from '../types/devices'
 import { UserEntity } from './user'
 
-@Entity()
+@Entity({ name: 'devices' })
 export class DeviceEntity extends BaseEntity implements IDevice {
   @PrimaryGeneratedColumn('uuid')
   deviceId: string
@@ -29,9 +29,6 @@ export class DeviceEntity extends BaseEntity implements IDevice {
 
   @Column()
   expiredDate: string
-
-  @Column()
-  createdAt: string
 
   @ManyToOne(() => UserEntity, (u) => u.devices)
   user: UserEntity

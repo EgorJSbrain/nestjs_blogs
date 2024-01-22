@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
-import { DataSource, Repository } from 'typeorm'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
 import { v4 } from 'uuid'
 
 import { SortDirections, SortType } from '../constants/global'
@@ -9,20 +9,9 @@ import { HashService } from '../hash/hash.service'
 import { IExtendedUser, UsersRequestParams } from '../types/users'
 import { UserEntity } from '../entities/user'
 
-const writeSql = async (sql: string) => {
-  const fs = require('fs/promises')
-  try {
-    await fs.writeFile('sql.txt', sql)
-  } catch (err) {
-    console.log(err)
-  }
-}
-
 @Injectable()
 export class UsersRepository {
   constructor(
-    @InjectDataSource() protected dataSource: DataSource,
-
     @InjectRepository(UserEntity)
     private readonly usersRepo: Repository<UserEntity>,
 
