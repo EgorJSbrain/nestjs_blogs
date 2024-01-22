@@ -22,10 +22,10 @@ import { LocalGuard } from './guards/local-auth.guard'
 import { JWTAuthGuard } from './guards/jwt-auth.guard'
 import { CurrentUserId } from './current-user-id.param.decorator'
 import { appMessages } from '../constants/messages'
-import { DevicesRepository } from '../devices/devices.repository'
 import { UsersRepository } from '../users/users.repository'
 import { AuthRepository } from './auth.repository'
 import { RoutesEnum } from '../constants/global'
+import { DevicesService } from '../devices/devices.service'
 
 @SkipThrottle()
 @Controller(RoutesEnum.auth)
@@ -34,7 +34,7 @@ export class AuthController {
     private authRepository: AuthRepository,
     private JWTService: JWTService,
     private usersRepository: UsersRepository,
-    private devicesRepository: DevicesRepository,
+    private devicesService: DevicesService,
   ) {}
 
   @Post('login')
@@ -44,6 +44,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
     @Req() req: Request,
     @Ip() ip: string,
+    @Body() data: LoginDto
   ) {
     const deviceTitle = req.headers['user-agent']
 
@@ -55,7 +56,7 @@ export class AuthController {
       })
     }
 
-    const device = await this.devicesRepository.createDevice({
+    const device = await this.devicesService.createDevice({
       ip,
       title: deviceTitle ?? 'device_title',
       userId: req.user?.userId
@@ -81,7 +82,7 @@ export class AuthController {
 
     if (existedUserByLogin) {
       throw new HttpException(
-        { message: appMessages().info.loginIsUsedYet, field: appMessages().login },
+        { message: appMessages().info.loginIsUsedYet, field: 'login' },
         HttpStatus.BAD_REQUEST
       )
     }
@@ -245,13 +246,14 @@ export class AuthController {
       throw new UnauthorizedException()
     }
 
-    const existedDevice = await this.devicesRepository.getDeviceByDate(lastActiveDate)
+    const existedDevice = await this.devicesService.getDeviceByDate(lastActiveDate)
+    console.log("--!!!--existedDevice:", existedDevice)
 
     if (!existedDevice) {
       throw new UnauthorizedException()
     }
 
-    const updatedDevice = await this.devicesRepository.updateDevice(existedDevice.lastActiveDate)
+    const updatedDevice = await this.devicesService.updateDevice(existedDevice.lastActiveDate)
 
     if (!updatedDevice) {
       throw new UnauthorizedException()
@@ -278,6 +280,7 @@ export class AuthController {
     }
 
     const { userId, deviceId, lastActiveDate } = await this.JWTService.verifyRefreshToken(token)
+    const data = await this.JWTService.verifyRefreshToken(token)
 
     if (!userId || !lastActiveDate || !deviceId) {
       throw new UnauthorizedException()
@@ -289,13 +292,13 @@ export class AuthController {
       throw new UnauthorizedException()
     }
 
-    const existedDevice = await this.devicesRepository.getDeviceByDate(lastActiveDate)
+    const existedDevice = await this.devicesService.getDeviceByDate(lastActiveDate)
 
     if (!existedDevice) {
       throw new UnauthorizedException()
     }
 
-    await this.devicesRepository.deleteDevice(deviceId)
+    await this.devicesService.deleteDevice(deviceId)
 
     return
   }
