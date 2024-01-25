@@ -13,7 +13,6 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { Request, Response } from 'express'
-import { SkipThrottle } from '@nestjs/throttler'
 
 import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { LoginDto } from '../dtos/auth/login.dto'
@@ -27,7 +26,6 @@ import { AuthRepository } from './auth.repository'
 import { RoutesEnum } from '../constants/global'
 import { DevicesService } from '../devices/devices.service'
 
-@SkipThrottle()
 @Controller(RoutesEnum.auth)
 export class AuthController {
   constructor(
@@ -247,7 +245,6 @@ export class AuthController {
     }
 
     const existedDevice = await this.devicesService.getDeviceByDate(lastActiveDate)
-    console.log("--!!!--existedDevice:", existedDevice)
 
     if (!existedDevice) {
       throw new UnauthorizedException()
@@ -280,7 +277,6 @@ export class AuthController {
     }
 
     const { userId, deviceId, lastActiveDate } = await this.JWTService.verifyRefreshToken(token)
-    const data = await this.JWTService.verifyRefreshToken(token)
 
     if (!userId || !lastActiveDate || !deviceId) {
       throw new UnauthorizedException()
