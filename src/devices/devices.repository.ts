@@ -7,14 +7,14 @@ import { IDevice } from '../types/devices'
 import { CreateDeviceDto } from '../dtos/devices/create-device.dto'
 import { DeviceEntity } from '../entities/devices'
 
-const writeSql = async (sql: string) => {
-  const fs = require('fs/promises')
-  try {
-    await fs.writeFile('sql.txt', sql)
-  } catch (err) {
-    console.log(err)
-  }
-}
+// const writeSql = async (sql: string) => {
+//   const fs = require('fs/promises')
+//   try {
+//     await fs.writeFile('sql.txt', sql)
+//   } catch (err) {
+//     console.log(err)
+//   }
+// }
 
 @Injectable()
 export class DevicesRepository {
@@ -24,31 +24,30 @@ export class DevicesRepository {
     private readonly devicesRepo: Repository<DeviceEntity>
   ) {}
 
-  async getAllDevicesByUserId(userId: string | null): Promise<any> {
+  async getAllDevicesByUserId(userId: string | null): Promise<DeviceEntity[] | null> {
     try {
-      const device = await this.devicesRepo
+      const devices = await this.devicesRepo
         .createQueryBuilder('device')
+        .select(["device.deviceId", "device.ip", "device.title", "device.lastActiveDate"])
         .where('device.userId = :userId', { userId })
-        .getOne()
+        .getMany()
 
-      if (!device) {
+      if (!devices.length) {
         return null
       }
 
-      return device
-    } catch {
+      return devices
+    } catch(e) {
       return []
     }
   }
 
   async getDeviceByDate(lastActiveDate: string): Promise<IDevice | null> {
     try {
-      console.log("lastActiveDate:", lastActiveDate)
       const device = await this.devicesRepo
         .createQueryBuilder('device')
         .where('device.lastActiveDate = :lastActiveDate', { lastActiveDate })
         .getOne()
-      console.log("!!!!!getDeviceByDate ~ device:", device)
 
       if (!device) {
         return null
@@ -61,7 +60,6 @@ export class DevicesRepository {
   }
 
   async getDeviceByDeviceId(deviceId: string): Promise<IDevice | null> {
-    console.log("======= ~ deviceId:", deviceId)
     try {
       const device = await this.devicesRepo
         .createQueryBuilder('device')
@@ -73,7 +71,7 @@ export class DevicesRepository {
       }
 
       return device
-    } catch {
+    } catch(e) {
       return null
     }
   }
@@ -132,29 +130,17 @@ export class DevicesRepository {
       const expiredDate = add(date, {
         seconds: 20
       }).toISOString()
-console.log('---BEFORE-upDTAE')
-      await this.devicesRepo
-      .createQueryBuilder('device')
-      .update()
-      .set({ lastActiveDate, expiredDate })
-      .where('deviceId = :deviceId', {
-        deviceId: existedDevice.deviceId
-      })
-      .execute()
 
-      // const query = `
-      //   UPDATE public.devices
-      //     SET "lastActiveDate"=$2, "expiredDate"=$3
-      //     WHERE "deviceId" = $1;
-      // `
-      // await this.dataSource.query(query, [
-      //   existedDevice.deviceId,
-      //   lastActiveDate,
-      //   expiredDate
-      // ])
-      console.log('---AFTER-upDTAE')
+      await this.devicesRepo
+        .createQueryBuilder('device')
+        .update()
+        .set({ lastActiveDate, expiredDate })
+        .where('deviceId = :deviceId', {
+          deviceId: existedDevice.deviceId
+        })
+        .execute()
+
       const device = await this.getDeviceByDeviceId(existedDevice.deviceId)
-      console.log("ppppp000ppppp00-------device:", device)
 
       if (!device) {
         return null
@@ -171,22 +157,14 @@ console.log('---BEFORE-upDTAE')
     lastActiveDate: string
   ): Promise<boolean> {
     try {
-      // const query = `
-      //   DELETE FROM public.devices
-      //   WHERE "userId" = $1
-      //     AND NOT "lastActiveDate"=$2
-      // `
-      // await this.dataSource.query(query, [userId, lastActiveDate])
-      console.log("--1:")
-      const res = await this.devicesRepo
+      await this.devicesRepo
         .createQueryBuilder('device')
         .delete()
-        .where('device.userId = :userId AND NOT device.lastActiveDate = :lastActiveDate', {
+        .where('userId = :userId AND NOT lastActiveDate = :lastActiveDate', {
           userId,
           lastActiveDate
         })
         .execute()
-      console.log("--DELETE MANY--res:", res)
 
       return true
     } catch {
@@ -196,20 +174,14 @@ console.log('---BEFORE-upDTAE')
 
   async deleteDevice(deviceId: string): Promise<boolean> {
     try {
-      console.log("--2--:")
-      const res = await this.devicesRepo
-      .createQueryBuilder('device')
-      .delete()
-      .where('device.deviceId = :deviceId', { deviceId })
-      .execute()
-      console.log("one======== ~ res:", res)
-      // const query = `
-      //   DELETE FROM public.devices
-      //   WHERE "deviceId" = $1
-      // `
-      // return this.dataSource.query(query, [deviceId])
+      await this.devicesRepo
+        .createQueryBuilder('device')
+        .delete()
+        .where('deviceId = :deviceId', { deviceId })
+        .execute()
+
       return true
-    } catch {
+    } catch(e) {
       return false
     }
   }
