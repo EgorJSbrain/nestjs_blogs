@@ -1,53 +1,59 @@
-import { DataSource } from 'typeorm'
-import { Injectable } from '@nestjs/common';
-import { InjectDataSource } from '@nestjs/typeorm';
-import add from 'date-fns/add';
+import { DataSource, Repository } from 'typeorm'
+import { Injectable } from '@nestjs/common'
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
+import add from 'date-fns/add'
 
 import { IDevice } from '../types/devices'
 import { CreateDeviceDto } from '../dtos/devices/create-device.dto'
+import { DeviceEntity } from '../entities/devices'
 
+// const writeSql = async (sql: string) => {
+//   const fs = require('fs/promises')
+//   try {
+//     await fs.writeFile('sql.txt', sql)
+//   } catch (err) {
+//     console.log(err)
+//   }
+// }
 
 @Injectable()
 export class DevicesRepository {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
+    @InjectRepository(DeviceEntity)
+    private readonly devicesRepo: Repository<DeviceEntity>
   ) {}
 
-  async getAllDevicesByUserId(
-    userId: string | null,
-  ): Promise<any> {
+  async getAllDevicesByUserId(userId: string | null): Promise<DeviceEntity[] | null> {
     try {
-      const query = `
-        SELECT "deviceId", ip, title, "lastActiveDate"
-          FROM public.devices
-          WHERE "userId" = $1
-      `
-    const devices = await this.dataSource.query<IDevice[]>(query, [userId])
+      const devices = await this.devicesRepo
+        .createQueryBuilder('device')
+        .select(["device.deviceId", "device.ip", "device.title", "device.lastActiveDate"])
+        .where('device.userId = :userId', { userId })
+        .getMany()
 
-    if (!devices[0]) {
-      return null
-    }
+      if (!devices.length) {
+        return null
+      }
 
-    return devices
-    } catch {
+      return devices
+    } catch(e) {
       return []
     }
   }
 
   async getDeviceByDate(lastActiveDate: string): Promise<IDevice | null> {
     try {
-      const query = `
-        SELECT "deviceId", "userId", ip, title, "lastActiveDate", "expiredDate"
-          FROM public.devices
-          WHERE "lastActiveDate" = $1
-      `
-      const device = await this.dataSource.query(query, [lastActiveDate])
+      const device = await this.devicesRepo
+        .createQueryBuilder('device')
+        .where('device.lastActiveDate = :lastActiveDate', { lastActiveDate })
+        .getOne()
 
-      if (!device.length) {
+      if (!device) {
         return null
       }
 
-      return device[0]
+      return device
     } catch {
       return null
     }
@@ -55,19 +61,17 @@ export class DevicesRepository {
 
   async getDeviceByDeviceId(deviceId: string): Promise<IDevice | null> {
     try {
-      const query = `
-        SELECT "deviceId", "userId", ip, title, "lastActiveDate", "expiredDate"
-          FROM public.devices
-          WHERE "deviceId" = $1
-      `
-      const device = await this.dataSource.query(query, [deviceId])
+      const device = await this.devicesRepo
+        .createQueryBuilder('device')
+        .where('device.deviceId = :deviceId', { deviceId })
+        .getOne()
 
-      if (!device.length) {
+      if (!device) {
         return null
       }
 
-      return device[0]
-    } catch {
+      return device
+    } catch(e) {
       return null
     }
   }
@@ -81,19 +85,17 @@ export class DevicesRepository {
         seconds: 20
       }).toISOString()
 
-      const query = `
-        INSERT INTO public.devices(
-          "userId", ip, title, "lastActiveDate", "expiredDate")
-          VALUES ($1, $2, $3, $4, $5);
-        `
-
-      await this.dataSource.query(query, [
-        device.userId,
-        device.ip,
-        device.title,
-        lastActiveDate,
-        expiredDate
-      ])
+      await this.devicesRepo
+        .createQueryBuilder('device')
+        .insert()
+        .values({
+          userId: device.userId,
+          ip: device.ip,
+          title: device.title,
+          lastActiveDate,
+          expiredDate
+        })
+        .execute()
 
       const createdDevice = await this.getDeviceByDate(lastActiveDate)
 
@@ -114,9 +116,7 @@ export class DevicesRepository {
     }
   }
 
-  async updateDevice(
-    currentLastActiveDate: string,
-  ): Promise<IDevice | null> {
+  async updateDevice(currentLastActiveDate: string): Promise<IDevice | null> {
     try {
       const existedDevice = await this.getDeviceByDate(currentLastActiveDate)
 
@@ -131,15 +131,18 @@ export class DevicesRepository {
         seconds: 20
       }).toISOString()
 
-      const query = `
-        UPDATE public.devices
-          SET "lastActiveDate"=$2, "expiredDate"=$3
-          WHERE "deviceId" = $1;
-      `
-      await this.dataSource.query(query, [existedDevice.deviceId, lastActiveDate, expiredDate])
+      await this.devicesRepo
+        .createQueryBuilder('device')
+        .update()
+        .set({ lastActiveDate, expiredDate })
+        .where('deviceId = :deviceId', {
+          deviceId: existedDevice.deviceId
+        })
+        .execute()
+
       const device = await this.getDeviceByDeviceId(existedDevice.deviceId)
 
-      if (!existedDevice) {
+      if (!device) {
         return null
       }
 
@@ -154,12 +157,14 @@ export class DevicesRepository {
     lastActiveDate: string
   ): Promise<boolean> {
     try {
-      const query = `
-        DELETE FROM public.devices
-        WHERE "userId" = $1
-          AND NOT "lastActiveDate"=$2
-      `
-      await this.dataSource.query(query, [userId, lastActiveDate])
+      await this.devicesRepo
+        .createQueryBuilder('device')
+        .delete()
+        .where('userId = :userId AND NOT lastActiveDate = :lastActiveDate', {
+          userId,
+          lastActiveDate
+        })
+        .execute()
 
       return true
     } catch {
@@ -169,12 +174,14 @@ export class DevicesRepository {
 
   async deleteDevice(deviceId: string): Promise<boolean> {
     try {
-      const query = `
-        DELETE FROM public.devices
-        WHERE "deviceId" = $1
-      `
-      return this.dataSource.query(query, [deviceId])
-    } catch {
+      await this.devicesRepo
+        .createQueryBuilder('device')
+        .delete()
+        .where('deviceId = :deviceId', { deviceId })
+        .execute()
+
+      return true
+    } catch(e) {
       return false
     }
   }

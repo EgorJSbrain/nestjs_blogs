@@ -15,8 +15,8 @@ import { Request } from 'express'
 import { DevicesRepository } from './devices.repository'
 import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
-import { IDevice } from '../types/devices'
 import { appMessages } from '../constants/messages'
+import { DeviceEntity } from '../entities/devices'
 
 @SkipThrottle()
 @Controller(RoutesEnum.devices)
@@ -29,7 +29,7 @@ export class DevicesController {
   @Get()
   async getAllDevicesByUserId(
     @Req() req: Request
-  ): Promise<IDevice[] | []> {
+  ): Promise<DeviceEntity[] | []> {
     const token = req.cookies.refreshToken
 
     if (!token) {
@@ -43,6 +43,13 @@ export class DevicesController {
     }
 
     const devices = await this.devicesRepository.getAllDevicesByUserId(userId)
+
+    if (!devices) {
+      throw new HttpException(
+        { message: appMessages(appMessages().device).errors.notFound, field: '' },
+        HttpStatus.NOT_FOUND
+      )
+    }
 
     return devices
   }
@@ -74,6 +81,13 @@ export class DevicesController {
     @Req() request: Request
   ): Promise<undefined> {
     const token = request.cookies.refreshToken
+
+    if (!params.deviceId) {
+      throw new HttpException(
+        { message: appMessages(appMessages().device).errors.notFound, field: '' },
+        HttpStatus.NOT_FOUND
+      )
+    }
 
     if (!token) {
       throw new UnauthorizedException()
