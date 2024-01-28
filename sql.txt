@@ -1,0 +1,1 @@
+SELECT "post"."id" AS "post_id", "post"."title" AS "post_title", "post"."blogId" AS "post_blogId", "post"."content" AS "post_content", "post"."shortDescription" AS "post_shortDescription", "post"."createdAt" AS "post_createdAt" FROM "posts" "post" LEFT JOIN "blogs" "blog" ON "blog"."id"="post"."blogId" ORDER BY "post"."blogName" ASC

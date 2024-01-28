@@ -17,15 +17,15 @@ import { appMessages } from '../constants/messages'
 import { IExtendedPost } from '../types/posts'
 import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
-import { BlogsSqlRepository } from './blogs.repository.sql'
-import { PostsSqlRepository } from '../posts/posts.repository.sql'
+import { BlogsRepository } from './blogs.repository'
+import { PostsRepository } from '../posts/posts.repository'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogs)
 export class BlogsController {
   constructor(
-    private blogsSqlRepository: BlogsSqlRepository,
-    private postsSqlRepository: PostsSqlRepository,
+    private blogsRepository: BlogsRepository,
+    private postsRepository: PostsRepository,
     private JWTService: JWTService,
   ) {}
 
@@ -33,14 +33,14 @@ export class BlogsController {
   async getAll(
     @Query() query: BlogsRequestParams
   ): Promise<ResponseBody<IBlog> | []> {
-    const blogs = await this.blogsSqlRepository.getAll(query)
+    const blogs = await this.blogsRepository.getAll(query)
 
     return blogs
   }
 
   @Get(':id')
   async getBlogById(@Param() params: { id: string }): Promise<IBlog | null> {
-    const blog = await this.blogsSqlRepository.getById(params.id)
+    const blog = await this.blogsRepository.getById(params.id)
 
     if (!blog) {
       throw new HttpException(
@@ -70,7 +70,7 @@ export class BlogsController {
       )
     }
 
-    const blog = await this.blogsSqlRepository.getById(params.blogId)
+    const blog = await this.blogsRepository.getById(params.blogId)
 
     if (!blog) {
       throw new HttpException(
@@ -89,7 +89,7 @@ export class BlogsController {
       }
     }
 
-    const posts = await this.postsSqlRepository.getAll(query, currentUserId, blog.id)
+    const posts = await this.postsRepository.getAll(query, currentUserId, blog.id)
 
     return posts
   }
