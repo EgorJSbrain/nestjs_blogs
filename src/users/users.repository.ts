@@ -47,6 +47,7 @@ export class UsersRepository {
     }
 
     const query = this.usersRepo.createQueryBuilder('user')
+
     const searchObject = query
       .where(whereFilter, {
         email: searchEmailTerm
@@ -258,12 +259,16 @@ export class UsersRepository {
   }
 
   async deleteById(id: string) {
-    const user = await this.usersRepo
-      .createQueryBuilder('user')
-      .delete()
-      .where('id = :id', { id })
-      .execute()
+    try {
+      const user = await this.usersRepo
+        .createQueryBuilder('user')
+        .delete()
+        .where('id = :id', { id })
+        .execute()
 
-    return !!user.affected
+      return !!user.affected
+    } catch (e) {
+      return false
+    }
   }
 }

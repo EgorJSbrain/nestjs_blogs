@@ -7,15 +7,6 @@ import { IDevice } from '../types/devices'
 import { CreateDeviceDto } from '../dtos/devices/create-device.dto'
 import { DeviceEntity } from '../entities/devices'
 
-// const writeSql = async (sql: string) => {
-//   const fs = require('fs/promises')
-//   try {
-//     await fs.writeFile('sql.txt', sql)
-//   } catch (err) {
-//     console.log(err)
-//   }
-// }
-
 @Injectable()
 export class DevicesRepository {
   constructor(
