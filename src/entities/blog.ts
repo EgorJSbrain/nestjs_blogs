@@ -10,7 +10,9 @@ import { STRING_MAX_LENGTH } from '../constants/global'
 import { IBlog } from '../types/blogs'
 import { PostEntity } from './post'
 
-@Entity()
+@Entity({
+  name: 'blogs'
+})
 export class BlogEntity extends BaseEntity implements IBlog {
   @PrimaryGeneratedColumn('uuid')
   id: string

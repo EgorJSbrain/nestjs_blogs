@@ -12,7 +12,9 @@ import { BlogEntity } from './blog'
 import { IPost } from '../types/posts'
 import { PostLikeEntity } from './post-like'
 
-@Entity()
+@Entity({
+  name: 'posts'
+})
 export class PostEntity extends BaseEntity implements IPost {
   @PrimaryGeneratedColumn('uuid')
   id: string

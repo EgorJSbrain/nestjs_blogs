@@ -28,15 +28,15 @@ import { IExtendedPost } from '../types/posts'
 import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
-import { BlogsSqlRepository } from './blogs.repository.sql'
-import { PostsSqlRepository } from '../posts/posts.repository.sql'
+import { BlogsRepository } from './blogs.repository'
+import { PostsRepository } from '../posts/posts.repository'
 
 @SkipThrottle()
 @Controller(RoutesEnum.saBlogs)
 export class BlogsSAController {
   constructor(
-    private blogsSqlRepository: BlogsSqlRepository,
-    private postsSqlRepository: PostsSqlRepository,
+    private blogsRepository: BlogsRepository,
+    private postsRepository: PostsRepository,
     private JWTService: JWTService
   ) {}
 
@@ -45,7 +45,7 @@ export class BlogsSAController {
   async getAll(
     @Query() query: BlogsRequestParams
   ): Promise<ResponseBody<IBlog> | []> {
-    const blogs = await this.blogsSqlRepository.getAll(query)
+    const blogs = await this.blogsRepository.getAll(query)
 
     return blogs
   }
@@ -53,7 +53,7 @@ export class BlogsSAController {
   @Post()
   @UseGuards(BasicAuthGuard)
   async creatBlog(@Body() data: CreateBlogDto): Promise<IBlog | null> {
-    return this.blogsSqlRepository.createBlog(data)
+    return this.blogsRepository.createBlog(data)
   }
 
   @Put(':id')
@@ -70,7 +70,7 @@ export class BlogsSAController {
       )
     }
 
-    const blog = await this.blogsSqlRepository.getById(params.id)
+    const blog = await this.blogsRepository.getById(params.id)
 
     if (!blog) {
       throw new HttpException(
@@ -79,9 +79,9 @@ export class BlogsSAController {
       )
     }
 
-    const updatedBlog = await this.blogsSqlRepository.updateBlog(
+    const updatedBlog = await this.blogsRepository.updateBlog(
       params.id,
-      data
+      data,
     )
 
     if (!updatedBlog) {
@@ -96,7 +96,7 @@ export class BlogsSAController {
   @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBlog(@Param() params: { id: string }): Promise<any> {
-    const blog = await this.blogsSqlRepository.getById(params.id)
+    const blog = await this.blogsRepository.getById(params.id)
 
     if (!blog) {
       throw new HttpException(
@@ -105,7 +105,7 @@ export class BlogsSAController {
       )
     }
 
-    await this.blogsSqlRepository.deleteBlog(params.id)
+    await this.blogsRepository.deleteBlog(params.id)
   }
 
   @Post(':blogId/posts')
@@ -114,7 +114,7 @@ export class BlogsSAController {
     @Param() params: { blogId: string },
     @Body() data: CreatePostDto
   ): Promise<IExtendedPost | null> {
-    const blog = await this.blogsSqlRepository.getById(params.blogId)
+    const blog = await this.blogsRepository.getById(params.blogId)
 
     if (!blog) {
       throw new HttpException(
@@ -123,7 +123,7 @@ export class BlogsSAController {
       )
     }
 
-    const newPost = await  this.postsSqlRepository.createPost({
+    const newPost = await  this.postsRepository.createPost({
       ...data,
       blogId: blog.id
     })
@@ -135,7 +135,7 @@ export class BlogsSAController {
       )
     }
 
-    const post = await this.postsSqlRepository.getById(newPost.id)
+    const post = await this.postsRepository.getByIdWithLikes(newPost.id)
 
     return post
   }
@@ -158,7 +158,7 @@ export class BlogsSAController {
       )
     }
 
-    const blog = await this.blogsSqlRepository.getById(params.blogId)
+    const blog = await this.blogsRepository.getById(params.blogId)
 
     if (!blog) {
       throw new HttpException(
@@ -177,7 +177,7 @@ export class BlogsSAController {
       }
     }
 
-    const posts = await this.postsSqlRepository.getAll(
+    const posts = await this.postsRepository.getAll(
       query,
       currentUserId,
       blog.id
@@ -207,7 +207,7 @@ export class BlogsSAController {
       )
     }
 
-    const blog = await this.blogsSqlRepository.getById(params.blogId)
+    const blog = await this.blogsRepository.getById(params.blogId)
 
     if (!blog) {
       throw new HttpException(
@@ -216,7 +216,7 @@ export class BlogsSAController {
       )
     }
 
-    const post = await this.postsSqlRepository.getById(params.postId)
+    const post = await this.postsRepository.getById(params.postId)
 
     if (!post) {
       throw new HttpException(
@@ -225,7 +225,7 @@ export class BlogsSAController {
       )
     }
 
-    const updatedPost = await this.postsSqlRepository.updatePost(params.postId, data)
+    const updatedPost = await this.postsRepository.updatePost(params.postId, data)
 
     if (!updatedPost) {
       throw new HttpException({ message: appMessages(appMessages().post).errors.notFound }, HttpStatus.NOT_FOUND)
@@ -250,7 +250,7 @@ export class BlogsSAController {
       )
     }
 
-    const blog = await this.blogsSqlRepository.getById(params.blogId)
+    const blog = await this.blogsRepository.getById(params.blogId)
 
     if (!blog) {
       throw new HttpException(
@@ -259,7 +259,7 @@ export class BlogsSAController {
       )
     }
 
-    const post = await this.postsSqlRepository.getById(params.postId)
+    const post = await this.postsRepository.getById(params.postId)
 
     if (!post) {
       throw new HttpException(
@@ -268,7 +268,7 @@ export class BlogsSAController {
       )
     }
 
-    await this.postsSqlRepository.deletePost(params.postId)
+    await this.postsRepository.deletePost(params.postId)
   }
 }
 

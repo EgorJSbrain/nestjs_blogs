@@ -29,7 +29,7 @@ import { RoutesEnum } from '../constants/global'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
 import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes'
 import { IExtendedComment } from '../types/comments'
-import { PostsSqlRepository } from './posts.repository.sql'
+import { PostsRepository } from './posts.repository'
 import { LikesSqlRepository } from '../likes/likes.repository.sql'
 import { UsersRepository } from '../users/users.repository'
 import { CommentsSqlRepository } from '../comments/comments.repository.sql'
@@ -38,7 +38,7 @@ import { CommentsSqlRepository } from '../comments/comments.repository.sql'
 @Controller(RoutesEnum.posts)
 export class PostsController {
   constructor(
-    private postsSqlRepository: PostsSqlRepository,
+    private postsRepository: PostsRepository,
     private usersRepository: UsersRepository,
     private JWTService: JWTService,
     private likesSqlRepository: LikesSqlRepository,
@@ -58,9 +58,7 @@ export class PostsController {
       currentUserId = userId || null
     }
 
-    const posts = await this.postsSqlRepository.getAll(query, currentUserId)
-    // console.log("-----posts:", posts)
-    // const posts = await this.postsSqlRepository.getAll(query, currentUserId)
+    const posts = await this.postsRepository.getAll(query, currentUserId)
 
     return posts
   }
@@ -80,7 +78,7 @@ export class PostsController {
       )
     }
 
-    const post = await this.postsSqlRepository.getById(postId)
+    const post = await this.postsRepository.getByIdWithLikes(postId)
 
     if (!post) {
       throw new HttpException(
@@ -115,7 +113,7 @@ export class PostsController {
       currentUserId = userId
     }
 
-    const post = await this.postsSqlRepository.getById(params.id, currentUserId)
+    const post = await this.postsRepository.getByIdWithLikes(params.id, currentUserId)
 
     if (!post) {
       throw new HttpException(
@@ -152,7 +150,7 @@ export class PostsController {
       blogName: blog.name
     }
 
-    return this.postsSqlRepository.createPost(creatingData)
+    return this.postsRepository.createPost(creatingData)
   }
 
   @Put(':id')
@@ -169,7 +167,7 @@ export class PostsController {
       )
     }
 
-    const post = await this.postsSqlRepository.getById(params.id)
+    const post = await this.postsRepository.getById(params.id)
 
     if (!post) {
       throw new HttpException(
@@ -178,7 +176,7 @@ export class PostsController {
       )
     }
 
-    const updatedPost = await this.postsSqlRepository.updatePost(params.id, data)
+    const updatedPost = await this.postsRepository.updatePost(params.id, data)
 
     if (!updatedPost) {
       throw new HttpException({ message: appMessages(appMessages().post).errors.notFound }, HttpStatus.NOT_FOUND)
@@ -189,27 +187,27 @@ export class PostsController {
   @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deletePost(@Param() params: { id: string }): Promise<any> {
-    const post = await this.postsSqlRepository.getById(params.id)
+    const post = await this.postsRepository.getById(params.id)
 
     if (!post) {
       throw new HttpException({ message: appMessages(appMessages().post).errors.notFound }, HttpStatus.NOT_FOUND)
     }
 
-    await this.postsSqlRepository.deletePost(params.id)
+    await this.postsRepository.deletePost(params.id)
   }
 
-  @Get(':id/posts')
-  async getPostsByPostId(
-    @Param() params: { id: string }
-  ): Promise<IExtendedPost | null> {
-    const post = await this.postsSqlRepository.getById(params.id)
+  // @Get(':id/posts')
+  // async getPostsByPostId(
+  //   @Param() params: { id: string }
+  // ): Promise<IExtendedPost | null> {
+  //   const post = await this.postsRepository.getById(params.id)
 
-    return null
-  }
+  //   return null
+  // }
 
   @Post()
   async creatPostByPostId(@Body() data: CreatePostDto): Promise<any> {
-    return this.postsSqlRepository.createPost(data)
+    return this.postsRepository.createPost(data)
   }
 
   @Put('/:postId/like-status')
@@ -229,7 +227,7 @@ export class PostsController {
       )
     }
 
-    const existedPost = await this.postsSqlRepository.getById(params.postId)
+    const existedPost = await this.postsRepository.getById(params.postId)
 
     if (!existedPost) {
       throw new HttpException(
@@ -270,7 +268,7 @@ export class PostsController {
       )
     }
 
-    const existedPost = await this.postsSqlRepository.getById(params.postId)
+    const existedPost = await this.postsRepository.getById(params.postId)
 
     if (!existedPost) {
       throw new HttpException(
