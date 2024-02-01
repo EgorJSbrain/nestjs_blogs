@@ -1,14 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 
 import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes';
 import { IExtendedLike, IExtendedLikesInfo, LikesRequestParams } from '../types/likes';
 import { CreateLikeDto } from '../dtos/like/create-like.dto';
+import { CommentLikeEntity } from 'src/entities/comment-like';
+import { PostLikeEntity } from 'src/entities/post-like';
 
 @Injectable()
-export class LikesSqlRepository {
-  constructor(@InjectDataSource() protected dataSource: DataSource) {}
+export class LikesRepository {
+  constructor(
+    @InjectDataSource() protected dataSource: DataSource,
+
+    @InjectRepository(CommentLikeEntity)
+    private readonly commentLikesRepo: Repository<CommentLikeEntity>,
+
+    @InjectRepository(PostLikeEntity)
+    private readonly postLikesRepo: Repository<PostLikeEntity>
+  ) {}
 
   async getLikesCountsBySourceId(
     sourceType: LikeSourceTypeEnum,
@@ -153,7 +163,7 @@ export class LikesSqlRepository {
       params.authorId,
       params.sourceId
     ])
-    console.log("🚀 ~ LikesSqlRepository ~ getLikeBySourceIdAndAuthorId ~ likes:", likes)
+    console.log("🚀 ~ LikesRepository ~ getLikeBySourceIdAndAuthorId ~ likes:", likes)
 
     if (!likes[0]) {
       return null

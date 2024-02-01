@@ -30,9 +30,9 @@ import { CommentDto } from '../dtos/comments/create-comment.dto'
 import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes'
 import { IExtendedComment } from '../types/comments'
 import { PostsRepository } from './posts.repository'
-import { LikesSqlRepository } from '../likes/likes.repository.sql'
+import { LikesRepository } from '../likes/likes.repository'
 import { UsersRepository } from '../users/users.repository'
-import { CommentsSqlRepository } from '../comments/comments.repository.sql'
+import { CommentsRepository } from '../comments/comments.repository'
 
 @SkipThrottle()
 @Controller(RoutesEnum.posts)
@@ -41,8 +41,8 @@ export class PostsController {
     private postsRepository: PostsRepository,
     private usersRepository: UsersRepository,
     private JWTService: JWTService,
-    private likesSqlRepository: LikesSqlRepository,
-    private commentsSqlRepository: CommentsSqlRepository,
+    private LikesRepository: LikesRepository,
+    private CommentsRepository: CommentsRepository,
   ) {}
 
   @Get()
@@ -95,7 +95,7 @@ export class PostsController {
       currentUserId = userId || null
     }
 
-    const comments = await this.commentsSqlRepository.getAll(query, postId, currentUserId)
+    const comments = await this.CommentsRepository.getAll(query, postId, currentUserId)
 
     return comments
   }
@@ -236,7 +236,7 @@ export class PostsController {
       )
     }
 
-    const like = await this.likesSqlRepository.likeEntity(
+    const like = await this.LikesRepository.likeEntity(
       data.likeStatus,
       params.postId,
       LikeSourceTypeEnum.posts,
@@ -277,7 +277,7 @@ export class PostsController {
       )
     }
 
-    const comment = await this.commentsSqlRepository.createComment({
+    const comment = await this.CommentsRepository.createComment({
       content: data.content,
       userId: existedUser.id,
       sourceId: existedPost.id
@@ -294,7 +294,8 @@ export class PostsController {
       id: comment.id,
       content: comment.content,
       commentatorInfo: {
-        userId: comment.authorId,
+        userId: '',
+        // userId: comment.authorId,
         userLogin: existedUser.login
       },
       createdAt: comment.createdAt,

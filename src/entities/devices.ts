@@ -30,6 +30,6 @@ export class DeviceEntity extends BaseEntity implements IDevice {
   @Column()
   expiredDate: string
 
-  @ManyToOne(() => UserEntity, (u) => u.devices)
+  @ManyToOne(() => UserEntity, (user) => user.devices)
   user: UserEntity
 }

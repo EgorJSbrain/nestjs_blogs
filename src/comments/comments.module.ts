@@ -5,22 +5,31 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommentsController } from './comments.controller';
 import { JWTService } from '../jwt/jwt.service';
 import { HashService } from '../hash/hash.service';
-import { LikesSqlRepository } from '../likes/likes.repository.sql';
-import { CommentsSqlRepository } from './comments.repository.sql';
+import { LikesRepository } from '../likes/likes.repository';
+import { CommentsRepository } from './comments.repository';
 import { UsersRepository } from '../users/users.repository';
 import { UserEntity } from '../entities/user';
+import { CommentEntity } from '../entities/comment';
+import { CommentLikeEntity } from '../entities/comment-like';
+import { PostLikeEntity } from '../entities/post-like';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity])],
+  imports: [
+    TypeOrmModule.forFeature([
+      UserEntity,
+      CommentEntity,
+      CommentLikeEntity,
+      PostLikeEntity
+    ])
+  ],
   controllers: [CommentsController],
   providers: [
     JWTService,
-    LikesSqlRepository,
-    CommentsSqlRepository,
+    LikesRepository,
+    CommentsRepository,
     JwtService,
     UsersRepository,
-    HashService,
+    HashService
   ]
 })
-
 export class CommentsModule {}

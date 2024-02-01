@@ -8,13 +8,15 @@ import { JWTService } from '../jwt/jwt.service';
 import { BlogsSAController } from './blogs.controller.sa';
 import { BlogsRepository } from './blogs.repository';
 import { PostsRepository } from '../posts/posts.repository';
-import { LikesSqlRepository } from '../likes/likes.repository.sql';
+import { LikesRepository } from '../likes/likes.repository';
 import { BlogEntity } from '../entities/blog';
 import { PostEntity } from '../entities/post';
+import { CommentLikeEntity } from '../entities/comment-like';
+import { PostLikeEntity } from '../entities/post-like';
 
 @Module({
   imports: [
-  TypeOrmModule.forFeature([BlogEntity, PostEntity]),
+  TypeOrmModule.forFeature([BlogEntity, PostEntity, CommentLikeEntity, PostLikeEntity]),
   LikesModule,
 ],
   controllers: [BlogsController, BlogsSAController],
@@ -23,7 +25,7 @@ import { PostEntity } from '../entities/post';
     PostsRepository,
     JWTService,
     BlogsRepository,
-    LikesSqlRepository,
+    LikesRepository,
   ]
 })
 
