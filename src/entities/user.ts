@@ -9,6 +9,7 @@ import {
 import { STRING_MAX_LENGTH } from '../constants/global'
 import { IExtendedUser } from '../types/users'
 import { DeviceEntity } from './devices'
+import { CommentEntity } from './comment'
 
 @Entity({ name: 'users' })
 export class UserEntity extends BaseEntity implements IExtendedUser {
@@ -39,6 +40,9 @@ export class UserEntity extends BaseEntity implements IExtendedUser {
   @Column()
   createdAt: string
 
-  @OneToMany(() => DeviceEntity, (d) => d.user)
+  @OneToMany(() => DeviceEntity, (device) => device.user)
   devices: DeviceEntity[]
+
+  @OneToMany(() => CommentEntity, comment => comment.user)
+  comments: CommentEntity[]
 }

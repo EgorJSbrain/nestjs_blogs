@@ -4,30 +4,18 @@ import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 
 import { RequestParams, ResponseBody } from '../types/request';
 import { UpdatePostDto } from '../dtos/posts/update-post.dto';
-import { LENGTH_OF_NEWEST_LIKES_FOR_POST, LikeSourceTypeEnum } from '../constants/likes'
 import { LikeStatusEnum } from '../constants/likes';
-import { formatLikes } from '../utils/formatLikes';
-import { IExtendedLike } from '../types/likes';
-import { ICreatePostType, IPost, IExtendedPost } from '../types/posts';
-import { SortDirections, SortDirectionsEnum, SortType } from '../constants/global';
-import { LikesSqlRepository } from '../likes/likes.repository.sql';
+import { ICreatePostType, IExtendedPost } from '../types/posts';
+import { SortDirections, SortType } from '../constants/global';
+import { LikesRepository } from '../likes/likes.repository';
 import { PostEntity } from '../entities/post';
 import { BlogEntity } from '../entities/blog';
-
-const writeSql = async (sql: string) => {
-  const fs = require('fs/promises')
-  try {
-    await fs.writeFile('sql.txt', sql)
-  } catch (err) {
-    console.log(err)
-  }
-}
 
 @Injectable()
 export class PostsRepository {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
-    private likeSqlRepository: LikesSqlRepository,
+    private likeSqlRepository: LikesRepository,
 
     @InjectRepository(PostEntity)
     private readonly postsRepo: Repository<PostEntity>
@@ -46,50 +34,47 @@ export class PostsRepository {
         pageSize = 10
       } = params
 
-      let whereFilter = ''
       const pageSizeNumber = Number(pageSize)
       const pageNumberNum = Number(pageNumber)
       const skip = (pageNumberNum - 1) * pageSizeNumber
 
-      if (blogId) {
-        whereFilter = 'post.blogId = :blogId'
-      }
+      const query = this.dataSource
+      .createQueryBuilder()
+      .select([
+        'post.id',
+        'post.title',
+        'post.shortDescription',
+        'post.content',
+        'post.createdAt',
+        'post.blogId'
+      ])
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('blog.name', 'blogname')
+          .from(BlogEntity, 'blog')
+          .where('post.blogId = blog.id')
+      }, 'blogname')
+      .from(PostEntity, 'post')
+      .addOrderBy(
+        sortBy === 'blogName' ? 'blogname' : `post.${sortBy}`,
+        sortDirection?.toLocaleUpperCase() as SortType
+      )
+      .skip(skip)
+      .take(pageSizeNumber)
 
-      const query = this.postsRepo.createQueryBuilder('post')
-
-      const searchObject = query
-        .where(whereFilter, {
-          blogId: blogId ? blogId : undefined
-        })
-        .leftJoinAndSelect('post.blog', 'blog')
-        .select([
-          'post.id',
-          'post.title',
-          'post.shortDescription',
-          'post.content',
-          'post.createdAt',
-          'post.blogId',
-        ])
-        .addOrderBy(
-          `post.${sortBy}`,
-          sortDirection?.toLocaleUpperCase() as SortType
-        )
-        .skip(skip)
-        .take(pageSizeNumber)
-
-      const postsResponse = await searchObject.getMany()
+      const postsResponse = await query.getRawMany()
 
       const posts = postsResponse.map((post) => ({
-        id: post.id,
-        title: post.title,
-        shortDescription: post.shortDescription,
-        content: post.content,
-        createdAt: post.createdAt,
-        blogId: post.blogId,
-        blogName: post.blog.name
+        id: post.post_id,
+        title: post.post_title,
+        shortDescription: post.post_shortDescription,
+        content: post.post_content,
+        createdAt: post.post_createdAt,
+        blogId: post.post_blogId,
+        blogName: post.blogname
       }))
 
-      const count = await searchObject.getCount()
+      const count = await query.getCount()
       const pagesCount = Math.ceil(count / pageSizeNumber)
 
       const postsWithInfoAboutLikes = await Promise.all(

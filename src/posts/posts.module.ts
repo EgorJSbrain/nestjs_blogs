@@ -7,28 +7,39 @@ import { JWTService } from '../jwt/jwt.service';
 import { BlogIdValidator } from '../validators/blog-id.validator';
 import { HashService } from '../hash/hash.service';
 import { PostsRepository } from './posts.repository';
-import { LikesSqlRepository } from '../likes/likes.repository.sql';
+import { LikesRepository } from '../likes/likes.repository';
 import { UsersRepository } from '../users/users.repository';
-import { CommentsSqlRepository } from '../comments/comments.repository.sql';
+import { CommentsRepository } from '../comments/comments.repository';
 import { BlogsRepository } from '../blogs/blogs.repository';
 import { UserEntity } from '../entities/user';
 import { BlogEntity } from '../entities/blog';
 import { PostEntity } from '../entities/post';
+import { CommentEntity } from '../entities/comment';
+import { PostLikeEntity } from '../entities/post-like';
+import { CommentLikeEntity } from 'src/entities/comment-like';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity, BlogEntity, PostEntity])],
+  imports: [
+    TypeOrmModule.forFeature([
+      UserEntity,
+      BlogEntity,
+      PostEntity,
+      CommentEntity,
+      PostLikeEntity,
+      CommentLikeEntity,
+    ])
+  ],
   controllers: [PostsController],
   providers: [
     JWTService,
-    LikesSqlRepository,
+    LikesRepository,
     PostsRepository,
     JwtService,
     UsersRepository,
     BlogIdValidator,
     BlogsRepository,
-    CommentsSqlRepository,
-    HashService,
+    CommentsRepository,
+    HashService
   ]
 })
-
 export class PostsModule {}
