@@ -2,6 +2,8 @@ import {
   BaseEntity,
   Column,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn
 } from 'typeorm'
@@ -11,7 +13,9 @@ import { ILike } from '../types/likes'
 import { LikeStatusEnum } from '../constants/likes'
 import { UserEntity } from './user'
 
-@Entity()
+@Entity({
+  name: 'posts-likes'
+})
 export class PostLikeEntity extends BaseEntity implements ILike {
   @PrimaryGeneratedColumn('uuid')
   id: string
@@ -28,9 +32,15 @@ export class PostLikeEntity extends BaseEntity implements ILike {
   @Column()
   createdAt: string
 
-  @OneToOne(() => PostEntity)
+  @ManyToOne(() => PostEntity)
+  @JoinColumn({
+    name: 'sourceId'
+  })
   post: PostEntity
 
-  @OneToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity)
+  @JoinColumn({
+    name: 'authorId'
+  })
   user: UserEntity
 }

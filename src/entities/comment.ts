@@ -2,6 +2,9 @@ import {
   BaseEntity,
   Column,
   Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn
 } from 'typeorm'
@@ -9,8 +12,11 @@ import {
 import { PostEntity } from './post'
 import { IComment } from 'src/types/comments'
 import { UserEntity } from './user'
+import { CommentLikeEntity } from './comment-like'
 
-@Entity()
+@Entity({
+  name: 'comments'
+})
 export class CommentEntity extends BaseEntity implements IComment {
   @PrimaryGeneratedColumn('uuid')
   id: string
@@ -27,9 +33,18 @@ export class CommentEntity extends BaseEntity implements IComment {
   @Column()
   createdAt: string
 
-  @OneToOne(() => PostEntity)
+  @ManyToOne(() => PostEntity, post => post.comments)
+  @JoinColumn({
+    name: 'sourceId'
+  })
   post: PostEntity
 
-  @OneToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, user => user.comments)
+  @JoinColumn({
+    name: 'authorId'
+  })
   user: UserEntity
+
+  @OneToMany(() => CommentLikeEntity, like => like.comment)
+  likes: CommentLikeEntity[]
 }

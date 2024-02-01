@@ -22,19 +22,19 @@ import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { LikeDto } from '../dtos/like/like.dto'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
-import { LikesSqlRepository } from '../likes/likes.repository.sql'
+import { LikesRepository } from '../likes/likes.repository'
 import { LikeSourceTypeEnum } from '../constants/likes'
-import { CommentsSqlRepository } from './comments.repository.sql'
+import { CommentsRepository } from './comments.repository'
 import { UsersRepository } from '../users/users.repository'
 
 @SkipThrottle()
 @Controller(RoutesEnum.comments)
 export class CommentsController {
   constructor(
-    private commentsSqlRepository: CommentsSqlRepository,
+    private CommentsRepository: CommentsRepository,
     private JWTService: JWTService,
     private usersRepository: UsersRepository,
-    private likesSqlRepository: LikesSqlRepository,
+    private LikesRepository: LikesRepository,
   ) {}
 
   @Get(':commentId')
@@ -58,7 +58,7 @@ export class CommentsController {
       currentUserId = userId || null
     }
 
-    const comment = await this.commentsSqlRepository.getById(
+    const comment = await this.CommentsRepository.getById(
       commentId,
       currentUserId
     )
@@ -102,7 +102,7 @@ export class CommentsController {
       )
     }
 
-    const comment = await this.commentsSqlRepository.getById(commentId)
+    const comment = await this.CommentsRepository.getById(commentId)
     console.log("!!!!!!!comment:", comment)
 
     if (!comment) {
@@ -115,7 +115,7 @@ export class CommentsController {
       )
     }
 
-    const like = await this.likesSqlRepository.likeEntity(
+    const like = await this.LikesRepository.likeEntity(
       data.likeStatus,
       commentId,
       LikeSourceTypeEnum.comments,
@@ -152,7 +152,7 @@ export class CommentsController {
       )
     }
 
-    const existedComment = await this.commentsSqlRepository.getById(commentId)
+    const existedComment = await this.CommentsRepository.getById(commentId)
 
     if (!existedComment) {
       throw new HttpException(
@@ -177,7 +177,7 @@ export class CommentsController {
       )
     }
 
-    const updatedComment = await this.commentsSqlRepository.updateComment({
+    const updatedComment = await this.CommentsRepository.updateComment({
       id: commentId,
       content: data.content
     })
@@ -217,7 +217,7 @@ export class CommentsController {
       )
     }
 
-    const existedComment = await this.commentsSqlRepository.getById(commentId)
+    const existedComment = await this.CommentsRepository.getById(commentId)
 
     if (!existedComment) {
       throw new HttpException(
@@ -233,6 +233,6 @@ export class CommentsController {
       )
     }
 
-    return this.commentsSqlRepository.deleteComment(commentId)
+    return this.CommentsRepository.deleteComment(commentId)
   }
 }
