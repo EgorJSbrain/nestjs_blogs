@@ -290,20 +290,6 @@ export class PostsController {
       )
     }
 
-    return {
-      id: comment.id,
-      content: comment.content,
-      commentatorInfo: {
-        userId: '',
-        // userId: comment.authorId,
-        userLogin: existedUser.login
-      },
-      createdAt: comment.createdAt,
-      likesInfo: {
-        likesCount: 0,
-        dislikesCount: 0,
-        myStatus: LikeStatusEnum.none
-      }
-    }
+    return comment
   }
 }
