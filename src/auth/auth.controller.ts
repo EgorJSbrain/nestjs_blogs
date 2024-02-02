@@ -25,7 +25,9 @@ import { UsersRepository } from '../users/users.repository'
 import { AuthRepository } from './auth.repository'
 import { RoutesEnum } from '../constants/global'
 import { DevicesService } from '../devices/devices.service'
+import { SkipThrottle } from '@nestjs/throttler'
 
+@SkipThrottle()
 @Controller(RoutesEnum.auth)
 export class AuthController {
   constructor(
