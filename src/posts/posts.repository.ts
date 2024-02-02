@@ -40,14 +40,7 @@ export class PostsRepository {
 
       const query = this.dataSource
       .createQueryBuilder()
-      .select([
-        'post.id',
-        'post.title',
-        'post.shortDescription',
-        'post.content',
-        'post.createdAt',
-        'post.blogId'
-      ])
+      .select('post.*')
       .addSelect((subQuery) => {
         return subQuery
           .select('blog.name', 'blogname')
@@ -65,12 +58,12 @@ export class PostsRepository {
       const postsResponse = await query.getRawMany()
 
       const posts = postsResponse.map((post) => ({
-        id: post.post_id,
-        title: post.post_title,
-        shortDescription: post.post_shortDescription,
-        content: post.post_content,
-        createdAt: post.post_createdAt,
-        blogId: post.post_blogId,
+        id: post.id,
+        title: post.title,
+        shortDescription: post.shortDescription,
+        content: post.content,
+        createdAt: post.createdAt,
+        blogId: post.blogId,
         blogName: post.blogname
       }))
 
