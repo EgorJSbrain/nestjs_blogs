@@ -14,7 +14,7 @@ import { LikeStatusEnum } from '../constants/likes'
 import { UserEntity } from './user'
 
 @Entity({
-  name: 'posts-likes'
+  name: 'posts_likes'
 })
 export class PostLikeEntity extends BaseEntity implements ILike {
   @PrimaryGeneratedColumn('uuid')
@@ -32,13 +32,13 @@ export class PostLikeEntity extends BaseEntity implements ILike {
   @Column()
   createdAt: string
 
-  @ManyToOne(() => PostEntity)
+  @ManyToOne(() => PostEntity, post => post.likes)
   @JoinColumn({
     name: 'sourceId'
   })
   post: PostEntity
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, user => user.postsLikes)
   @JoinColumn({
     name: 'authorId'
   })

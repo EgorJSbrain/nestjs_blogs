@@ -4,21 +4,30 @@ import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 
 import { RequestParams, ResponseBody } from '../types/request';
 import { UpdatePostDto } from '../dtos/posts/update-post.dto';
-import { LikeStatusEnum } from '../constants/likes';
+import {
+  LENGTH_OF_NEWEST_LIKES_FOR_POST,
+  LikeSourceTypeEnum,
+  LikeStatusEnum
+} from '../constants/likes'
 import { ICreatePostType, IExtendedPost } from '../types/posts';
 import { SortDirections, SortType } from '../constants/global';
 import { LikesRepository } from '../likes/likes.repository';
 import { PostEntity } from '../entities/post';
 import { BlogEntity } from '../entities/blog';
+import { PostLikeEntity } from '../entities/post-like';
+import { formatLikes } from '../utils/formatLikes';
 
 @Injectable()
 export class PostsRepository {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
-    private likeSqlRepository: LikesRepository,
+    private likeRepository: LikesRepository,
 
     @InjectRepository(PostEntity)
-    private readonly postsRepo: Repository<PostEntity>
+    private readonly postsRepo: Repository<PostEntity>,
+
+    @InjectRepository(PostLikeEntity)
+    private readonly postLikesRepo: Repository<PostLikeEntity>
   ) {}
 
   async getAll(
@@ -37,23 +46,55 @@ export class PostsRepository {
       const pageSizeNumber = Number(pageSize)
       const pageNumberNum = Number(pageNumber)
       const skip = (pageNumberNum - 1) * pageSizeNumber
+      let filter = ''
+
+      if (blogId) {
+        filter = 'post.blogId = :blogId'
+      }
 
       const query = this.dataSource
-      .createQueryBuilder()
-      .select('post.*')
-      .addSelect((subQuery) => {
-        return subQuery
-          .select('blog.name', 'blogname')
-          .from(BlogEntity, 'blog')
-          .where('post.blogId = blog.id')
-      }, 'blogname')
-      .from(PostEntity, 'post')
-      .addOrderBy(
-        sortBy === 'blogName' ? 'blogname' : `post.${sortBy}`,
-        sortDirection?.toLocaleUpperCase() as SortType
-      )
-      .skip(skip)
-      .take(pageSizeNumber)
+        .createQueryBuilder()
+        .select('post.*')
+        .where(filter, {
+          blogId: blogId ? blogId : undefined
+        })
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('blog.name', 'blogname')
+            .from(BlogEntity, 'blog')
+            .where('post.blogId = blog.id')
+        }, 'blogname')
+        .from(PostEntity, 'post')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('count(*)', 'likesCount')
+            .from(PostLikeEntity, 'l')
+            .where("l.sourceId = post.id AND l.status = 'Like'", {
+              userId: userId
+            })
+        }, 'likesCount')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('count(*)', 'dislikesCount')
+            .from(PostLikeEntity, 'l')
+            .where("l.sourceId = post.id AND l.status = 'Dislike'", {
+              userId: userId
+            })
+        }, 'dislikesCount')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('l.status', 'myStatus')
+            .from(PostLikeEntity, 'l')
+            .where('l.sourceId = post.id AND l.authorId = :userId', {
+              userId: userId
+            })
+        }, 'myStatus')
+        .addOrderBy(
+          sortBy === 'blogName' ? 'blogname' : `post.${sortBy}`,
+          sortDirection?.toLocaleUpperCase() as SortType
+        )
+        .skip(skip)
+        .take(pageSizeNumber)
 
       const postsResponse = await query.getRawMany()
 
@@ -64,57 +105,40 @@ export class PostsRepository {
         content: post.content,
         createdAt: post.createdAt,
         blogId: post.blogId,
-        blogName: post.blogname
+        blogName: post.blogname,
+        extendedLikesInfo: {
+          likesCount: Number(post.likesCount ?? 0),
+          dislikesCount: Number(post.dislikesCount ?? 0),
+          myStatus: post.myStatus ? post.myStatus : LikeStatusEnum.none
+        }
       }))
 
       const count = await query.getCount()
       const pagesCount = Math.ceil(count / pageSizeNumber)
 
+      const likeQuery = this.postLikesRepo.createQueryBuilder(
+        LikeSourceTypeEnum.posts
+      )
+
       const postsWithInfoAboutLikes = await Promise.all(
         posts.map(async (post) => {
-          // const likesCounts = await this.likeSqlRepository.getLikesCountsBySourceId(
-          //   LikeSourceTypeEnum.posts,
-          //   post.id
-          // )
-
-          // const newestLikes = await this.likeSqlRepository.getSegmentOfLikesByParams(
-          //   LikeSourceTypeEnum.posts,
-          //   post.id,
-          //   LENGTH_OF_NEWEST_LIKES_FOR_POST
-          // )
-
-          // let likesUserInfo
-
-          // if (userId) {
-          //   likesUserInfo =
-          //     await this.likeSqlRepository.getLikeBySourceIdAndAuthorId({
-          //       sourceType: LikeSourceTypeEnum.posts,
-          //       sourceId: post.id,
-          //       authorId: userId
-          //     })
-          // }
+          const newestLikes =
+            await this.likeRepository.getSegmentOfLikesByParams(
+              LikeSourceTypeEnum.posts,
+              post.id,
+              LENGTH_OF_NEWEST_LIKES_FOR_POST,
+              likeQuery
+            )
 
           return {
             ...post,
             extendedLikesInfo: {
-              likesCount: 0,
-              dislikesCount: 0,
-              myStatus: LikeStatusEnum.none,
-              newestLikes: []
+              ...post.extendedLikesInfo,
+              newestLikes: formatLikes(newestLikes)
             }
           }
-          // return {
-          //   ...post,
-          //   extendedLikesInfo: {
-          //     likesCount: likesCounts?.likesCount ?? 0,
-          //     dislikesCount: likesCounts?.dislikesCount ?? 0,
-          //     myStatus: likesUserInfo ? likesUserInfo.status : LikeStatusEnum.none,
-          //     newestLikes: formatLikes(newestLikes)
-          //   }
-          // }
         })
       )
-      console.log("------postsWithInfoAboutLikes:", postsWithInfoAboutLikes)
 
       return {
         pagesCount,
@@ -122,7 +146,6 @@ export class PostsRepository {
         pageSize: pageSizeNumber,
         totalCount: count,
         items: postsWithInfoAboutLikes
-        // items: []
       }
     } catch {
       return []
@@ -164,45 +187,60 @@ export class PostsRepository {
     id: string,
     userId?: string
   ): Promise<IExtendedPost | null> {
-    // let myLike: IExtendedLike | null = null
+    try {
+      let filter = ''
 
-    const query = this.postsRepo.createQueryBuilder('post')
+      if (userId) {
+        filter = 'l.sourceId = post.id AND l.authorId = :userId'
+      }
 
-    const post = await query
-      .select([
-        'post.id',
-        'post.blogId',
-        'post.title',
-        'post.shortDescription',
-        'post.content',
-        'post.createdAt'
-      ])
-      .leftJoinAndSelect('post.blog', 'blog')
+      const post = await this.dataSource
+      .createQueryBuilder()
+      .select('post.*')
       .where('post.id = :id', { id })
-      .getOne()
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('blog.name', 'blogname')
+          .from(BlogEntity, 'blog')
+          .where('post.blogId = blog.id')
+      }, 'blogname')
+      .from(PostEntity, 'post')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('count(*)', 'likesCount')
+          .from(PostLikeEntity, 'l')
+          .where("l.sourceId = post.id AND l.status = 'Like'")
+      }, 'likesCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('count(*)', 'dislikesCount')
+          .from(PostLikeEntity, 'l')
+          .where("l.sourceId = post.id AND l.status = 'Dislike'")
+      }, 'dislikesCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('l.status', 'myStatus')
+          .from(PostLikeEntity, 'l')
+          .where('l.sourceId = post.id AND l.authorId = :userId', {
+            userId
+          })
+      }, 'myStatus')
+      .getRawOne()
+
+    const likeQuery = this.postLikesRepo.createQueryBuilder(
+      LikeSourceTypeEnum.posts
+    )
+
+    const newestLikes = await this.likeRepository.getSegmentOfLikesByParams(
+      LikeSourceTypeEnum.posts,
+      id,
+      LENGTH_OF_NEWEST_LIKES_FOR_POST,
+      likeQuery
+    )
 
     if (!post) {
       return null
     }
-
-    // const likesCounts = await this.likeSqlRepository.getLikesCountsBySourceId(
-    //   LikeSourceTypeEnum.posts,
-    //   post.id
-    // )
-
-    // const newestLikes = await this.likeSqlRepository.getSegmentOfLikesByParams(
-    //   LikeSourceTypeEnum.posts,
-    //   post.id,
-    //   LENGTH_OF_NEWEST_LIKES_FOR_POST
-    // )
-
-    // if (userId) {
-    //   myLike = await this.likeSqlRepository.getLikeBySourceIdAndAuthorId({
-    //     sourceType: LikeSourceTypeEnum.posts,
-    //     sourceId: post.id,
-    //     authorId: userId
-    //   })
-    // }
 
     return {
       id: post.id,
@@ -211,17 +249,17 @@ export class PostsRepository {
       shortDescription: post.shortDescription,
       content: post.content,
       createdAt: post.createdAt,
-      blogName: post.blog.name,
+      blogName: post.blogname,
       extendedLikesInfo: {
-        likesCount: 0,
-        dislikesCount: 0,
-        myStatus: LikeStatusEnum.none,
-        newestLikes: []
-        // likesCount: likesCounts?.likesCount ?? 0,
-        // dislikesCount: likesCounts?.dislikesCount ?? 0,
-        // myStatus: myLike?.status ?? LikeStatusEnum.none,
-        // newestLikes: formatLikes(newestLikes)
+        likesCount: Number(post.likesCount),
+        dislikesCount: Number(post.dislikesCount),
+        myStatus: post.myStatus ? post.myStatus : LikeStatusEnum.none,
+        newestLikes: formatLikes(newestLikes) || []
       }
+    }
+    } catch(e) {
+      console.log('--ERR----', e)
+      throw new Error('-1-')
     }
   }
 
@@ -281,6 +319,30 @@ export class PostsRepository {
         .execute()
 
       return !!post.affected
+    } catch (e) {
+      return false
+    }
+  }
+
+  async likePost(
+    likeStatus: LikeStatusEnum,
+    sourceId: string,
+    authorId: string
+  ) {
+    try {
+      const query = this.postLikesRepo.createQueryBuilder(
+        LikeSourceTypeEnum.posts
+      )
+
+      const like = await this.likeRepository.likeEntity(
+        likeStatus,
+        sourceId,
+        LikeSourceTypeEnum.posts,
+        authorId,
+        query
+      )
+
+      return like
     } catch (e) {
       return false
     }

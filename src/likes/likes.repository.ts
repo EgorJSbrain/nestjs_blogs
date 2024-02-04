@@ -1,214 +1,174 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
 
 import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes';
-import { IExtendedLike, IExtendedLikesInfo, LikesRequestParams } from '../types/likes';
-import { CreateLikeDto } from '../dtos/like/create-like.dto';
-import { CommentLikeEntity } from 'src/entities/comment-like';
-import { PostLikeEntity } from 'src/entities/post-like';
+import { LikesRequestParams } from '../types/likes';
+import { CommentLikeEntity } from '../entities/comment-like';
+import { PostLikeEntity } from '../entities/post-like';
+import { UserEntity } from '../entities/user';
+import { appMessages } from '../constants/messages';
 
 @Injectable()
 export class LikesRepository {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
 
-    @InjectRepository(CommentLikeEntity)
-    private readonly commentLikesRepo: Repository<CommentLikeEntity>,
-
-    @InjectRepository(PostLikeEntity)
-    private readonly postLikesRepo: Repository<PostLikeEntity>
   ) {}
-
-  async getLikesCountsBySourceId(
-    sourceType: LikeSourceTypeEnum,
-    sourceId: string
-  ) {
-    const query = `
-      SELECT count(*) AS count
-        FROM public.${sourceType}_likes
-        WHERE "sourceId" = $1 AND "status" = $2
-    `
-
-    const likesCount = await this.dataSource.query(query, [
-      sourceId,
-      LikeStatusEnum.like
-    ])
-
-    const dislikesCount = await this.dataSource.query(query, [
-      sourceId,
-      LikeStatusEnum.dislike
-    ])
-
-    return {
-      sourceId,
-      dislikesCount: Number(dislikesCount[0].count),
-      likesCount: Number(likesCount[0].count),
-    }
-  }
 
   async getSegmentOfLikesByParams(
     sourceType: LikeSourceTypeEnum,
     sourceId: string,
     limit: number,
+    query: SelectQueryBuilder<PostLikeEntity | CommentLikeEntity>,
     authorId?: string
   ) {
-    let countParams = [sourceId]
-    let params = [sourceId, limit]
-    let countQuery = `
-      SELECT count(*) AS count
-        FROM public.${sourceType}_likes
-        WHERE "sourceId" = $1 AND "status" = '${LikeStatusEnum.like}'
-    `
+    try {
+      const querySearch = query
+        .createQueryBuilder()
+        .select('likes.*')
+        .where("likes.sourceId = :sourceId AND likes.status = 'Like'", { sourceId })
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('u.login', 'login')
+            .from(UserEntity, 'u')
+            .where('likes.authorId = u.id')
+        }, 'login')
+        .from(PostLikeEntity, 'likes')
+      .addOrderBy('likes.createdAt', 'DESC')
+      .skip(0)
+      .take(limit)
 
-    let query = `
-      SELECT l.*, u."login" AS "userLogin"
-        FROM public.${sourceType}_likes l
-          LEFT JOIN public.users u
-            ON l."authorId" = u.id
-        WHERE "sourceId" = $1 AND "status" = '${LikeStatusEnum.like}'
-        ORDER BY "createdAt" DESC
-        LIMIT $2 OFFSET 0
-    `
+      const newLikes = await querySearch.getRawMany()
+      const sortedNewsetLikes = newLikes.sort((a, b) => {
+        if (Number(new Date(a.createdAt)) > Number(new Date(b.createdAt)))
+          return -1
+        return 1
+      })
 
-    if (authorId) {
-      countQuery = `
-        SELECT l.*, u."login" AS "userLogin"
-        FROM public.${sourceType}_likes l
-          LEFT JOIN public.users u
-            ON l."authorId" = u.id
-        WHERE "sourceId" = $1 AND "authorId"=$2 AND "status" = '${LikeStatusEnum.like}'
-      `
-
-      countParams = [sourceId, authorId]
-      params = [sourceId, authorId, limit]
-
-      query = `
-        SELECT *
-          FROM public.${sourceType}_likes
-          WHERE "sourceId" = $1 AND "authorId"=$2 AND "status" = '${LikeStatusEnum.like}'
-          ORDER BY "createdAt" DESC
-          LIMIT $3 OFFSET 0
-      `
+    return sortedNewsetLikes
+    } catch(e) {
+      throw new Error(appMessages().errors.somethingIsWrong)
     }
-
-
-    const count = await this.dataSource.query(countQuery, countParams)
-    const newLikes = await this.dataSource.query(query, params)
-
-    const sortedNewsetLikes = newLikes.sort((a, b) => {
-      if (Number(new Date(a.createdAt)) > Number(new Date(b.createdAt))) return -1
-      return 1
-    })
-
-    return sortedNewsetLikes.map(like => ({
-      id: like.id,
-      login: like.userLogin,
-      authorId: like.authorId,
-      sourceId: like.sourceId,
-      status: like.status,
-      createdAt: like.createdAt,
-    }))
   }
 
   async createLike(
     likeStatus: LikeStatusEnum,
     sourceId: string,
     sourceType: LikeSourceTypeEnum,
-    authorId: string
+    authorId: string,
+    query: SelectQueryBuilder<PostLikeEntity | CommentLikeEntity>
   ) {
-    const query = `
-      INSERT INTO public.${sourceType}_likes(
-        "authorId", "sourceId", "status"
+    try {
+      await query
+        .insert()
+        .values({
+          status: likeStatus,
+          authorId,
+          sourceId,
+        })
+        .execute()
+
+        return true
+    } catch(e) {
+      throw new Error(appMessages().errors.somethingIsWrong)
+    }
+  }
+
+  async updateLike(
+    id: string,
+    likeStatus: LikeStatusEnum,
+    query: SelectQueryBuilder<PostLikeEntity | CommentLikeEntity>
+  ) {
+    const updatedLike = await query
+      .update()
+      .set({
+        status: likeStatus
+      })
+      .where('id = :id', {
+        id
+      })
+      .execute()
+
+      if (!updatedLike.affected) {
+        return false
+      }
+
+      return true
+  }
+
+  async getLikeBySourceIdAndAuthorId<T extends ObjectLiteral>(
+    params: LikesRequestParams,
+    query: SelectQueryBuilder<T>
+  ) {
+    try {
+      const like = await query
+      .select(`${params.sourceType}.*`)
+      .where(
+        `${params.sourceType}.authorId = :authorId AND ${params.sourceType}.sourceId = :sourceId`,
+        {
+          authorId: params.authorId,
+          sourceId: params.sourceId
+        }
       )
-        VALUES ($1, $2, $3)
-        RETURNING "authorId", "sourceId", "status", "createdAt"
-    `
+      .getRawOne()
 
-    const likes = await this.dataSource.query(query, [
-      authorId,
-      sourceId,
-      likeStatus
-    ])
-
-    return likes[0]
-  }
-
-  async updateLike(id: string, sourceType: LikeSourceTypeEnum, likeStatus: LikeStatusEnum) {
-    const query = `
-      UPDATE public.${sourceType}_likes
-        SET "status"=$2
-        WHERE id = $1;
-    `
-
-    const likes = await this.dataSource.query<IExtendedLike[]>(query, [
-      id,
-      likeStatus
-    ])
-
-    if (!likes[0]) {
+    if (!like) {
       return null
     }
 
-    return likes[0]
-  }
-
-  async getLikeBySourceIdAndAuthorId(params: LikesRequestParams) {
-    const query = `
-      SELECT *
-        FROM public.${params.sourceType}_likes
-        WHERE "authorId" = $1 AND "sourceId" = $2
-    `
-    const likes = await this.dataSource.query<IExtendedLike[]>(query, [
-      params.authorId,
-      params.sourceId
-    ])
-    console.log("🚀 ~ LikesRepository ~ getLikeBySourceIdAndAuthorId ~ likes:", likes)
-
-    if (!likes[0]) {
-      return null
+    return like
+    } catch(e) {
+      throw new Error(appMessages().errors.somethingIsWrong)
     }
-
-    return likes[0]
   }
 
   async likeEntity(
     likeStatus: LikeStatusEnum,
     sourceId: string,
     sourceType: LikeSourceTypeEnum,
-    authorId: string
+    authorId: string,
+    query: SelectQueryBuilder<PostLikeEntity | CommentLikeEntity>,
   ) {
-    const like = await this.getLikeBySourceIdAndAuthorId({
-      sourceType,
-      sourceId,
-      authorId
-    })
-
-    if (
-      !like &&
-      (likeStatus === LikeStatusEnum.like ||
-        likeStatus === LikeStatusEnum.dislike)
-    ) {
-      const newLike = await this.createLike(
-        likeStatus,
-        sourceId,
-        sourceType,
-        authorId
+    try {
+      const like = await this.getLikeBySourceIdAndAuthorId(
+        {
+          sourceType,
+          sourceId,
+          authorId
+        },
+        query
       )
 
-      if (!newLike) {
-        return false
+      if (
+        !like &&
+        (likeStatus === LikeStatusEnum.like ||
+          likeStatus === LikeStatusEnum.dislike)
+      ) {
+        const newLike = await this.createLike(
+          likeStatus,
+          sourceId,
+          sourceType,
+          authorId,
+          query
+        )
+
+        if (!newLike) {
+          return false
+        }
       }
-    }
 
-    if (like && likeStatus !== like.status) {
-      const updatedLike = await this.updateLike(like.id, sourceType, likeStatus)
+      if (like && likeStatus !== like.status) {
+        const updatedLike = await this.updateLike(like.id, likeStatus, query)
 
-      if (!updatedLike) {
-        return false
+        if (!updatedLike) {
+          return false
+        }
       }
-    }
 
-    return true
+      return true
+    } catch(e) {
+      throw new Error(appMessages().errors.somethingIsWrong)
+    }
   }
 }
