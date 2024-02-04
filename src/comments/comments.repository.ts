@@ -19,15 +19,7 @@ import { SortDirections, SortType } from '../constants/global'
 import { LikesRepository } from '../likes/likes.repository'
 import { CommentEntity } from '../entities/comment'
 import { UserEntity } from 'src/entities/user'
-
-const writeSql = async (sql: string) => {
-  const fs = require('fs/promises')
-  try {
-    await fs.writeFile('sql.txt', sql)
-  } catch (err) {
-    console.log(err)
-  }
-}
+import { CommentLikeEntity } from 'src/entities/comment-like'
 
 @Injectable()
 export class CommentsRepository {
@@ -36,7 +28,10 @@ export class CommentsRepository {
     private readonly commentsRepo: Repository<CommentEntity>,
 
     @InjectDataSource() protected dataSource: DataSource,
-    private likeSqlRepository: LikesRepository
+    private likeRepository: LikesRepository,
+
+    @InjectRepository(CommentLikeEntity)
+    private readonly commentLikesRepo: Repository<CommentLikeEntity>
   ) {}
 
   async getAll(
@@ -80,21 +75,6 @@ export class CommentsRepository {
 
       const commentsWithInfoAboutLikes = await Promise.all(
         comments.map(async (comment) => {
-          // const likesCounts =
-          //   await this.likeSqlRepository.getLikesCountsBySourceId(
-          //     LikeSourceTypeEnum.comments,
-          //     comment.id
-          //   )
-
-          // let likesUserInfo
-
-          // if (userId) {
-          //   likesUserInfo = await this.likeSqlRepository.getLikeBySourceIdAndAuthorId({
-          //     sourceType: LikeSourceTypeEnum.comments,
-          //     sourceId: comment.id,
-          //     authorId: userId})
-          // }
-
           return {
             id: comment.id,
             content: comment.content,
@@ -102,15 +82,11 @@ export class CommentsRepository {
             commentatorInfo: {
               userId: comment.authorId,
               userLogin: comment.userLogin
-              // userLogin: comment.userLogin,
             },
             likesInfo: {
               likesCount: 0,
               dislikesCount: 0,
               myStatus: LikeStatusEnum.none
-              // likesCount: likesCounts?.likesCount ?? 0,
-              // dislikesCount: likesCounts?.dislikesCount ?? 0,
-              // myStatus: likesUserInfo ? likesUserInfo.status : LikeStatusEnum.none
             }
           }
         })
@@ -152,26 +128,6 @@ export class CommentsRepository {
       return null
     }
 
-    // const likesCounts = await this.likeSqlRepository.getLikesCountsBySourceId(
-    //   LikeSourceTypeEnum.comments,
-    //   comment.id
-    // )
-
-    // // TODO newst likes
-    // const newestLikes = await this.likeSqlRepository.getSegmentOfLikesByParams(
-    //   LikeSourceTypeEnum.comments,
-    //   comment.id,
-    //   LENGTH_OF_NEWEST_LIKES_FOR_POST
-    // )
-
-    // if (userId) {
-    //   myLike = await this.likeSqlRepository.getLikeBySourceIdAndAuthorId({
-    //     sourceType: LikeSourceTypeEnum.comments,
-    //     sourceId: comment.id,
-    //     authorId: userId
-    //   })
-    // }
-
     return {
       id: comment.id,
       commentatorInfo: {
@@ -181,9 +137,6 @@ export class CommentsRepository {
       content: comment.content,
       createdAt: comment.createdAt,
       likesInfo: {
-        // likesCount: likesCounts?.likesCount ?? 0,
-        // dislikesCount: likesCounts?.dislikesCount ?? 0,
-        // myStatus: myLike?.status ?? LikeStatusEnum.none
         likesCount: 0,
         dislikesCount: 0,
         myStatus: LikeStatusEnum.none
@@ -246,6 +199,30 @@ export class CommentsRepository {
         .execute()
 
       return !!comment.affected
+    } catch (e) {
+      return false
+    }
+  }
+
+  async likeComment(
+    likeStatus: LikeStatusEnum,
+    sourceId: string,
+    authorId: string
+  ) {
+    try {
+      const query = this.commentLikesRepo.createQueryBuilder(
+        LikeSourceTypeEnum.comments
+      )
+
+      const like = await this.likeRepository.likeEntity(
+        likeStatus,
+        sourceId,
+        LikeSourceTypeEnum.comments,
+        authorId,
+        query,
+      )
+
+      return like
     } catch (e) {
       return false
     }
