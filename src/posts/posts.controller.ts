@@ -15,6 +15,7 @@ import {
   Req
 } from '@nestjs/common'
 import { Request } from 'express'
+
 import { CreatePostByBlogIdDto, CreatePostDto } from '../dtos/posts/create-post.dto'
 import { ResponseBody, RequestParams } from '../types/request'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
@@ -27,10 +28,8 @@ import { LikeDto } from '../dtos/like/like.dto'
 import { IExtendedPost } from '../types/posts'
 import { RoutesEnum } from '../constants/global'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
-import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes'
 import { IExtendedComment } from '../types/comments'
 import { PostsRepository } from './posts.repository'
-import { LikesRepository } from '../likes/likes.repository'
 import { UsersRepository } from '../users/users.repository'
 import { CommentsRepository } from '../comments/comments.repository'
 
@@ -41,7 +40,6 @@ export class PostsController {
     private postsRepository: PostsRepository,
     private usersRepository: UsersRepository,
     private JWTService: JWTService,
-    private LikesRepository: LikesRepository,
     private CommentsRepository: CommentsRepository,
   ) {}
 
@@ -105,24 +103,29 @@ export class PostsController {
     @Param() params: { id: string },
     @Req() req: Request,
   ): Promise<IExtendedPost | null> {
-    let currentUserId: string | undefined
+    try {
+      let currentUserId: string | undefined
 
-    if (req.headers.authorization) {
-      const token = req.headers.authorization.split(' ')[1]
-      const { userId } = this.JWTService.verifyAccessToken(token)
-      currentUserId = userId
+      if (req.headers.authorization) {
+        const token = req.headers.authorization.split(' ')[1]
+        const { userId } = this.JWTService.verifyAccessToken(token)
+        currentUserId = userId
+      }
+
+      const post = await this.postsRepository.getByIdWithLikes(params.id, currentUserId)
+
+      if (!post) {
+        throw new HttpException(
+          { message: appMessages(appMessages().post).errors.notFound },
+          HttpStatus.NOT_FOUND
+        )
+      }
+
+      return post
+    } catch(e) {
+      console.log("🚀 ~ PostsController ~ e:", e)
+      return null
     }
-
-    const post = await this.postsRepository.getByIdWithLikes(params.id, currentUserId)
-
-    if (!post) {
-      throw new HttpException(
-        { message: appMessages(appMessages().post).errors.notFound },
-        HttpStatus.NOT_FOUND
-      )
-    }
-
-    return post
   }
 
   @Post()
@@ -179,7 +182,10 @@ export class PostsController {
     const updatedPost = await this.postsRepository.updatePost(params.id, data)
 
     if (!updatedPost) {
-      throw new HttpException({ message: appMessages(appMessages().post).errors.notFound }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().post).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
   }
 
@@ -195,15 +201,6 @@ export class PostsController {
 
     await this.postsRepository.deletePost(params.id)
   }
-
-  // @Get(':id/posts')
-  // async getPostsByPostId(
-  //   @Param() params: { id: string }
-  // ): Promise<IExtendedPost | null> {
-  //   const post = await this.postsRepository.getById(params.id)
-
-  //   return null
-  // }
 
   @Post()
   async creatPostByPostId(@Body() data: CreatePostDto): Promise<any> {
@@ -236,11 +233,10 @@ export class PostsController {
       )
     }
 
-    const like = await this.LikesRepository.likeEntity(
+    const like = await this.postsRepository.likePost(
       data.likeStatus,
       params.postId,
-      LikeSourceTypeEnum.posts,
-      existedUser?.id,
+      existedUser?.id
     )
 
     if (!like) {
