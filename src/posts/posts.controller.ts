@@ -103,29 +103,27 @@ export class PostsController {
     @Param() params: { id: string },
     @Req() req: Request,
   ): Promise<IExtendedPost | null> {
-    try {
-      let currentUserId: string | undefined
+    let currentUserId: string | undefined
 
-      if (req.headers.authorization) {
-        const token = req.headers.authorization.split(' ')[1]
-        const { userId } = this.JWTService.verifyAccessToken(token)
-        currentUserId = userId
-      }
-
-      const post = await this.postsRepository.getByIdWithLikes(params.id, currentUserId)
-
-      if (!post) {
-        throw new HttpException(
-          { message: appMessages(appMessages().post).errors.notFound },
-          HttpStatus.NOT_FOUND
-        )
-      }
-
-      return post
-    } catch(e) {
-      console.log("🚀 ~ PostsController ~ e:", e)
-      return null
+    if (req.headers.authorization) {
+      const token = req.headers.authorization.split(' ')[1]
+      const { userId } = this.JWTService.verifyAccessToken(token)
+      currentUserId = userId
     }
+
+    const post = await this.postsRepository.getByIdWithLikes(
+      params.id,
+      currentUserId
+    )
+
+    if (!post) {
+      throw new HttpException(
+        { message: appMessages(appMessages().post).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    return post
   }
 
   @Post()

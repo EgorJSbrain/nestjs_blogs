@@ -108,8 +108,6 @@ export class CommentsRepository {
     id: string,
     userId?: string | null
   ): Promise<IExtendedComment | null> {
-    // let myLike: IExtendedLike | null = null
-
     const query = this.dataSource.createQueryBuilder()
 
     const comment = await query
