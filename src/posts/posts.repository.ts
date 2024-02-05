@@ -16,6 +16,7 @@ import { PostEntity } from '../entities/post';
 import { BlogEntity } from '../entities/blog';
 import { PostLikeEntity } from '../entities/post-like';
 import { formatLikes } from '../utils/formatLikes';
+import { appMessages } from 'src/constants/messages';
 
 @Injectable()
 export class PostsRepository {
@@ -258,7 +259,6 @@ export class PostsRepository {
       }
     }
     } catch(e) {
-      console.log('--ERR----', e)
       throw new Error('-1-')
     }
   }
@@ -320,7 +320,7 @@ export class PostsRepository {
 
       return !!post.affected
     } catch (e) {
-      return false
+      throw new Error(appMessages().errors.somethingIsWrong)
     }
   }
 
