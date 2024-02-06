@@ -16,7 +16,7 @@ import { PostEntity } from '../entities/post';
 import { BlogEntity } from '../entities/blog';
 import { PostLikeEntity } from '../entities/post-like';
 import { formatLikes } from '../utils/formatLikes';
-import { appMessages } from 'src/constants/messages';
+import { appMessages } from '../constants/messages';
 
 @Injectable()
 export class PostsRepository {
@@ -125,7 +125,7 @@ export class PostsRepository {
         posts.map(async (post) => {
           const newestLikes =
             await this.likeRepository.getSegmentOfLikesByParams(
-              LikeSourceTypeEnum.posts,
+              PostLikeEntity,
               post.id,
               LENGTH_OF_NEWEST_LIKES_FOR_POST,
               likeQuery
@@ -233,7 +233,7 @@ export class PostsRepository {
     )
 
     const newestLikes = await this.likeRepository.getSegmentOfLikesByParams(
-      LikeSourceTypeEnum.posts,
+      PostLikeEntity,
       id,
       LENGTH_OF_NEWEST_LIKES_FOR_POST,
       likeQuery

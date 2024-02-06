@@ -6,20 +6,17 @@ import { RequestParams, ResponseBody } from '../types/request'
 import {
   IExtendedComment,
   ICreateCommentType,
-  ICreatedComment,
   IUpdateCommentType
 } from '../types/comments'
-import { IExtendedLike } from '../types/likes'
 import {
-  LENGTH_OF_NEWEST_LIKES_FOR_POST,
   LikeSourceTypeEnum,
   LikeStatusEnum
 } from '../constants/likes'
 import { SortDirections, SortType } from '../constants/global'
 import { LikesRepository } from '../likes/likes.repository'
 import { CommentEntity } from '../entities/comment'
-import { UserEntity } from 'src/entities/user'
-import { CommentLikeEntity } from 'src/entities/comment-like'
+import { UserEntity } from '../entities/user'
+import { CommentLikeEntity } from '../entities/comment-like'
 
 @Injectable()
 export class CommentsRepository {
@@ -62,6 +59,30 @@ export class CommentsRepository {
             .where('comment.authorId = user.id')
         }, 'userLogin')
         .from(CommentEntity, 'comment')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('count(*)', 'likesCount')
+            .from(CommentLikeEntity, 'l')
+            .where("l.sourceId = comment.id AND l.status = 'Like'", {
+              userId: userId
+            })
+        }, 'likesCount')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('count(*)', 'dislikesCount')
+            .from(CommentLikeEntity, 'l')
+            .where("l.sourceId = comment.id AND l.status = 'Dislike'", {
+              userId: userId
+            })
+        }, 'dislikesCount')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('l.status', 'myStatus')
+            .from(CommentLikeEntity, 'l')
+            .where('l.sourceId = comment.id AND l.authorId = :userId', {
+              userId
+            })
+        }, 'myStatus')
         .addOrderBy(
           `comment.${sortBy}`,
           sortDirection?.toLocaleUpperCase() as SortType
@@ -84,9 +105,9 @@ export class CommentsRepository {
               userLogin: comment.userLogin
             },
             likesInfo: {
-              likesCount: 0,
-              dislikesCount: 0,
-              myStatus: LikeStatusEnum.none
+              likesCount: Number(comment.likesCount) ?? 0,
+              dislikesCount: Number(comment.dislikesCount) ?? 0,
+              myStatus: comment.myStatus || LikeStatusEnum.none
             }
           }
         })
@@ -120,6 +141,30 @@ export class CommentsRepository {
           .where('comment.authorId = user.id')
       }, 'userLogin')
       .from(CommentEntity, 'comment')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('count(*)', 'likesCount')
+          .from(CommentLikeEntity, 'l')
+          .where("l.sourceId = comment.id AND l.status = 'Like'", {
+            userId: userId
+          })
+      }, 'likesCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('count(*)', 'dislikesCount')
+          .from(CommentLikeEntity, 'l')
+          .where("l.sourceId = comment.id AND l.status = 'Dislike'", {
+            userId: userId
+          })
+      }, 'dislikesCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('l.status', 'myStatus')
+          .from(CommentLikeEntity, 'l')
+          .where('l.sourceId = comment.id AND l.authorId = :userId', {
+            userId
+          })
+      }, 'myStatus')
       .getRawOne()
 
     if (!comment) {
@@ -135,9 +180,9 @@ export class CommentsRepository {
       content: comment.content,
       createdAt: comment.createdAt,
       likesInfo: {
-        likesCount: 0,
-        dislikesCount: 0,
-        myStatus: LikeStatusEnum.none
+        likesCount: Number(comment.likesCount) ?? 0,
+        dislikesCount: Number(comment.dislikesCount) ?? 0,
+        myStatus: comment.myStatus || LikeStatusEnum.none
       }
     }
   }
