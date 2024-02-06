@@ -10,7 +10,7 @@ import {
 } from 'typeorm'
 
 import { PostEntity } from './post'
-import { IComment } from 'src/types/comments'
+import { IComment } from '../types/comments'
 import { UserEntity } from './user'
 import { CommentLikeEntity } from './comment-like'
 
