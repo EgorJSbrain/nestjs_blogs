@@ -14,7 +14,7 @@ import { CommentEntity } from './comment'
 import { UserEntity } from './user'
 
 @Entity({
-  name: 'comments-likes'
+  name: 'comments_likes'
 })
 export class CommentLikeEntity extends BaseEntity implements ILike {
   @PrimaryGeneratedColumn('uuid')
