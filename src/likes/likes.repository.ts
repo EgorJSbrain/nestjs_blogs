@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
+import {
+  DataSource,
+  EntityTarget,
+  ObjectLiteral,
+  SelectQueryBuilder
+} from 'typeorm'
 import { InjectDataSource } from '@nestjs/typeorm';
 
 import { LikeSourceTypeEnum, LikeStatusEnum } from '../constants/likes';
@@ -17,11 +22,10 @@ export class LikesRepository {
   ) {}
 
   async getSegmentOfLikesByParams(
-    sourceType: LikeSourceTypeEnum,
+    entity: EntityTarget<PostLikeEntity>,
     sourceId: string,
     limit: number,
     query: SelectQueryBuilder<PostLikeEntity | CommentLikeEntity>,
-    authorId?: string
   ) {
     try {
       const querySearch = query
@@ -34,7 +38,7 @@ export class LikesRepository {
             .from(UserEntity, 'u')
             .where('likes.authorId = u.id')
         }, 'login')
-        .from(PostLikeEntity, 'likes')
+        .from(entity, 'likes')
       .addOrderBy('likes.createdAt', 'DESC')
       .skip(0)
       .take(limit)
@@ -55,7 +59,6 @@ export class LikesRepository {
   async createLike(
     likeStatus: LikeStatusEnum,
     sourceId: string,
-    sourceType: LikeSourceTypeEnum,
     authorId: string,
     query: SelectQueryBuilder<PostLikeEntity | CommentLikeEntity>
   ) {
@@ -103,15 +106,15 @@ export class LikesRepository {
   ) {
     try {
       const like = await query
-      .select(`${params.sourceType}.*`)
-      .where(
-        `${params.sourceType}.authorId = :authorId AND ${params.sourceType}.sourceId = :sourceId`,
-        {
-          authorId: params.authorId,
-          sourceId: params.sourceId
-        }
-      )
-      .getRawOne()
+        .select(`${params.sourceType}.*`)
+        .where(
+          `${params.sourceType}.authorId = :authorId AND ${params.sourceType}.sourceId = :sourceId`,
+          {
+            authorId: params.authorId,
+            sourceId: params.sourceId
+          }
+        )
+        .getRawOne()
 
     if (!like) {
       return null
@@ -145,10 +148,10 @@ export class LikesRepository {
         (likeStatus === LikeStatusEnum.like ||
           likeStatus === LikeStatusEnum.dislike)
       ) {
+
         const newLike = await this.createLike(
           likeStatus,
           sourceId,
-          sourceType,
           authorId,
           query
         )

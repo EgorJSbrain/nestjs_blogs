@@ -82,10 +82,11 @@ export class BlogsController {
     if (req.headers.authorization) {
       const token = req.headers.authorization.split(' ')[1]
       try {
-      const { userId } = this.JWTService.verifyAccessToken(token)
-      currentUserId = userId || null
+        const { userId } = this.JWTService.verifyAccessToken(token)
+
+        currentUserId = userId || null
       } catch {
-        console.log('err')
+        currentUserId = null
       }
     }
 

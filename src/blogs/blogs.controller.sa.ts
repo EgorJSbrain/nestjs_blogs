@@ -173,7 +173,7 @@ export class BlogsSAController {
         const { userId } = this.JWTService.verifyAccessToken(token)
         currentUserId = userId || null
       } catch {
-        console.log('err')
+        currentUserId = null
       }
     }
 
