@@ -16,7 +16,7 @@ import { BlogEntity } from '../entities/blog';
 import { PostEntity } from '../entities/post';
 import { CommentEntity } from '../entities/comment';
 import { PostLikeEntity } from '../entities/post-like';
-import { CommentLikeEntity } from 'src/entities/comment-like';
+import { CommentLikeEntity } from '../entities/comment-like';
 
 @Module({
   imports: [
