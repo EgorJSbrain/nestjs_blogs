@@ -3,5 +3,6 @@ node_modules
 
 local.env
 test.env
+.env
 
 dist
