@@ -25,6 +25,8 @@ import { DeviceEntity } from './entities/devices'
 import { CommentLikeEntity } from './entities/comment-like'
 import { CommentEntity } from './entities/comment'
 import { PostLikeEntity } from './entities/post-like'
+import { QuestionEntity } from './entities/question'
+import { QuestionsModule } from './questions/questions.module'
 
 @Module({
   imports: [
@@ -45,13 +47,14 @@ import { PostLikeEntity } from './entities/post-like'
           CommentEntity,
           CommentLikeEntity,
           PostLikeEntity,
+          QuestionEntity,
         ],
         autoLoadEntities: true,
         synchronize: false
       })
     }),
     ConfigModule.forRoot({
-      envFilePath: `${process.env.NODE_ENV}.env`,
+      envFilePath: '.env',
       isGlobal: true,
       load: [configuration]
     }),
@@ -77,7 +80,8 @@ import { PostLikeEntity } from './entities/post-like'
     JWTModule,
     LikesModule,
     HashModule,
-    DeviceModule
+    DeviceModule,
+    QuestionsModule,
   ],
   controllers: [],
   providers: [

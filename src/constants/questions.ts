@@ -1,0 +1,2 @@
+export const QUESTION_BODY_MIN_LENGTH = 10
+export const QUESTION_BODY_MAX_LENGTH = 500
