@@ -10,6 +10,7 @@ import { DeviceEntity } from './src/entities/devices';
 import { PostEntity } from './src/entities/post';
 import { PostLikeEntity } from './src/entities/post-like';
 import { UserEntity } from './src/entities/user';
+import { QuestionEntity } from './src/entities/question';
 
 dotenv.config({
   path: path.resolve(process.cwd(), '.env'),
@@ -32,6 +33,7 @@ export default new DataSource({
     PostEntity,
     PostLikeEntity,
     UserEntity,
+    QuestionEntity,
   ],
   synchronize: false,
   migrations:
