@@ -4,13 +4,12 @@ import {
   Table,
   TableColumnOptions
 } from 'typeorm'
-import { GameStatusEnum } from '../enums/gameStatusEnum'
 
-export class AddTableGames1707459567669 implements MigrationInterface {
+export class AddQuestionTable1707716790479 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: 'games',
+        name: 'questions',
         columns: [
           {
             name: 'id',
@@ -20,25 +19,20 @@ export class AddTableGames1707459567669 implements MigrationInterface {
             generationStrategy: 'uuid'
           },
           {
-            type: 'enum',
-            name: 'status',
-            enum: Object.values(GameStatusEnum),
+            name: 'body',
+            type: 'text',
             isNullable: true
           },
           {
-            name: 'pairCreatedDate',
-            type: 'timestamp',
+            name: 'correctAnswers',
+            type: 'JSON',
             isNullable: true
           },
           {
-            name: 'finishGameDate',
-            type: 'timestamp',
-            isNullable: true
-          },
-          {
-            name: 'startGameFate',
-            type: 'timestamp',
-            isNullable: true
+            name: 'published',
+            type: 'boolean',
+            isNullable: false,
+            default: false
           },
           {
             name: 'createdAt',
@@ -61,6 +55,6 @@ export class AddTableGames1707459567669 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('games', true)
+    await queryRunner.dropTable('questions', true)
   }
 }

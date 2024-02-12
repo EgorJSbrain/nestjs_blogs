@@ -44,7 +44,7 @@ export class JWTService {
 
   verifyAccessToken(token: string): { userId?: string; password?: string } {
     return this.jwtService.verify<{ userId: string; password: string }>(token, {
-      secret: process.env.ACCESS_SECRET_KEY
+      secret: this.configService.get<string>('ACCESS_SECRET_KEY')
     })
   }
 }
