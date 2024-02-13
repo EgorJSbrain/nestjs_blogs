@@ -42,7 +42,7 @@ export class AddQuestionTable1707716790479 implements MigrationInterface {
           {
             name: 'updatedAt',
             type: 'timestamp',
-            default: 'now()'
+            isNullable: true
           },
           {
             name: 'deletedAt',

@@ -290,7 +290,7 @@ export class PostsRepository {
   }
 
   async updatePost(id: string, data: UpdatePostDto): Promise<boolean> {
-    const updatedBlog = await this.postsRepo
+    const updatedPost = await this.postsRepo
       .createQueryBuilder('post')
       .update()
       .set({
@@ -303,7 +303,7 @@ export class PostsRepository {
       })
       .execute()
 
-    if (!updatedBlog.affected) {
+    if (!updatedPost.affected) {
       return false
     }
 

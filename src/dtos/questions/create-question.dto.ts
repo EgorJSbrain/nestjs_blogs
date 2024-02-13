@@ -25,5 +25,5 @@ export class CreateQuestionDto {
   @IsArray()
   @IsDefined()
   @IsNotEmpty()
-  correctAnswers: string
+  correctAnswers: string[]
 }
