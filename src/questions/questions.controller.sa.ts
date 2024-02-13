@@ -16,34 +16,21 @@ import {
 } from '@nestjs/common'
 import { Request } from 'express'
 
-import { CreatePostByBlogIdDto, CreatePostDto } from '../dtos/posts/create-post.dto'
 import { ResponseBody, RequestParams } from '../types/request'
-import { UpdatePostDto } from '../dtos/posts/update-post.dto'
-import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
-import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { appMessages } from '../constants/messages'
-import { JWTService } from '../jwt/jwt.service'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
-import { LikeDto } from '../dtos/like/like.dto'
-import { IExtendedPost } from '../types/posts'
 import { RoutesEnum } from '../constants/global'
-import { CommentDto } from '../dtos/comments/create-comment.dto'
-import { IExtendedComment } from '../types/comments'
-import { PostsRepository } from '../posts/posts.repository'
-import { UsersRepository } from '../users/users.repository'
-import { CommentsRepository } from '../comments/comments.repository'
 import { QuestionsRepository } from './questions.repository'
-import { IQuestion } from 'src/types/questions'
-import { CreateQuestionDto } from 'src/dtos/questions/create-question.dto'
+import { IQuestion } from '../types/questions'
+import { CreateQuestionDto } from '../dtos/questions/create-question.dto'
+import { UpdateQuestionDto } from '../dtos/questions/update-question.dto'
+import { QuestionPublishDto } from '../dtos/questions/question.dto'
 
 @SkipThrottle()
 @Controller(RoutesEnum.saQuizQuestions)
 export class QuestionsSAController {
   constructor(
     private questionsRepository: QuestionsRepository,
-    // private usersRepository: UsersRepository,
-    private JWTService: JWTService,
-    // private CommentsRepository: CommentsRepository,
   ) {}
 
   @Get()
@@ -66,61 +53,80 @@ export class QuestionsSAController {
   @Put(':id')
   @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async updatePost(
+  async updateQuestion(
     @Param() params: { id: string },
-    @Body() data: UpdatePostDto
+    @Body() data: UpdateQuestionDto
   ): Promise<undefined> {
     if (!params.id) {
       throw new HttpException(
-        { message: appMessages(appMessages().postId).errors.isRequiredField },
+        { message: appMessages(appMessages().questionId).errors.isRequiredField },
         HttpStatus.NOT_FOUND
       )
     }
 
-    const post = await this.questionsRepository.getById(params.id)
+    const existedQuestion = await this.questionsRepository.getById(params.id)
 
-    if (!post) {
+    if (!existedQuestion) {
       throw new HttpException(
-        { message: appMessages(appMessages().post).errors.notFound },
+        { message: appMessages(appMessages().question).errors.notFound },
         HttpStatus.NOT_FOUND
       )
     }
 
-    const updatedPost = await this.questionsRepository.updateQuestion(params.id, data)
+    const updatedQuestion = await this.questionsRepository.updateQuestion(params.id, {
+      body: data.body,
+      correctAnswers: JSON.stringify(data.correctAnswers),
+      published: existedQuestion.published
+    })
 
-    if (!updatedPost) {
+    if (!updatedQuestion) {
       throw new HttpException(
-        { message: appMessages(appMessages().post).errors.notFound },
+        { message: appMessages(appMessages().question).errors.notFound },
         HttpStatus.NOT_FOUND
       )
     }
   }
 
   @Put('/:questionId/publish')
-  @UseGuards(JWTAuthGuard)
+  @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async publishQuestion(
-    @Param() params: { postId: string },
-    @Body() data: LikeDto
+    @Param() params: { questionId: string },
+    @Body() data: QuestionPublishDto
   ): Promise<undefined> {
-    const existedPost = await this.questionsRepository.getById(params.postId)
+    const existedQuestion = await this.questionsRepository.getById(params.questionId)
 
-    if (!existedPost) {
+    if (!existedQuestion) {
       throw new HttpException(
         { message: appMessages(appMessages().post).errors.notFound, field: '' },
         HttpStatus.NOT_FOUND
       )
     }
+
+    if (existedQuestion.published === data.published) {
+      return
+    }
+
+    await this.questionsRepository.updateQuestion(existedQuestion.id, {
+      body: existedQuestion.body,
+      correctAnswers: JSON.stringify(existedQuestion.correctAnswers),
+      published: data.published
+    })
+
+    return
   }
 
   @Delete(':id')
   @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deletePost(@Param() params: { id: string }): Promise<any> {
-    const post = await this.questionsRepository.getById(params.id)
+  async deleteQuestion(@Param() params: { id: string }): Promise<any> {
+    const question = await this.questionsRepository.getById(params.id)
 
-    if (!post) {
-      throw new HttpException({ message: appMessages(appMessages().post).errors.notFound }, HttpStatus.NOT_FOUND)
+    if (!question) {
+      throw new HttpException(
+        { message: appMessages(appMessages().question).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
 
     await this.questionsRepository.deleteQuestion(params.id)
