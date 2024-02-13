@@ -1,8 +1,11 @@
 import {
   BaseEntity,
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
-  PrimaryGeneratedColumn
+  PrimaryGeneratedColumn,
+  UpdateDateColumn
 } from 'typeorm'
 
 import { STRING_MAX_LENGTH } from '../constants/global'
@@ -18,15 +21,31 @@ export class QuestionEntity extends BaseEntity implements IQuestion {
   @Column({ length: STRING_MAX_LENGTH })
   body: string
 
-  @Column("character varying", { array: true })
-  correctAnswers: string[]
+  @Column("json")
+  correctAnswers: string
 
   @Column({ default: false })
   published: boolean
 
-  @Column()
-  createdAt: string
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    name: 'createdAt',
+  })
+  createdAt: Date
 
-  @Column()
-  updatedAt: string
+  @UpdateDateColumn({
+    type: 'timestamp',
+    nullable: true,
+    // onUpdate: 'CURRENT_TIMESTAMP(6)',
+    name: 'updatedAt',
+  })
+  updatedAt: Date | null;
+
+  @DeleteDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    name: 'deletedAt',
+  })
+  deletedAt: Date | null;
 }
