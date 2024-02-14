@@ -11,6 +11,8 @@ import { PostEntity } from './src/entities/post';
 import { PostLikeEntity } from './src/entities/post-like';
 import { UserEntity } from './src/entities/user';
 import { QuestionEntity } from './src/entities/question';
+import { ProgressEntity } from './src/entities/progress';
+import { AnswerEntity } from './src/entities/answer';
 
 dotenv.config({
   path: path.resolve(process.cwd(), '.env'),
@@ -34,6 +36,8 @@ export default new DataSource({
     PostLikeEntity,
     UserEntity,
     QuestionEntity,
+    ProgressEntity,
+    AnswerEntity,
   ],
   synchronize: false,
   migrations:

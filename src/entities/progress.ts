@@ -9,27 +9,23 @@ import {
   UpdateDateColumn
 } from 'typeorm'
 
-import { STRING_MAX_LENGTH } from '../constants/global'
-import { IQuestion } from '../types/questions'
+import { IProgress } from 'src/types/progress'
 import { AnswerEntity } from './answer'
 
 @Entity({
-  name: 'questions'
+  name: 'progresses'
 })
-export class QuestionEntity extends BaseEntity implements IQuestion {
+export class ProgressEntity extends BaseEntity implements IProgress {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ length: STRING_MAX_LENGTH })
-  body: string
-
-  @Column("json")
-  correctAnswers: string
+  @Column()
+  score: number
 
   @Column({ default: false })
-  published: boolean
+  userId: string
 
-  @OneToMany(() => AnswerEntity, answer => answer.question)
+  @OneToMany(() => AnswerEntity, answer => answer.progress)
   answers: AnswerEntity[]
 
   @CreateDateColumn({

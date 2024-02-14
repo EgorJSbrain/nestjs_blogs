@@ -11,6 +11,7 @@ import { IExtendedUser } from '../types/users'
 import { DeviceEntity } from './devices'
 import { CommentEntity } from './comment'
 import { PostLikeEntity } from './post-like'
+import { AnswerEntity } from './answer'
 
 @Entity({ name: 'users' })
 export class UserEntity extends BaseEntity implements IExtendedUser {
@@ -49,4 +50,7 @@ export class UserEntity extends BaseEntity implements IExtendedUser {
 
   @OneToMany(() => PostLikeEntity, like => like.user)
   postsLikes: PostLikeEntity[]
+
+  @OneToMany(() => AnswerEntity, answer => answer.user)
+  answers: AnswerEntity[]
 }
