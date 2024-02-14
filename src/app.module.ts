@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core'
 import { TypeOrmModule } from '@nestjs/typeorm'
 
 import configuration from '../config/configuration'
+
 import { UsersModule } from './users/users.module'
 import { BlogsModule } from './blogs/blogs.module'
 import { PostsModule } from './posts/posts.module'
@@ -18,6 +19,7 @@ import { JWTModule } from './jwt/jwt.module'
 import { LikesModule } from './likes/likes.module'
 import { HashModule } from './hash/hash.module'
 import { DeviceModule } from './devices/devices.module'
+
 import { UserEntity } from './entities/user'
 import { BlogEntity } from './entities/blog'
 import { PostEntity } from './entities/post'
@@ -27,6 +29,8 @@ import { CommentEntity } from './entities/comment'
 import { PostLikeEntity } from './entities/post-like'
 import { QuestionEntity } from './entities/question'
 import { QuestionsModule } from './questions/questions.module'
+import { ProgressEntity } from './entities/progress'
+import { AnswerEntity } from './entities/answer'
 
 @Module({
   imports: [
@@ -48,6 +52,8 @@ import { QuestionsModule } from './questions/questions.module'
           CommentLikeEntity,
           PostLikeEntity,
           QuestionEntity,
+          ProgressEntity,
+          AnswerEntity,
         ],
         autoLoadEntities: true,
         synchronize: false
