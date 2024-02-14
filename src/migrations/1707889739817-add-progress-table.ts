@@ -2,15 +2,15 @@ import {
   MigrationInterface,
   QueryRunner,
   Table,
-  TableColumnOptions
+  TableColumnOptions,
+  TableForeignKeyOptions
 } from 'typeorm'
-import { GameStatusEnum } from '../enums/gameStatusEnum'
 
-export class AddTableGames1707459567669 implements MigrationInterface {
+export class AddProgressTable1707889739817 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: 'games',
+        name: 'progresses',
         columns: [
           {
             name: 'id',
@@ -20,47 +20,43 @@ export class AddTableGames1707459567669 implements MigrationInterface {
             generationStrategy: 'uuid'
           },
           {
-            type: 'enum',
-            name: 'status',
-            enum: Object.values(GameStatusEnum),
-            isNullable: true
+            name: 'score',
+            type: 'int',
+            default: 0
           },
           {
-            name: 'pairCreatedDate',
-            type: 'timestamp',
-            isNullable: true
-          },
-          {
-            name: 'finishGameDate',
-            type: 'timestamp',
-            isNullable: true
-          },
-          {
-            name: 'startGameFate',
-            type: 'timestamp',
+            name: 'userId',
+            type: 'uuid',
             isNullable: true
           },
           {
             name: 'createdAt',
             type: 'timestamp',
-            isNullable: true
+            default: 'now()'
           },
           {
             name: 'updatedAt',
             type: 'timestamp',
-            default: 'now()'
+            isNullable: true
           },
           {
             name: 'deletedAt',
             type: 'timestamp',
             isNullable: true
           }
-        ] as TableColumnOptions[]
+        ] as TableColumnOptions[],
+        foreignKeys: [
+          {
+            referencedTableName: 'users',
+            referencedColumnNames: ['id'],
+            columnNames: ['userId']
+          }
+        ] as TableForeignKeyOptions[]
       })
     )
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('games', true)
+    await queryRunner.dropTable('progresses', true)
   }
 }
