@@ -12,6 +12,7 @@ import { DeviceEntity } from './devices'
 import { CommentEntity } from './comment'
 import { PostLikeEntity } from './post-like'
 import { AnswerEntity } from './answer'
+import { ProgressEntity } from './progress'
 
 @Entity({ name: 'users' })
 export class UserEntity extends BaseEntity implements IExtendedUser {
@@ -44,6 +45,9 @@ export class UserEntity extends BaseEntity implements IExtendedUser {
 
   @OneToMany(() => DeviceEntity, (device) => device.user)
   devices: DeviceEntity[]
+
+  @OneToMany(() => ProgressEntity, (progress) => progress.user)
+  progresses: ProgressEntity[]
 
   @OneToMany(() => CommentEntity, comment => comment.user)
   comments: CommentEntity[]

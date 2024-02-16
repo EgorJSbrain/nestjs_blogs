@@ -2,7 +2,8 @@ import {
   MigrationInterface,
   QueryRunner,
   Table,
-  TableColumnOptions
+  TableColumnOptions,
+  TableForeignKeyOptions
 } from 'typeorm'
 import { GameStatusEnum } from '../enums/gameStatusEnum'
 
@@ -18,6 +19,16 @@ export class AddTableGames1707459567669 implements MigrationInterface {
             isPrimary: true,
             isGenerated: true,
             generationStrategy: 'uuid'
+          },
+          {
+            type: 'uuid',
+            name: 'firstPlayerProgressId',
+            isNullable: true,
+          },
+          {
+            type: 'uuid',
+            name: 'secondPlayerProgressId',
+            isNullable: true,
           },
           {
             type: 'enum',
@@ -36,7 +47,7 @@ export class AddTableGames1707459567669 implements MigrationInterface {
             isNullable: true
           },
           {
-            name: 'startGameFate',
+            name: 'startGameDate',
             type: 'timestamp',
             isNullable: true
           },
@@ -55,7 +66,19 @@ export class AddTableGames1707459567669 implements MigrationInterface {
             type: 'timestamp',
             isNullable: true
           }
-        ] as TableColumnOptions[]
+        ] as TableColumnOptions[],
+        foreignKeys: [
+          {
+            referencedTableName: 'progresses',
+            referencedColumnNames: ['id'],
+            columnNames: ['firstPlayerProgressId'],
+          },
+          {
+            referencedTableName: 'progresses',
+            referencedColumnNames: ['id'],
+            columnNames: ['secondPlayerProgressId'],
+          },
+        ] as TableForeignKeyOptions[],
       })
     )
   }
