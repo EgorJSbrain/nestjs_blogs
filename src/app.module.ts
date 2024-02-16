@@ -31,6 +31,8 @@ import { QuestionEntity } from './entities/question'
 import { QuestionsModule } from './questions/questions.module'
 import { ProgressEntity } from './entities/progress'
 import { AnswerEntity } from './entities/answer'
+import { GamesModule } from './games/games.module'
+import { ProgressesModule } from './progresses/progresses.module'
 
 @Module({
   imports: [
@@ -88,6 +90,8 @@ import { AnswerEntity } from './entities/answer'
     HashModule,
     DeviceModule,
     QuestionsModule,
+    GamesModule,
+    ProgressesModule,
   ],
   controllers: [],
   providers: [

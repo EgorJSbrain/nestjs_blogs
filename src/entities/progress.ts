@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
@@ -11,6 +12,7 @@ import {
 
 import { IProgress } from 'src/types/progress'
 import { AnswerEntity } from './answer'
+import { UserEntity } from './user'
 
 @Entity({
   name: 'progresses'
@@ -24,6 +26,9 @@ export class ProgressEntity extends BaseEntity implements IProgress {
 
   @Column({ default: false })
   userId: string
+
+  @ManyToOne(() => UserEntity, user => user.progresses)
+  user: UserEntity
 
   @OneToMany(() => AnswerEntity, answer => answer.progress)
   answers: AnswerEntity[]

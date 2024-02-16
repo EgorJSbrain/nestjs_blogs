@@ -19,3 +19,8 @@ export interface IQuestionData {
   correctAnswers: string
   published?: boolean
 }
+
+export interface IQuestionShort {
+  id: string
+  body: string
+}
