@@ -13,6 +13,9 @@ import { JWTService } from '../jwt/jwt.service';
 import { ProgressesRepository } from '../progresses/progresses.repository';
 import { GameEntity } from '../entities/game';
 import { ProgressEntity } from '../entities/progress';
+import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case.repository';
+
+const useCases = [CheckPalyerInGameUseCase]
 
 @Module({
   imports: [
@@ -32,6 +35,7 @@ import { ProgressEntity } from '../entities/progress';
     GamesRepository,
     HashService,
     ProgressesRepository,
+    ...useCases
   ]
 })
 export class GamesModule {}
