@@ -11,3 +11,7 @@ export interface IGame {
   updatedAt: Date | null
   deletedAt: Date | null
 }
+
+export interface IExtendedGame extends IGame {
+  userId: string
+}

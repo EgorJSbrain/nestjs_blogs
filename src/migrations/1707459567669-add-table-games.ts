@@ -37,11 +37,6 @@ export class AddTableGames1707459567669 implements MigrationInterface {
             isNullable: true
           },
           {
-            name: 'pairCreatedDate',
-            type: 'timestamp',
-            isNullable: true
-          },
-          {
             name: 'finishGameDate',
             type: 'timestamp',
             isNullable: true
@@ -54,6 +49,7 @@ export class AddTableGames1707459567669 implements MigrationInterface {
           {
             name: 'createdAt',
             type: 'timestamp',
+            default: 'now()',
             isNullable: true
           },
           {
