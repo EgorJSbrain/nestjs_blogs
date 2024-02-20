@@ -40,7 +40,7 @@ export class GamesController {
   constructor(
     private usersRepository: UsersRepository,
     private gamesRepository: GamesRepository,
-    private JWTService: JWTService
+    private JWTService: JWTService,
   ) {}
 
   @Get('/my-current')
@@ -85,15 +85,12 @@ export class GamesController {
   async connectToGame(
     @CurrentUserId() currentUserId: string,
   ): Promise<any> {
-    const games = await this.gamesRepository.getAccessibleGames()
+    const existedGame = await this.gamesRepository.getAccessibleGames(currentUserId)
 
-    if (!games.length) {
-      const newGame = await this.gamesRepository.createGame(currentUserId)
-      console.log("🚀 ~ GamesController ~ newGame:", newGame)
+    if (!existedGame) {
+      return await this.gamesRepository.createGame(currentUserId)
     }
-    // const posts = await this.postsRepository.getAll(query, currentUserId)
 
-    // return posts
-    return []
+    return await this.gamesRepository.connectToGame(currentUserId, existedGame.id)
   }
 }
