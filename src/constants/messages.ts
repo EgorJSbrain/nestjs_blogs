@@ -9,6 +9,7 @@ export const appMessages = (data?: string | number) => ({
   question: 'Question',
   blog: 'Blog',
   comment: 'Comment',
+  game: 'Game',
   device: 'Device',
   email: 'email',
   code: 'code',
