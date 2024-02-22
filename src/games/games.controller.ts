@@ -85,12 +85,18 @@ export class GamesController {
   async connectToGame(
     @CurrentUserId() currentUserId: string,
   ): Promise<any> {
-    const existedGame = await this.gamesRepository.getAccessibleGames(currentUserId)
+    const aciveGame = await this.gamesRepository.getActiveGameOfUser(currentUserId)
+
+    if (aciveGame) {
+      return aciveGame
+    }
+
+    const existedGame = await this.gamesRepository.getGameInPendingSecondPalyer(currentUserId)
 
     if (!existedGame) {
       return await this.gamesRepository.createGame(currentUserId)
     }
 
-    return await this.gamesRepository.connectToGame(currentUserId, existedGame.id)
+    return await this.gamesRepository.connectToGame(currentUserId, existedGame)
   }
 }

@@ -15,7 +15,8 @@ import {
 import { AnswerStatusEnum } from '../constants/answer'
 import { ProgressEntity } from './progress'
 import { IGame } from 'src/types/game'
-import { GameStatusEnum } from 'src/enums/gameStatusEnum'
+import { GameStatusEnum } from '../enums/gameStatusEnum'
+import { GameQuestionEntity } from './game-questions'
 
 @Entity({
   name: 'games'
@@ -46,12 +47,15 @@ export class GameEntity extends BaseEntity implements IGame {
   @Column({ type: 'enum', enum: GameStatusEnum })
   status: GameStatusEnum
 
+  @OneToMany(() => GameQuestionEntity, questions => questions.game)
+  questions: GameQuestionEntity[] | null
+
   @OneToOne(() => ProgressEntity)
   @JoinColumn({
-    name: 'firstPlayerProgressId'
+    name: 'firstPlayerProgressId',
   })
-
   firstPlayerProgress: ProgressEntity
+
   @OneToOne(() => ProgressEntity)
   @JoinColumn({
     name: 'secondPlayerProgressId'

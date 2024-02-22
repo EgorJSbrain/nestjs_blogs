@@ -13,9 +13,16 @@ import { JWTService } from '../jwt/jwt.service';
 import { ProgressesRepository } from '../progresses/progresses.repository';
 import { GameEntity } from '../entities/game';
 import { ProgressEntity } from '../entities/progress';
-import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case.repository';
+import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case';
+import { GameQuestionEntity } from '../entities/game-questions';
+import { GetRandomQuestionsForGameUseCase } from './use-cases/get-random-questions-for-game-use-case';
+import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questions-for-game-use-case';
 
-const useCases = [CheckPalyerInGameUseCase]
+const useCases = [
+  CheckPalyerInGameUseCase,
+  GetRandomQuestionsForGameUseCase,
+  SetRandomQuestionsForGameUseCase
+]
 
 @Module({
   imports: [
@@ -25,6 +32,7 @@ const useCases = [CheckPalyerInGameUseCase]
       QuestionEntity,
       GameEntity,
       ProgressEntity,
+      GameQuestionEntity
     ])
   ],
   controllers: [GamesController],
