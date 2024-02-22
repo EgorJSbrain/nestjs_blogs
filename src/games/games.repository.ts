@@ -8,10 +8,12 @@ import { ProgressEntity } from '../entities/progress';
 import { GameStatusEnum } from '../enums/gameStatusEnum';
 import { GameEntity } from '../entities/game';
 import { writeSql } from 'src/utils/sqlWriteFile';
-import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case.repository';
-import { IExtendedComment } from 'src/types/comments';
-import { IExtendedGame } from 'src/types/game';
-import { appMessages } from 'src/constants/messages';
+import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case';
+import { IExtendedGame } from '../types/game';
+import { appMessages } from '../constants/messages';
+import { GameQuestionEntity } from '../entities/game-questions';
+import { GetRandomQuestionsForGameUseCase } from './use-cases/get-random-questions-for-game-use-case';
+import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questions-for-game-use-case';
 
 @Injectable()
 export class GamesRepository {
@@ -22,9 +24,11 @@ export class GamesRepository {
     private progressesRepository: ProgressesRepository,
 
     private checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
+    private getRandomQuestionsForGameUseCase: GetRandomQuestionsForGameUseCase,
+    private setRandomQuestionsForGameUseCase: SetRandomQuestionsForGameUseCase,
   ) {}
 
-  async getAccessibleGames(userId: string): Promise<IExtendedGame | null> {
+  async getGameInPendingSecondPalyer(userId: string): Promise<IExtendedGame | null> {
     try {
       const existedGame = await this.gamesRepo
         .createQueryBuilder('game')
@@ -41,6 +45,10 @@ export class GamesRepository {
         }, 'userId')
         .getRawOne()
 
+        if (!existedGame) {
+          return null
+        }
+
       const game = this.checkPalyerInGameUseCase.execute(userId, existedGame)
 
       return game
@@ -49,21 +57,41 @@ export class GamesRepository {
     }
   }
 
-  async connectToGame(userId: string, gameId: string): Promise<any> {
+  async getActiveGameOfUser(userId: string): Promise<IExtendedGame | null> {
     try {
-      const existedGame = await this.getById(gameId)
-
-      if (!existedGame) {
-        throw new HttpException(
-          {
-            message: appMessages(appMessages().game).errors.notFound,
-            field: ''
-          },
-          HttpStatus.FORBIDDEN
+      const existedGame = await this.gamesRepo
+        .createQueryBuilder('game')
+        .select('game.*')
+        .where(
+          'game.status = :status AND game.firstPlayerProgressId IS NOT NULL AND game.secondPlayerProgressId IS NOT NULL',
+          { status: GameStatusEnum.active }
         )
-      }
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('questions.questionId', 'questions')
+            .from(GameQuestionEntity, 'questions')
+            .where('game.id = questions.gameId')
+        }, 'questions')
+        .getRawOne()
 
+        if (!existedGame) {
+          return null
+        }
+
+      const game = this.checkPalyerInGameUseCase.execute(userId, existedGame)
+
+      return game
+    } catch (e) {
+      console.log("🚀 ~ GamesRepository ~ getActiveGameOfUser ~ e:", e)
+      return null
+    }
+  }
+
+  async connectToGame(userId: string, existedGame: IExtendedGame): Promise<any> {
+    try {
       const progresses = await this.progressesRepository.createProgress(userId)
+      const questions = await this.getRandomQuestionsForGameUseCase.execute()
+      await this.setRandomQuestionsForGameUseCase.execute(questions, existedGame.id)
 
       await this.gamesRepo
         .createQueryBuilder('game')
@@ -78,7 +106,7 @@ export class GamesRepository {
         })
         .execute()
 
-        const startedGame = await this.getById(gameId)
+        const startedGame = await this.getById(existedGame.id)
 
       return startedGame
     } catch {
@@ -112,13 +140,19 @@ export class GamesRepository {
       }
 
       return game
+      // return {
+      //   ...game,
+      //   questions: null
+      // }
     } catch {
       return null
     }
   }
 
   async getById(id: string): Promise<GameEntity | null> {
-    const game = this.gamesRepo
+    console.log('!!!!')
+    try {
+      const game = await this.gamesRepo
       .createQueryBuilder('game')
       .select([
         'game.id',
@@ -130,12 +164,24 @@ export class GamesRepository {
         'game.secondPlayerProgressId',
       ])
       .where('game.id = :id', { id })
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('game_questions.questionId', 'questions')
+          .from(GameQuestionEntity, 'questions')
+          .where('game.id = questions.gameId')
+      }, 'questions')
       .getOne()
+    console.log("🚀 ~ GamesRepository ~ getById ~ game:", game)
 
     if (!game) {
       return null
     }
 
     return game
+    } catch(e) {
+    console.log("🚀 ~ GamesRepository ~ getById ~ e:", e)
+    return null
+    }
+    
   }
 }
