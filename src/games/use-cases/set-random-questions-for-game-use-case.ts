@@ -13,8 +13,6 @@ export class SetRandomQuestionsForGameUseCase {
   ) {}
 
   async execute (questions: QuestionEntity[], gameId: string) {
-    console.log("🚀 ~ SetRandomQuestionsForGameUseCase ~ execute ~ questions:", questions)
-
     questions.forEach(async(question, index) => {
       return await this.gameQuestionsRepo
         .createQueryBuilder()

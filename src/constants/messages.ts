@@ -30,5 +30,6 @@ export const appMessages = (data?: string | number) => ({
     emailOrPasswordNotCorrect: 'Email or password aren\'t correct',
     emailDoesntExist: 'This email doesn\'t exist',
     codeIsNotCorrect: 'This code isn\'t correct',
+    activeGameExist: 'You have the active game',
   },
 });
