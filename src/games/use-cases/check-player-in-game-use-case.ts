@@ -9,16 +9,13 @@ export class CheckPalyerInGameUseCase {
 
   async execute(
     userId: string,
-    game: IExtendedGame
-  ): Promise<IExtendedGame | null> {
-    console.log("🚀 ~ CheckPalyerInGameUseCase ~ userId:", userId)
-    if (game.userId !== userId) {
-      return game
+    firstPlayerId: string,
+    secondPlayerId?: string
+  ): Promise<boolean> {
+    if (firstPlayerId === userId || secondPlayerId === userId) {
+      return true
     } else {
-      throw new HttpException(
-        { message: appMessages().errors.somethingIsWrong, field: '' },
-        HttpStatus.FORBIDDEN
-      )
+      return false
     }
   }
 }

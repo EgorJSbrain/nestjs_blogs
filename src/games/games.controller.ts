@@ -40,26 +40,34 @@ export class GamesController {
   constructor(
     private usersRepository: UsersRepository,
     private gamesRepository: GamesRepository,
-    private JWTService: JWTService,
+    private JWTService: JWTService
   ) {}
 
   @Get('/my-current')
+  @UseGuards(JWTAuthGuard)
   async getAll(
-    @Query() query: RequestParams,
-    @Req() req: Request
-  ): Promise<ResponseBody<any> | []> {
-    // let currentUserId: string | null = null
+    @CurrentUserId() currentUserId: string
+  ): Promise<any> {
+    const atciveGame =
+      await this.gamesRepository.getActiveGameOfUser(currentUserId)
 
-    // if (req.headers.authorization) {
-    //   const token = req.headers.authorization.split(' ')[1]
-    //   const { userId } = this.JWTService.verifyAccessToken(token)
-    //   currentUserId = userId || null
-    // }
+    if (!!atciveGame) {
+      return atciveGame
+    }
 
-    // const posts = await this.postsRepository.getAll(query, currentUserId)
+    const myCurrentGameIdPendingSecondUser =
+      await this.gamesRepository.getMyCurrentGameInPendingSecondPalyer(
+        currentUserId
+      )
 
-    // return posts
-    return []
+    if (!!myCurrentGameIdPendingSecondUser) {
+      return myCurrentGameIdPendingSecondUser
+    }
+
+    throw new HttpException(
+      { message: appMessages(appMessages().game).errors.notFound, field: '' },
+      HttpStatus.NOT_FOUND
+    )
   }
 
   @Get(':id')
@@ -82,21 +90,32 @@ export class GamesController {
 
   @Post('connection')
   @UseGuards(JWTAuthGuard)
-  async connectToGame(
-    @CurrentUserId() currentUserId: string,
-  ): Promise<any> {
-    const aciveGame = await this.gamesRepository.getActiveGameOfUser(currentUserId)
+  @HttpCode(HttpStatus.OK)
+  async connectToGame(@CurrentUserId() currentUserId: string): Promise<any> {
+    const atciveGame =
+      await this.gamesRepository.getActiveGameOfUser(currentUserId)
 
-    if (aciveGame) {
-      return aciveGame
+    if (!!atciveGame) {
+      throw new HttpException(
+        { message: appMessages().errors.activeGameExist, field: '' },
+        HttpStatus.FORBIDDEN
+      )
     }
 
-    const existedGame = await this.gamesRepository.getGameInPendingSecondPalyer(currentUserId)
+    const gameInPendindSecondUser =
+      await this.gamesRepository.getGameInPendingSecondPalyer()
 
-    if (!existedGame) {
+    if (!gameInPendindSecondUser) {
       return await this.gamesRepository.createGame(currentUserId)
     }
 
-    return await this.gamesRepository.connectToGame(currentUserId, existedGame)
+    if (gameInPendindSecondUser.userId === currentUserId) {
+      return gameInPendindSecondUser
+    }
+
+    return await this.gamesRepository.connectToGame(
+      currentUserId,
+      gameInPendindSecondUser
+    )
   }
 }
