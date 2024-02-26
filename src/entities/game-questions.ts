@@ -6,7 +6,6 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm'
@@ -38,7 +37,7 @@ export class GameQuestionEntity extends BaseEntity implements IGameQuestion {
   @Column()
   questionId: string
 
-  @ManyToOne(() => QuestionEntity)
+  @ManyToOne(() => QuestionEntity, { eager: true })
   @JoinColumn({
     name: 'questionId'
   })

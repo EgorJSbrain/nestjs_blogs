@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 import { RequestParams } from '../types/request';
@@ -25,12 +25,12 @@ export class GamesRepository {
 
     private checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
     private getRandomQuestionsForGameUseCase: GetRandomQuestionsForGameUseCase,
-    private setRandomQuestionsForGameUseCase: SetRandomQuestionsForGameUseCase,
+    private setRandomQuestionsForGameUseCase: SetRandomQuestionsForGameUseCase
   ) {}
 
-  async getGameInPendingSecondPalyer(userId: string): Promise<IExtendedGame | null> {
+  async getGameInPendingSecondPalyer(): Promise<IExtendedGame | null> {
     try {
-      const existedGame = await this.gamesRepo
+      const existedGame: IExtendedGame | undefined = await this.gamesRepo
         .createQueryBuilder('game')
         .select('game.*')
         .where(
@@ -45,59 +45,115 @@ export class GamesRepository {
         }, 'userId')
         .getRawOne()
 
-        if (!existedGame) {
-          return null
-        }
+      if (!existedGame) {
+        return null
+      }
 
-      const game = this.checkPalyerInGameUseCase.execute(userId, existedGame)
-
-      return game
+      return {
+        ...existedGame,
+        questions: null
+      }
     } catch (e) {
-      return null
+      throw new HttpException(
+        { message: appMessages().errors.somethingIsWrong, field: '' },
+        HttpStatus.BAD_REQUEST
+      )
     }
   }
 
-  async getActiveGameOfUser(userId: string): Promise<IExtendedGame | null> {
+  async getMyCurrentGameInPendingSecondPalyer(
+    userId: string
+  ): Promise<IExtendedGame | null> {
     try {
-      const existedGame = await this.gamesRepo
-        .createQueryBuilder('game')
-        .select('game.*')
-        .where(
-          'game.status = :status AND game.firstPlayerProgressId IS NOT NULL AND game.secondPlayerProgressId IS NOT NULL',
-          { status: GameStatusEnum.active }
-        )
-        .addSelect((subQuery) => {
-          return subQuery
-            .select('questions.questionId', 'questions')
-            .from(GameQuestionEntity, 'questions')
-            .where('game.id = questions.gameId')
-        }, 'questions')
-        .getRawOne()
-
-        if (!existedGame) {
-          return null
+      const existedGame = await this.gamesRepo.findOne({
+        where: {
+            status: GameStatusEnum.pending,
+            firstPlayerProgress: {
+              userId
+            }
+          },
+        relations: {
+          firstPlayerProgress: true,
         }
+      })
 
-      const game = this.checkPalyerInGameUseCase.execute(userId, existedGame)
+      if (!existedGame) {
+        return null
+      }
 
-      return game
+      return {
+        ...existedGame,
+        questions: null,
+        userId
+      }
     } catch (e) {
-      console.log("🚀 ~ GamesRepository ~ getActiveGameOfUser ~ e:", e)
-      return null
+      throw new HttpException(
+        { message: appMessages().errors.somethingIsWrong, field: '' },
+        HttpStatus.BAD_REQUEST
+      )
     }
   }
 
-  async connectToGame(userId: string, existedGame: IExtendedGame): Promise<any> {
+  async getActiveGameOfUser(userId: string): Promise<GameEntity | null> {
     try {
-      const progresses = await this.progressesRepository.createProgress(userId)
+      const existedGame = await this.gamesRepo.findOne({
+        where: [
+          {
+            status: GameStatusEnum.active,
+            firstPlayerProgress: {
+              userId
+            }
+          },
+          {
+            status: GameStatusEnum.active,
+            secondPlayerProgress: {
+              userId
+            }
+          }
+        ],
+        relations: {
+          questions: true,
+          firstPlayerProgress: true,
+          secondPlayerProgress: true
+        }
+      })
+
+      if (!existedGame) {
+        return null
+      }
+
+      this.checkPalyerInGameUseCase.execute(
+        userId,
+        existedGame.firstPlayerProgress.userId,
+        existedGame.secondPlayerProgress.userId
+      )
+
+      return existedGame
+    } catch (e) {
+      throw new HttpException(
+        { message: appMessages().errors.somethingIsWrong, field: '' },
+        HttpStatus.BAD_REQUEST
+      )
+    }
+  }
+
+  async connectToGame(
+    userId: string,
+    existedGame: IExtendedGame
+  ): Promise<any> {
+    try {
+      const progress = await this.progressesRepository.createProgress(userId)
       const questions = await this.getRandomQuestionsForGameUseCase.execute()
-      await this.setRandomQuestionsForGameUseCase.execute(questions, existedGame.id)
+      await this.setRandomQuestionsForGameUseCase.execute(
+        questions,
+        existedGame.id
+      )
 
       await this.gamesRepo
         .createQueryBuilder('game')
         .update()
         .set({
-          secondPlayerProgressId: progresses?.id,
+          secondPlayerProgressId: progress?.id,
           startGameDate: new Date().toISOString(),
           status: GameStatusEnum.active
         })
@@ -106,7 +162,7 @@ export class GamesRepository {
         })
         .execute()
 
-        const startedGame = await this.getById(existedGame.id)
+      const startedGame = await this.getById(existedGame.id)
 
       return startedGame
     } catch {
@@ -140,48 +196,66 @@ export class GamesRepository {
       }
 
       return game
-      // return {
-      //   ...game,
-      //   questions: null
-      // }
     } catch {
       return null
     }
   }
 
   async getById(id: string): Promise<GameEntity | null> {
-    console.log('!!!!')
     try {
       const game = await this.gamesRepo
-      .createQueryBuilder('game')
-      .select([
-        'game.id',
-        'game.status',
-        'game.createdAt' as 'game.pairCreatedDate',
-        'game.startGameDate',
-        'game.finishGameDate',
-        'game.firstPlayerProgressId',
-        'game.secondPlayerProgressId',
-      ])
-      .where('game.id = :id', { id })
-      .addSelect((subQuery) => {
-        return subQuery
-          .select('game_questions.questionId', 'questions')
-          .from(GameQuestionEntity, 'questions')
-          .where('game.id = questions.gameId')
-      }, 'questions')
-      .getOne()
-    console.log("🚀 ~ GamesRepository ~ getById ~ game:", game)
+        .createQueryBuilder('game')
+        .select([
+          'game.id',
+          'game.status',
+          'game.createdAt' as 'game.pairCreatedDate',
+          'game.startGameDate',
+          'game.finishGameDate',
+          'game.firstPlayerProgressId',
+          'game.secondPlayerProgressId'
+        ])
+        .where('game.id = :id', { id })
+        .getOne()
 
-    if (!game) {
+      if (!game) {
+        return null
+      }
+
+      return game
+    } catch (e) {
       return null
     }
+  }
 
-    return game
-    } catch(e) {
-    console.log("🚀 ~ GamesRepository ~ getById ~ e:", e)
-    return null
+  async getByIdWithQuestions(id: string): Promise<GameEntity | null> {
+    try {
+      const game = await this.gamesRepo
+        .createQueryBuilder('game')
+        .select([
+          'game.id',
+          'game.status',
+          'game.createdAt' as 'game.pairCreatedDate',
+          'game.startGameDate',
+          'game.finishGameDate',
+          'game.firstPlayerProgressId',
+          'game.secondPlayerProgressId'
+        ])
+        .where('game.id = :id', { id })
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('game_questions.questionId', 'game_questions')
+            .from(GameQuestionEntity, 'game_questions')
+            .where('game.id = questions.gameId')
+        }, 'game_questions')
+        .getOne()
+
+      if (!game) {
+        return null
+      }
+
+      return game
+    } catch (e) {
+      return null
     }
-    
   }
 }

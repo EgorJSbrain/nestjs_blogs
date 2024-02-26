@@ -17,7 +17,13 @@ export class GeneralSqlRepository {
     const queryComments = `DELETE FROM public.comments`
     const queryBlogs = `DELETE FROM public.blogs`
     const queryQuestions = `DELETE FROM public.questions`
+    const queryProgresses = `DELETE FROM public.progresses`
+    const queryGames = `DELETE FROM public.games`
+    const queryGameQuestions = `DELETE FROM public.game_questions`
     await this.dataSource.query(queryCommentsLikes)
+    await this.dataSource.query(queryGameQuestions)
+    await this.dataSource.query(queryGames)
+    await this.dataSource.query(queryProgresses)
     await this.dataSource.query(queryComments)
     await this.dataSource.query(queryPostsLikes)
     await this.dataSource.query(queryDevices)
