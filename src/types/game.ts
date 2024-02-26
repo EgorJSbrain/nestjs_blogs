@@ -7,6 +7,7 @@ export interface IGame {
   status: GameStatusEnum
   startGameDate: Date | null
   finishGameDate: Date | null
+  questions: any[] | null
   createdAt: Date
   updatedAt: Date | null
   deletedAt: Date | null
