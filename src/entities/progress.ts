@@ -27,7 +27,7 @@ export class ProgressEntity extends BaseEntity implements IProgress {
   @Column({ default: false })
   userId: string
 
-  @ManyToOne(() => UserEntity, user => user.progresses)
+  @ManyToOne(() => UserEntity, user => user.progresses, { eager: true })
   user: UserEntity
 
   @OneToMany(() => AnswerEntity, answer => answer.progress)
