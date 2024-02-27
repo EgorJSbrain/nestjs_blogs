@@ -1,46 +1,28 @@
 import { SkipThrottle } from '@nestjs/throttler'
 import {
-  Body,
   Controller,
-  Delete,
   Get,
   HttpException,
   HttpStatus,
   Param,
   Post,
-  Put,
-  Query,
   HttpCode,
   UseGuards,
-  Req
 } from '@nestjs/common'
-import { Request } from 'express'
 
-import { CreatePostByBlogIdDto, CreatePostDto } from '../dtos/posts/create-post.dto'
-import { ResponseBody, RequestParams } from '../types/request'
-import { UpdatePostDto } from '../dtos/posts/update-post.dto'
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { appMessages } from '../constants/messages'
-import { JWTService } from '../jwt/jwt.service'
-import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
-import { LikeDto } from '../dtos/like/like.dto'
-import { IExtendedPost } from '../types/posts'
 import { RoutesEnum } from '../constants/global'
-import { CommentDto } from '../dtos/comments/create-comment.dto'
-import { IExtendedComment } from '../types/comments'
 import { GamesRepository } from './games.repository'
-import { UsersRepository } from '../users/users.repository'
-import { CommentsRepository } from '../comments/comments.repository'
-import { GameEntity } from 'src/entities/game'
+import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case'
 
 @SkipThrottle()
 @Controller(RoutesEnum.pairGameQuizPairs)
 export class GamesController {
   constructor(
-    private usersRepository: UsersRepository,
     private gamesRepository: GamesRepository,
-    private JWTService: JWTService
+    private checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
   ) {}
 
   @Get('/my-current')
@@ -71,21 +53,40 @@ export class GamesController {
   }
 
   @Get(':id')
+  @UseGuards(JWTAuthGuard)
   async getGameById(
-    @Param() params: { id: string }
-  ): Promise<ResponseBody<any> | []> {
-    // let currentUserId: string | null = null
+    @Param() params: { id: string },
+    @CurrentUserId() currentUserId: string
+  ): Promise<any> {
+    console.log("params:", params)
+    console.log("currentUserId:", currentUserId)
+    const game = await this.gamesRepository.getExtendedGameById(params.id)
+    console.log(" game:", game)
 
-    // if (req.headers.authorization) {
-    //   const token = req.headers.authorization.split(' ')[1]
-    //   const { userId } = this.JWTService.verifyAccessToken(token)
-    //   currentUserId = userId || null
-    // }
+    if (!game) {
+      throw new HttpException(
+        { message: appMessages(appMessages().game).errors.notFound, field: '' },
+        HttpStatus.NOT_FOUND
+      )
+    }
 
-    // const posts = await this.postsRepository.getAll(query, currentUserId)
+    const firstPlayerId = game.firstPlayerProgress ? game.firstPlayerProgress.userId : null
+    const secondPlayerId = game.secondPlayerProgress ? game.secondPlayerProgress.userId : null
 
-    // return posts
-    return []
+    const isCurrentUserGame = await this.checkPalyerInGameUseCase.execute(
+      currentUserId,
+      firstPlayerId,
+      secondPlayerId
+    )
+
+    if (!isCurrentUserGame) {
+      throw new HttpException(
+        { message: appMessages().errors.somethingIsWrong, field: '' },
+        HttpStatus.FORBIDDEN
+      )
+    }
+
+    return game
   }
 
   @Post('connection')
@@ -110,7 +111,10 @@ export class GamesController {
     }
 
     if (gameInPendindSecondUser.userId === currentUserId) {
-      return gameInPendindSecondUser
+      throw new HttpException(
+        { message: appMessages().errors.activeGameExist, field: '' },
+        HttpStatus.FORBIDDEN
+      )
     }
 
     return await this.gamesRepository.connectToGame(
