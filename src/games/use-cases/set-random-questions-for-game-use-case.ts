@@ -3,7 +3,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { QuestionEntity } from '../../entities/question';
-import { GameQuestionEntity } from '../../entities/game-questions';
+import { GameQuestionEntity } from '../../entities/game-question';
 
 @Injectable()
 export class SetRandomQuestionsForGameUseCase {

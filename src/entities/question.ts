@@ -29,9 +29,6 @@ export class QuestionEntity extends BaseEntity implements IQuestion {
   @Column({ default: false })
   published: boolean
 
-  @OneToMany(() => AnswerEntity, answer => answer.question)
-  answers: AnswerEntity[]
-
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',

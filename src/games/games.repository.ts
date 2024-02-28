@@ -11,21 +11,25 @@ import { writeSql } from 'src/utils/sqlWriteFile';
 import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case';
 import { IExtendedGame } from '../types/game';
 import { appMessages } from '../constants/messages';
-import { GameQuestionEntity } from '../entities/game-questions';
+import { GameQuestionEntity } from '../entities/game-question';
 import { GetRandomQuestionsForGameUseCase } from './use-cases/get-random-questions-for-game-use-case';
 import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questions-for-game-use-case';
+import { CreateAnswerForGameQuestionUseCase } from './use-cases/create-answer-for-game-question-use-case';
+import { AnswerStatusEnum } from 'src/constants/answer';
 
 @Injectable()
 export class GamesRepository {
   constructor(
     @InjectRepository(GameEntity)
     private readonly gamesRepo: Repository<GameEntity>,
+    @InjectRepository(GameQuestionEntity)
+    private readonly gameQuestionsRepo: Repository<GameQuestionEntity>,
 
     private progressesRepository: ProgressesRepository,
-
     private checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
     private getRandomQuestionsForGameUseCase: GetRandomQuestionsForGameUseCase,
-    private setRandomQuestionsForGameUseCase: SetRandomQuestionsForGameUseCase
+    private setRandomQuestionsForGameUseCase: SetRandomQuestionsForGameUseCase,
+    private createAnswerForGameQuestionUseCase: CreateAnswerForGameQuestionUseCase
   ) {}
 
   async getGameInPendingSecondPalyer(): Promise<IExtendedGame | null> {
@@ -157,7 +161,6 @@ export class GamesRepository {
         .execute()
 
       const game = await this.getExtendedGameById(existedGame.id)
-      console.log("🚀 ~ GamesRepository ~ game:", game)
 
       if (!game) {
         return null
@@ -291,7 +294,6 @@ export class GamesRepository {
           secondPlayerProgress: true
         }
       })
-      console.log("----game:", game)
 
       return game
     } catch (e) {
@@ -335,5 +337,36 @@ export class GamesRepository {
         HttpStatus.BAD_REQUEST
       )
     }
+  }
+
+  async answerToGameQuestion(answer: string, questions: GameQuestionEntity[]) {
+    console.log("🚀 ~ GamesRepository ~ answerToGameQuestion ~ questions:", questions)
+    for (let i = 0; i <= questions.length; i++) {
+      const question = questions[i]
+
+      if (!question.answer) {
+        this.answerToQuestion(answer, question);
+        break
+      }
+
+      break;
+    }
+  }
+
+  async getGameQuestionsByGameId(gameId: string) {
+    const questions = await this.gameQuestionsRepo.find({
+      where: {
+        gameId,
+      }
+    })
+    return questions.sort((a, b) => a.order - b.order)
+  }
+
+  private async answerToQuestion(answer: string, question: GameQuestionEntity) {
+    const isCorrectAnswer = (JSON.parse(question.question.correctAnswers) as string[]).includes(answer)
+    const answerStatus = isCorrectAnswer ? AnswerStatusEnum.correct : AnswerStatusEnum.incorrect;
+
+    const createdAnswer = await this.createAnswerForGameQuestionUseCase.execute(question.id, answerStatus)
+    console.log("createdAnswer:", createdAnswer)
   }
 }
