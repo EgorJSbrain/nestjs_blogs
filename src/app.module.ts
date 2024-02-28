@@ -33,7 +33,8 @@ import { ProgressEntity } from './entities/progress'
 import { AnswerEntity } from './entities/answer'
 import { GamesModule } from './games/games.module'
 import { ProgressesModule } from './progresses/progresses.module'
-import { GameQuestionEntity } from './entities/game-questions'
+import { GameQuestionEntity } from './entities/game-question'
+import { GameEntity } from './entities/game'
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { GameQuestionEntity } from './entities/game-questions'
           QuestionEntity,
           ProgressEntity,
           AnswerEntity,
+          GameEntity,
           GameQuestionEntity,
         ],
         autoLoadEntities: true,

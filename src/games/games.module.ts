@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { GameEntity } from '../entities/game';
 import { ProgressEntity } from '../entities/progress';
-import { GameQuestionEntity } from '../entities/game-questions';
+import { GameQuestionEntity } from '../entities/game-question';
 import { UserEntity } from '../entities/user';
 import { QuestionEntity } from '../entities/question';
 import { AnswerEntity } from '../entities/answer';
@@ -17,11 +17,13 @@ import { JWTService } from '../jwt/jwt.service';
 import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case';
 import { GetRandomQuestionsForGameUseCase } from './use-cases/get-random-questions-for-game-use-case';
 import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questions-for-game-use-case';
+import { CreateAnswerForGameQuestionUseCase } from './use-cases/create-answer-for-game-question-use-case';
 
 const useCases = [
   CheckPalyerInGameUseCase,
   GetRandomQuestionsForGameUseCase,
-  SetRandomQuestionsForGameUseCase
+  SetRandomQuestionsForGameUseCase,
+  CreateAnswerForGameQuestionUseCase,
 ]
 
 @Module({
