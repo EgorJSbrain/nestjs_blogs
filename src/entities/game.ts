@@ -16,7 +16,7 @@ import { AnswerStatusEnum } from '../constants/answer'
 import { ProgressEntity } from './progress'
 import { IGame } from 'src/types/game'
 import { GameStatusEnum } from '../enums/gameStatusEnum'
-import { GameQuestionEntity } from './game-questions'
+import { GameQuestionEntity } from './game-question'
 
 @Entity({
   name: 'games'

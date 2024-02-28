@@ -44,7 +44,6 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
     @Req() req: Request,
     @Ip() ip: string,
-    @Body() data: LoginDto
   ) {
     const deviceTitle = req.headers['user-agent']
 

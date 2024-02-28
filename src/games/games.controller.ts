@@ -8,6 +8,7 @@ import {
   Post,
   HttpCode,
   UseGuards,
+  Body,
 } from '@nestjs/common'
 
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
@@ -16,6 +17,7 @@ import { appMessages } from '../constants/messages'
 import { RoutesEnum } from '../constants/global'
 import { GamesRepository } from './games.repository'
 import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case'
+import { CreateAnswerDto } from '../dtos/answers/create-answer.dto'
 
 @SkipThrottle()
 @Controller(RoutesEnum.pairGameQuizPairs)
@@ -121,5 +123,36 @@ export class GamesController {
       currentUserId,
       gameInPendindSecondUser
     )
+  }
+
+  @Post('my-current/answers')
+  @UseGuards(JWTAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async answerToQuestion(
+    @CurrentUserId() currentUserId: string,
+    @Body() data: CreateAnswerDto
+  ): Promise<any> {
+    const atciveGame =
+      await this.gamesRepository.getActiveGameOfUser(currentUserId)
+
+    if (!atciveGame) {
+      throw new HttpException(
+        { message: appMessages(appMessages().game).errors.notFound, field: '' },
+        HttpStatus.FORBIDDEN
+      )
+    }
+
+    const questions = await this.gamesRepository.getGameQuestionsByGameId(atciveGame.id)
+
+    const isAllQuestionsAnswered = questions.every(question => question.answer)
+
+    if (isAllQuestionsAnswered) {
+      throw new HttpException(
+        { message: appMessages().errors.somethingIsWrong, field: '' },
+        HttpStatus.FORBIDDEN
+      )
+    }
+
+    const answeredQuestion = await this.gamesRepository.answerToGameQuestion(data.answer, questions)
   }
 }
