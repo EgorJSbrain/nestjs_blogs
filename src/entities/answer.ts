@@ -6,7 +6,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm'
@@ -16,6 +16,7 @@ import { QuestionEntity } from './question'
 import { AnswerStatusEnum } from '../constants/answer'
 import { UserEntity } from './user'
 import { ProgressEntity } from './progress'
+import { GameQuestionEntity } from './game-question'
 
 @Entity({
   name: 'answers'
@@ -37,11 +38,11 @@ export class AnswerEntity extends BaseEntity implements IAnswer {
   @Column({ type: 'enum', enum: AnswerStatusEnum })
   answerStatus: AnswerStatusEnum
 
-  @ManyToOne(() => QuestionEntity, question => question.answers)
+  @OneToOne(() => GameQuestionEntity, question => question.answer)
   @JoinColumn({
     name: 'questionId'
   })
-  question: QuestionEntity
+  question: GameQuestionEntity
 
   @ManyToOne(() => UserEntity, user => user.answers)
   @JoinColumn({
