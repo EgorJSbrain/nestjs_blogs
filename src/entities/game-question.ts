@@ -39,11 +39,16 @@ export class GameQuestionEntity extends BaseEntity implements IGameQuestion {
   @Column()
   answerId: string
 
-  @OneToOne(() => AnswerEntity, answer => answer.question, { eager: true })
+  @OneToOne(() => AnswerEntity)
   @JoinColumn({
     name: 'answerId'
   })
   answer: AnswerEntity
+  // @OneToOne(() => AnswerEntity, answer => answer.question, { eager: true })
+  // @JoinColumn({
+  //   name: 'answerId'
+  // })
+  // answer: AnswerEntity
 
   @Column()
   questionId: string
