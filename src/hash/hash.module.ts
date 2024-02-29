@@ -7,4 +7,5 @@ import { HashService } from './hash.service';
   controllers: [],
   providers: [HashService]
 })
+
 export class HashModule {}

@@ -27,9 +27,6 @@ export class AnswerEntity extends BaseEntity implements IAnswer {
   id: string
 
   @Column()
-  questionId: string
-
-  @Column()
   userId: string
 
   @Column()
@@ -37,12 +34,6 @@ export class AnswerEntity extends BaseEntity implements IAnswer {
 
   @Column({ type: 'enum', enum: AnswerStatusEnum })
   answerStatus: AnswerStatusEnum
-
-  @OneToOne(() => GameQuestionEntity, question => question.answer)
-  @JoinColumn({
-    name: 'questionId'
-  })
-  question: GameQuestionEntity
 
   @ManyToOne(() => UserEntity, user => user.answers)
   @JoinColumn({

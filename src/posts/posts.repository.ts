@@ -22,7 +22,7 @@ import { appMessages } from '../constants/messages';
 export class PostsRepository {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
-    private likeRepository: LikesRepository,
+    private readonly likeRepository: LikesRepository,
 
     @InjectRepository(PostEntity)
     private readonly postsRepo: Repository<PostEntity>,
