@@ -18,13 +18,21 @@ import { RoutesEnum } from '../constants/global'
 import { GamesRepository } from './games.repository'
 import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case'
 import { CreateAnswerDto } from '../dtos/answers/create-answer.dto'
+import { ProgressesRepository } from 'src/progresses/progresses.repository'
+import { InjectDataSource } from '@nestjs/typeorm'
+import { DataSource } from 'typeorm'
+import { AnswerStatusEnum } from 'src/constants/answer'
+import { GamesService } from './games.service'
 
 @SkipThrottle()
 @Controller(RoutesEnum.pairGameQuizPairs)
 export class GamesController {
   constructor(
-    private gamesRepository: GamesRepository,
-    private checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
+    @InjectDataSource() protected dataSource: DataSource,
+    private readonly gamesRepository: GamesRepository,
+    private readonly progressesRepository: ProgressesRepository,
+    private readonly checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
+    private readonly gamesService: GamesService,
   ) {}
 
   @Get('/my-current')
@@ -60,10 +68,7 @@ export class GamesController {
     @Param() params: { id: string },
     @CurrentUserId() currentUserId: string
   ): Promise<any> {
-    console.log("params:", params)
-    console.log("currentUserId:", currentUserId)
     const game = await this.gamesRepository.getExtendedGameById(params.id)
-    console.log(" game:", game)
 
     if (!game) {
       throw new HttpException(
@@ -132,8 +137,15 @@ export class GamesController {
     @CurrentUserId() currentUserId: string,
     @Body() data: CreateAnswerDto
   ): Promise<any> {
-    const atciveGame =
-      await this.gamesRepository.getActiveGameOfUser(currentUserId)
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      const manager = queryRunner.manager;
+
+      const atciveGame =
+        await this.gamesRepository.getActiveGameOfUser(currentUserId)
 
     if (!atciveGame) {
       throw new HttpException(
@@ -142,9 +154,32 @@ export class GamesController {
       )
     }
 
-    const questions = await this.gamesRepository.getGameQuestionsByGameId(atciveGame.id)
+    const progressId =
+      atciveGame.firstPlayerProgress.userId === currentUserId
+        ? atciveGame.firstPlayerProgressId
+        : atciveGame.secondPlayerProgressId
 
-    const isAllQuestionsAnswered = questions.every(question => question.answer)
+    const firstPlayerId = atciveGame.firstPlayerProgress ? atciveGame.firstPlayerProgress.userId : null
+    const secondPlayerId = atciveGame.secondPlayerProgress ? atciveGame.secondPlayerProgress.userId : null
+
+    const isCurrentUserGame = await this.checkPalyerInGameUseCase.execute(
+      currentUserId,
+      firstPlayerId,
+      secondPlayerId
+    )
+
+    if (!isCurrentUserGame) {
+      throw new HttpException(
+        { message: appMessages(appMessages().game).errors.notFound, field: '' },
+        HttpStatus.FORBIDDEN
+      )
+    }
+
+    const questions = await this.gamesRepository.getGameQuestionsByGameId(
+      atciveGame.id
+    )
+
+    const isAllQuestionsAnswered = questions.every(question => question.answerId)
 
     if (isAllQuestionsAnswered) {
       throw new HttpException(
@@ -153,6 +188,45 @@ export class GamesController {
       )
     }
 
-    const answeredQuestion = await this.gamesRepository.answerToGameQuestion(data.answer, questions)
+    const answeredQuestion = await this.gamesRepository.answerToGameQuestion(
+      data.answer,
+      questions,
+      progressId ?? '',
+      currentUserId,
+      manager
+    )
+
+    if (!answeredQuestion) {
+      return null
+    }
+
+    if (answeredQuestion.answerStatus === AnswerStatusEnum.correct && progressId) {
+      await this.progressesRepository.increaseScore(progressId, manager)
+    }
+
+    await this.gamesService.markQuestionAsAnswered(
+      answeredQuestion.questionId,
+      answeredQuestion.id,
+      manager
+    )
+
+    await queryRunner.commitTransaction();
+
+    return {
+      questionId: answeredQuestion.questionId,
+      answerStatus: answeredQuestion.answerStatus,
+      addedAt: answeredQuestion.createdAt,
+    }
+
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+
+      throw new HttpException(
+        { message: err.message || appMessages().errors.somethingIsWrong, field: '' },
+        err.status || HttpStatus.BAD_REQUEST
+      )
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

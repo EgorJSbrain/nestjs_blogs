@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
 import { RequestParams } from '../types/request';
@@ -16,15 +16,15 @@ export class ProgressesRepository {
     private readonly usersRepo: Repository<UserEntity>
   ) {}
 
-  async getProgressesByUserId(userId: string | null): Promise<any> {
+  async getProgressesByUserIdAndGameId(userId: string | null, gameId: string): Promise<any> {
     try {
-      const progresses = this.progressesRepo
+      const progress = this.progressesRepo
         .createQueryBuilder('progress')
         .select('progress.*')
         .where('progress.userId = :userId', { userId })
-        .getMany()
+        .getOne()
 
-      return []
+      return progress
     } catch {
       return []
     }
@@ -52,6 +52,16 @@ export class ProgressesRepository {
     } catch {
       return null
     }
+  }
+
+  async increaseScore(progressId: string, manager: EntityManager) {
+    const progress = await this.progressesRepo.findOne({ where: { id: progressId } })
+
+    if (!progress) {
+      return null
+    }
+
+    return await manager.update(ProgressEntity, { id: progressId }, { score: progress.score + 1 })
   }
 
   async getById(id: string): Promise<ProgressEntity | null> {

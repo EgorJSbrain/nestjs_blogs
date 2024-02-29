@@ -15,8 +15,6 @@ import { QuestionPublishDto } from 'src/dtos/questions/question.dto';
 @Injectable()
 export class QuestionsRepository {
   constructor(
-    @InjectDataSource() protected dataSource: DataSource,
-
     @InjectRepository(QuestionEntity)
     private readonly questionsRepo: Repository<QuestionEntity>
   ) {}
