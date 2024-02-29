@@ -1,4 +1,4 @@
-import { IsNull, Not, Repository } from 'typeorm';
+import { EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 import { RequestParams } from '../types/request';
@@ -14,8 +14,8 @@ import { appMessages } from '../constants/messages';
 import { GameQuestionEntity } from '../entities/game-question';
 import { GetRandomQuestionsForGameUseCase } from './use-cases/get-random-questions-for-game-use-case';
 import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questions-for-game-use-case';
-import { CreateAnswerForGameQuestionUseCase } from './use-cases/create-answer-for-game-question-use-case';
 import { AnswerStatusEnum } from 'src/constants/answer';
+import { AnswerEntity } from 'src/entities/answer';
 
 @Injectable()
 export class GamesRepository {
@@ -29,7 +29,6 @@ export class GamesRepository {
     private checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
     private getRandomQuestionsForGameUseCase: GetRandomQuestionsForGameUseCase,
     private setRandomQuestionsForGameUseCase: SetRandomQuestionsForGameUseCase,
-    private createAnswerForGameQuestionUseCase: CreateAnswerForGameQuestionUseCase
   ) {}
 
   async getGameInPendingSecondPalyer(): Promise<IExtendedGame | null> {
@@ -71,13 +70,13 @@ export class GamesRepository {
     try {
       const existedGame = await this.gamesRepo.findOne({
         where: {
-            status: GameStatusEnum.pending,
-            firstPlayerProgress: {
-              userId
-            }
-          },
+          status: GameStatusEnum.pending,
+          firstPlayerProgress: {
+            userId
+          }
+        },
         relations: {
-          firstPlayerProgress: true,
+          firstPlayerProgress: true
         }
       })
 
@@ -128,6 +127,7 @@ export class GamesRepository {
 
       return game
     } catch (e) {
+      console.log('---e---', e)
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.BAD_REQUEST
@@ -142,6 +142,7 @@ export class GamesRepository {
     try {
       const progress = await this.progressesRepository.createProgress(userId)
       const questions = await this.getRandomQuestionsForGameUseCase.execute()
+
       await this.setRandomQuestionsForGameUseCase.execute(
         questions,
         existedGame.id
@@ -166,9 +167,9 @@ export class GamesRepository {
         return null
       }
 
-      const preparedQuestions = game.questions!
-        .sort((a, b) => a.order - b.order)
-        .map(question => ({
+      const preparedQuestions = game
+        .questions!.sort((a, b) => a.order - b.order)
+        .map((question) => ({
           id: question.id,
           body: question.question.body
         }))
@@ -195,7 +196,7 @@ export class GamesRepository {
         },
         pairCreatedDate: game.createdAt,
         startGameDate: game.startGameDate,
-        finishGameDate: game.finishGameDate,
+        finishGameDate: game.finishGameDate
       }
     } catch {
       throw new HttpException(
@@ -245,7 +246,7 @@ export class GamesRepository {
         secondPlayerProgress: null,
         pairCreatedDate: game.createdAt,
         startGameDate: game.startGameDate,
-        finishGameDate: game.finishGameDate,
+        finishGameDate: game.finishGameDate
       }
     } catch {
       throw new HttpException(
@@ -339,34 +340,64 @@ export class GamesRepository {
     }
   }
 
-  async answerToGameQuestion(answer: string, questions: GameQuestionEntity[]) {
-    console.log("🚀 ~ GamesRepository ~ answerToGameQuestion ~ questions:", questions)
+  async answerToGameQuestion(
+    answer: string,
+    questions: GameQuestionEntity[],
+    progressId: string,
+    userId: string,
+    manager: EntityManager
+  ): Promise<any> {
+    let answerForQuestion: AnswerEntity | null = null
+
     for (let i = 0; i <= questions.length; i++) {
       const question = questions[i]
+      if (!question.answerId) {
+        answerForQuestion = await this.answerToQuestion(answer, question, progressId, userId, manager)
 
-      if (!question.answer) {
-        this.answerToQuestion(answer, question);
-        break
+        break;
+      } else {
+        continue;
       }
-
-      break;
     }
+
+    return answerForQuestion
   }
 
   async getGameQuestionsByGameId(gameId: string) {
     const questions = await this.gameQuestionsRepo.find({
       where: {
-        gameId,
+        gameId
       }
     })
+
     return questions.sort((a, b) => a.order - b.order)
   }
 
-  private async answerToQuestion(answer: string, question: GameQuestionEntity) {
-    const isCorrectAnswer = (JSON.parse(question.question.correctAnswers) as string[]).includes(answer)
-    const answerStatus = isCorrectAnswer ? AnswerStatusEnum.correct : AnswerStatusEnum.incorrect;
+  private async answerToQuestion(
+    answer: string,
+    question: GameQuestionEntity,
+    progressId: string,
+    userId: string,
+    manager: EntityManager
+  ): Promise<any> {
+    const isCorrectAnswer = (
+      JSON.parse(question.question.correctAnswers) as string[]
+    ).includes(answer)
 
-    const createdAnswer = await this.createAnswerForGameQuestionUseCase.execute(question.id, answerStatus)
-    console.log("createdAnswer:", createdAnswer)
+    const answerStatus = isCorrectAnswer
+      ? AnswerStatusEnum.correct
+      : AnswerStatusEnum.incorrect
+
+    const newAnswer = manager.create(AnswerEntity)
+
+    newAnswer.answerStatus = answerStatus;
+    newAnswer.progressId = progressId;
+    newAnswer.userId = userId;
+    const createdAnswer = await manager.save(newAnswer)
+
+    return {
+      ...createdAnswer,
+      questionId: question.id
+    }
   }
 }

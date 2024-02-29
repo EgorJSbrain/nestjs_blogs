@@ -17,13 +17,12 @@ import { JWTService } from '../jwt/jwt.service';
 import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case';
 import { GetRandomQuestionsForGameUseCase } from './use-cases/get-random-questions-for-game-use-case';
 import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questions-for-game-use-case';
-import { CreateAnswerForGameQuestionUseCase } from './use-cases/create-answer-for-game-question-use-case';
+import { GamesService } from './games.service';
 
 const useCases = [
   CheckPalyerInGameUseCase,
   GetRandomQuestionsForGameUseCase,
   SetRandomQuestionsForGameUseCase,
-  CreateAnswerForGameQuestionUseCase,
 ]
 
 @Module({
@@ -45,6 +44,7 @@ const useCases = [
     GamesRepository,
     HashService,
     ProgressesRepository,
+    GamesService,
     ...useCases
   ]
 })
