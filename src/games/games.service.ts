@@ -4,6 +4,8 @@ import { CreateDeviceDto } from '../dtos/devices/create-device.dto'
 import { GamesRepository } from './games.repository'
 import { EntityManager } from 'typeorm'
 import { GameQuestionEntity } from 'src/entities/game-question'
+import { GameEntity } from 'src/entities/game'
+import { GameStatusEnum } from 'src/enums/gameStatusEnum'
 
 @Injectable()
 export class GamesService {
@@ -12,14 +14,16 @@ export class GamesService {
   ) {}
 
   async checkAnsweredQuestions(gameId: string) {
-    const questions = await this.gamesRepository.getGameQuestionsByGameId(gameId)
+    // const questions = await this.gamesRepository.getGameQuestionsByGameId(gameId)
 
-    return !!questions.every(question => question.answer)
+    // return !!questions.every(question => question.answer)
   }
 
-  async markQuestionAsAnswered(questionId: string, answerId: string, manager: EntityManager) {
-    console.log("🚀 ~ GamesService ~ markQuestionAsAnswered ~ answerId:", answerId)
-    console.log("🚀 ~ GamesService ~ markQuestionAsAnswered ~ questionId:", questionId)
-    return await manager.update(GameQuestionEntity, { id: questionId }, { answerId })
+  async finishCurrentGame(gameId: string, manager: EntityManager) {
+    return await manager.update(
+      GameEntity,
+      { id: gameId },
+      { finishGameDate: new Date(), status: GameStatusEnum.finished }
+    )
   }
 }

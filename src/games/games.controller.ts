@@ -10,6 +10,8 @@ import {
   UseGuards,
   Body,
 } from '@nestjs/common'
+import { InjectDataSource } from '@nestjs/typeorm'
+import { DataSource } from 'typeorm'
 
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
@@ -18,10 +20,8 @@ import { RoutesEnum } from '../constants/global'
 import { GamesRepository } from './games.repository'
 import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case'
 import { CreateAnswerDto } from '../dtos/answers/create-answer.dto'
-import { ProgressesRepository } from 'src/progresses/progresses.repository'
-import { InjectDataSource } from '@nestjs/typeorm'
-import { DataSource } from 'typeorm'
-import { AnswerStatusEnum } from 'src/constants/answer'
+import { ProgressesRepository } from '../progresses/progresses.repository'
+import { AnswerStatusEnum } from '../constants/answer'
 import { GamesService } from './games.service'
 
 @SkipThrottle()
@@ -159,8 +159,33 @@ export class GamesController {
         ? atciveGame.firstPlayerProgressId
         : atciveGame.secondPlayerProgressId
 
-    const firstPlayerId = atciveGame.firstPlayerProgress ? atciveGame.firstPlayerProgress.userId : null
-    const secondPlayerId = atciveGame.secondPlayerProgress ? atciveGame.secondPlayerProgress.userId : null
+    const firstPlayerId = atciveGame.firstPlayerProgress.userId
+    const secondPlayerId = atciveGame.secondPlayerProgress.userId
+    const firstPlayerProgressId = atciveGame.firstPlayerProgressId
+    const secondPlayerProgressId = atciveGame.secondPlayerProgressId
+
+    if (!firstPlayerId || !secondPlayerId || !firstPlayerProgressId || !secondPlayerProgressId) {
+      throw new HttpException(
+        { message: appMessages().errors.somethingIsWrong, field: '' },
+        HttpStatus.BAD_REQUEST
+      )
+    }
+
+    const currentPlayerId =
+      firstPlayerId === currentUserId ? firstPlayerId : secondPlayerId
+
+    const anotherPlayerId =
+      firstPlayerId !== currentUserId ? firstPlayerId : secondPlayerId
+
+    const currentPlayerProgressId =
+      atciveGame.firstPlayerProgress.userId === currentUserId
+        ? firstPlayerProgressId
+        : secondPlayerProgressId
+
+    const anotherPlayerProgressId =
+      atciveGame.firstPlayerProgress.userId !== currentUserId
+        ? firstPlayerProgressId
+        : secondPlayerProgressId
 
     const isCurrentUserGame = await this.checkPalyerInGameUseCase.execute(
       currentUserId,
@@ -179,22 +204,38 @@ export class GamesController {
       atciveGame.id
     )
 
-    const isAllQuestionsAnswered = questions.every(question => question.answerId)
+    const answersOfCurrentPlayer = await this.gamesRepository.getAnswersByProgressIdAndUserId(
+      currentPlayerProgressId,
+      currentPlayerId
+    )
 
-    if (isAllQuestionsAnswered) {
+    // TODO fix hardcoded numbers
+    if (answersOfCurrentPlayer.length >= 5) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.FORBIDDEN
       )
     }
 
+    const answersOfAnotherPlayer = await this.gamesRepository.getAnswersByProgressIdAndUserId(
+      anotherPlayerProgressId,
+      anotherPlayerId
+    )
+
     const answeredQuestion = await this.gamesRepository.answerToGameQuestion(
       data.answer,
       questions,
       progressId ?? '',
       currentUserId,
-      manager
+      manager,
+      answersOfCurrentPlayer
     )
+
+    // TODO fix hardcoded numbers
+    if (answersOfAnotherPlayer.length >= 5 && answersOfCurrentPlayer.length >= 4) {
+      console.log('___FINICH GAME')
+      await this.gamesService.finishCurrentGame(atciveGame.id, manager)
+    }
 
     if (!answeredQuestion) {
       return null
@@ -203,12 +244,6 @@ export class GamesController {
     if (answeredQuestion.answerStatus === AnswerStatusEnum.correct && progressId) {
       await this.progressesRepository.increaseScore(progressId, manager)
     }
-
-    await this.gamesService.markQuestionAsAnswered(
-      answeredQuestion.questionId,
-      answeredQuestion.id,
-      manager
-    )
 
     await queryRunner.commitTransaction();
 
