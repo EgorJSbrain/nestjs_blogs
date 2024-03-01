@@ -12,7 +12,6 @@ import {
 } from 'typeorm'
 
 import { IAnswer } from '../types/answer'
-import { QuestionEntity } from './question'
 import { AnswerStatusEnum } from '../constants/answer'
 import { UserEntity } from './user'
 import { ProgressEntity } from './progress'
@@ -32,6 +31,9 @@ export class AnswerEntity extends BaseEntity implements IAnswer {
   @Column()
   progressId: string
 
+  @Column()
+  questionId: string
+
   @Column({ type: 'enum', enum: AnswerStatusEnum })
   answerStatus: AnswerStatusEnum
 
@@ -46,6 +48,12 @@ export class AnswerEntity extends BaseEntity implements IAnswer {
     name: 'progressId'
   })
   progress: ProgressEntity
+
+  @ManyToOne(() => GameQuestionEntity)
+  @JoinColumn({
+    name: 'questionId'
+  })
+  question: GameQuestionEntity
 
   @CreateDateColumn({
     type: 'timestamp',

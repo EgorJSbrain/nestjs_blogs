@@ -1,21 +1,19 @@
 import { EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
-import { RequestParams } from '../types/request';
 import { ProgressesRepository } from '../progresses/progresses.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProgressEntity } from '../entities/progress';
 import { GameStatusEnum } from '../enums/gameStatusEnum';
 import { GameEntity } from '../entities/game';
-import { writeSql } from 'src/utils/sqlWriteFile';
 import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case';
 import { IExtendedGame } from '../types/game';
 import { appMessages } from '../constants/messages';
 import { GameQuestionEntity } from '../entities/game-question';
 import { GetRandomQuestionsForGameUseCase } from './use-cases/get-random-questions-for-game-use-case';
 import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questions-for-game-use-case';
-import { AnswerStatusEnum } from 'src/constants/answer';
-import { AnswerEntity } from 'src/entities/answer';
+import { AnswerStatusEnum } from '../constants/answer';
+import { AnswerEntity } from '../entities/answer';
 
 @Injectable()
 export class GamesRepository {
@@ -24,6 +22,8 @@ export class GamesRepository {
     private readonly gamesRepo: Repository<GameEntity>,
     @InjectRepository(GameQuestionEntity)
     private readonly gameQuestionsRepo: Repository<GameQuestionEntity>,
+    @InjectRepository(AnswerEntity)
+    private readonly answersRepo: Repository<AnswerEntity>,
 
     private progressesRepository: ProgressesRepository,
     private checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
@@ -345,13 +345,16 @@ export class GamesRepository {
     questions: GameQuestionEntity[],
     progressId: string,
     userId: string,
-    manager: EntityManager
+    manager: EntityManager,
+    answers: AnswerEntity[]
   ): Promise<any> {
     let answerForQuestion: AnswerEntity | null = null
 
     for (let i = 0; i <= questions.length; i++) {
       const question = questions[i]
-      if (!question.answerId) {
+      const isQuestionAnswered = answers.find(answer => answer.questionId === question.id)
+
+      if (!isQuestionAnswered) {
         answerForQuestion = await this.answerToQuestion(answer, question, progressId, userId, manager)
 
         break;
@@ -371,6 +374,15 @@ export class GamesRepository {
     })
 
     return questions.sort((a, b) => a.order - b.order)
+  }
+
+  async getAnswersByProgressIdAndUserId(progressId: string, userId: string) {
+    return await this.answersRepo.find({
+      where: {
+        progressId,
+        userId
+      }
+    })
   }
 
   private async answerToQuestion(
@@ -393,11 +405,8 @@ export class GamesRepository {
     newAnswer.answerStatus = answerStatus;
     newAnswer.progressId = progressId;
     newAnswer.userId = userId;
-    const createdAnswer = await manager.save(newAnswer)
+    newAnswer.questionId = question.id;
 
-    return {
-      ...createdAnswer,
-      questionId: question.id
-    }
+    return  await manager.save(newAnswer)
   }
 }
