@@ -22,8 +22,8 @@ export class GeneralSqlRepository {
     const queryGameQuestions = `DELETE FROM public.game_questions`
     const queryAnswers = `DELETE FROM public.answers`
     await this.dataSource.query(queryCommentsLikes)
-    await this.dataSource.query(queryGameQuestions)
     await this.dataSource.query(queryAnswers)
+    await this.dataSource.query(queryGameQuestions)
     await this.dataSource.query(queryGames)
     await this.dataSource.query(queryProgresses)
     await this.dataSource.query(queryComments)
