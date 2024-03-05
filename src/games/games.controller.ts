@@ -37,14 +37,48 @@ export class GamesController {
 
   @Get('/my-current')
   @UseGuards(JWTAuthGuard)
-  async getAll(
+  async getMyCurrentGame(
     @CurrentUserId() currentUserId: string
   ): Promise<any> {
     const atciveGame =
       await this.gamesRepository.getActiveGameOfUser(currentUserId)
 
     if (!!atciveGame) {
-      return atciveGame
+      return {
+        id: atciveGame.id,
+        firstPlayerProgress: {
+          answers: atciveGame.firstPlayerProgress.answers.map(answer => ({
+            questionId: answer.questionId,
+            answerStatus: answer.answerStatus,
+            addedAt: answer.createdAt
+          })),
+          player: {
+            id: atciveGame.firstPlayerProgress.userId,
+            login: atciveGame.firstPlayerProgress.user.login
+          },
+          score: atciveGame.firstPlayerProgress.score,
+        },
+        secondPlayerProgress: {
+          answers: atciveGame.secondPlayerProgress.answers.map(answer => ({
+            questionId: answer.questionId,
+            answerStatus: answer.answerStatus,
+            addedAt: answer.createdAt
+          })),
+          player: {
+            id: atciveGame.secondPlayerProgress.userId,
+            login: atciveGame.secondPlayerProgress.user.login
+          },
+          score: atciveGame.secondPlayerProgress.score
+        },
+        questions: atciveGame.questions?.map(question => ({
+          id: question.id,
+          body: question.question.body
+        })),
+        status: atciveGame.status,
+        pairCreatedDate: atciveGame.createdAt,
+        startGameDate: atciveGame.startGameDate,
+        finishGameDate: atciveGame.finishGameDate
+      }
     }
 
     const myCurrentGameIdPendingSecondUser =
@@ -233,7 +267,6 @@ export class GamesController {
 
     // TODO fix hardcoded numbers
     if (answersOfAnotherPlayer.length >= 5 && answersOfCurrentPlayer.length >= 4) {
-      console.log('___FINICH GAME')
       await this.gamesService.finishCurrentGame(atciveGame.id, manager)
     }
 
