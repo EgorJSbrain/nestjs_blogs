@@ -30,7 +30,7 @@ export class ProgressEntity extends BaseEntity implements IProgress {
   @ManyToOne(() => UserEntity, user => user.progresses, { eager: true })
   user: UserEntity
 
-  @OneToMany(() => AnswerEntity, answer => answer.progress)
+  @OneToMany(() => AnswerEntity, answer => answer.progress, { eager: true })
   answers: AnswerEntity[]
 
   @CreateDateColumn({
