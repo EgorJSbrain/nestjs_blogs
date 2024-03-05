@@ -3,9 +3,8 @@ import { Injectable } from '@nestjs/common'
 import { CreateDeviceDto } from '../dtos/devices/create-device.dto'
 import { GamesRepository } from './games.repository'
 import { EntityManager } from 'typeorm'
-import { GameQuestionEntity } from 'src/entities/game-question'
-import { GameEntity } from 'src/entities/game'
-import { GameStatusEnum } from 'src/enums/gameStatusEnum'
+import { GameEntity } from '../entities/game'
+import { GameStatusEnum } from '../enums/gameStatusEnum'
 
 @Injectable()
 export class GamesService {

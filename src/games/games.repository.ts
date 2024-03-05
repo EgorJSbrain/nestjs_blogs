@@ -86,6 +86,14 @@ export class GamesRepository {
 
       return {
         ...existedGame,
+        firstPlayerProgress: {
+          answers: existedGame.firstPlayerProgress.answers || undefined,
+          score: existedGame.firstPlayerProgress.score ?? 0,
+          player: {
+            id: existedGame.firstPlayerProgress.userId,
+            login: existedGame.firstPlayerProgress.user.login
+          }
+        },
         questions: null,
         userId
       }
@@ -97,7 +105,7 @@ export class GamesRepository {
     }
   }
 
-  async getActiveGameOfUser(userId: string): Promise<GameEntity | null> {
+  async getActiveGameOfUser(userId: string): Promise<any | null> {
     try {
       const game = await this.gamesRepo.findOne({
         where: [
@@ -127,7 +135,6 @@ export class GamesRepository {
 
       return game
     } catch (e) {
-      console.log('---e---', e)
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.BAD_REQUEST
@@ -181,7 +188,7 @@ export class GamesRepository {
         firstPlayerProgress: {
           answers: [],
           player: {
-            id: game.firstPlayerProgress.id,
+            id: game.firstPlayerProgress.user.id,
             login: game.firstPlayerProgress.user.login
           },
           score: game.firstPlayerProgress.score
@@ -236,7 +243,7 @@ export class GamesRepository {
         firstPlayerProgress: {
           answers: [],
           player: {
-            id: game.firstPlayerProgress.id,
+            id: game.firstPlayerProgress.user.id,
             login: game.firstPlayerProgress.user.login
           },
           score: game.firstPlayerProgress.score
