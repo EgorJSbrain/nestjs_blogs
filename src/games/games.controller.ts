@@ -42,6 +42,7 @@ export class GamesController {
   ): Promise<any> {
     const atciveGame =
       await this.gamesRepository.getActiveGameOfUser(currentUserId)
+    console.log("----atciveGame:", atciveGame)
 
     if (!!atciveGame) {
       return {
@@ -87,7 +88,23 @@ export class GamesController {
       )
 
     if (!!myCurrentGameIdPendingSecondUser) {
-      return myCurrentGameIdPendingSecondUser
+      return {
+        id: myCurrentGameIdPendingSecondUser.id,
+        firstPlayerProgress: {
+          answers: [],
+          player: {
+            id: myCurrentGameIdPendingSecondUser.firstPlayerProgress.player.id,
+            login: myCurrentGameIdPendingSecondUser.firstPlayerProgress.player.login
+          },
+          score: myCurrentGameIdPendingSecondUser.firstPlayerProgress.score,
+        },
+        secondPlayerProgress: null,
+        questions: myCurrentGameIdPendingSecondUser.questions,
+        status: myCurrentGameIdPendingSecondUser.status,
+        pairCreatedDate: myCurrentGameIdPendingSecondUser.createdAt,
+        startGameDate: myCurrentGameIdPendingSecondUser.startGameDate,
+        finishGameDate: myCurrentGameIdPendingSecondUser.finishGameDate
+      }
     }
 
     throw new HttpException(
@@ -127,7 +144,53 @@ export class GamesController {
       )
     }
 
-    return game
+    const preparedGame = {
+      id: game.id,
+      firstPlayerProgress: {
+        answers: game.firstPlayerProgress.answers.length
+          ? game.firstPlayerProgress.answers.map((answer) => ({
+              questionId: answer.questionId,
+              answerStatus: answer.answerStatus,
+              addedAt: answer.createdAt
+            }))
+          : [],
+        player: {
+          id: game.firstPlayerProgress.userId,
+          login: game.firstPlayerProgress.user.login
+        },
+        score: game.firstPlayerProgress.score
+      },
+      questions: null,
+      status: game.status,
+      pairCreatedDate: game.createdAt,
+      startGameDate: game.startGameDate,
+      finishGameDate: game.finishGameDate,
+      secondPlayerProgress: null
+    }
+
+    if (!!secondPlayerId) {
+      return {
+        ...preparedGame,
+        secondPlayerProgress: {
+          answers: game.secondPlayerProgress.answers.map(answer => ({
+            questionId: answer.questionId,
+            answerStatus: answer.answerStatus,
+            addedAt: answer.createdAt
+          })),
+          player: {
+            id: game.secondPlayerProgress.userId,
+            login: game.secondPlayerProgress.user.login
+          },
+          score: game.secondPlayerProgress.score
+        },
+        questions: game.questions?.map(question => ({
+          id: question.id,
+          body: question.question.body
+        })),
+      }
+    }
+
+    return preparedGame
   }
 
   @Post('connection')

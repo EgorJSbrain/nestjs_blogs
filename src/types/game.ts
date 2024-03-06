@@ -16,4 +16,5 @@ export interface IGame {
 export interface IExtendedGame extends IGame {
   userId: string
   firstPlayerProgress: any
+  questions: any[] | null
 }

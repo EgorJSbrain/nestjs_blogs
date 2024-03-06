@@ -133,7 +133,10 @@ export class GamesRepository {
         return null
       }
 
-      return game
+      return {
+        ...game,
+        questions: game.questions?.length ? game.questions.sort((a, b) => a.order - b.order) : null
+      }
     } catch (e) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
@@ -196,7 +199,7 @@ export class GamesRepository {
         secondPlayerProgress: {
           answers: [],
           player: {
-            id: game.secondPlayerProgress.id,
+            id: game.secondPlayerProgress.user.id,
             login: game.secondPlayerProgress.user.login
           },
           score: game.secondPlayerProgress.score
@@ -292,7 +295,7 @@ export class GamesRepository {
     }
   }
 
-  async getExtendedGameById(id: string): Promise<GameEntity | null> {
+  async getExtendedGameById(id: string): Promise<any | null> {
     try {
       const game = await this.gamesRepo.findOne({
         where: { id },
@@ -303,7 +306,14 @@ export class GamesRepository {
         }
       })
 
-      return game
+      if (!game) {
+        return null
+      }
+
+      return {
+        ...game,
+        questions: game.questions?.length ? game.questions.sort((a, b) => a.order - b.order) : null
+      }
     } catch (e) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
