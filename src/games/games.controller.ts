@@ -21,8 +21,10 @@ import { GamesRepository } from './games.repository'
 import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case'
 import { CreateAnswerDto } from '../dtos/answers/create-answer.dto'
 import { ProgressesRepository } from '../progresses/progresses.repository'
-import { AnswerStatusEnum } from '../constants/answer'
+import { ANSWERS_MAX_LENGTH, AnswerStatusEnum } from '../constants/answer'
 import { GamesService } from './games.service'
+import { sortAnswers } from '../utils/sortAnswers'
+import { Answer } from '../types/answer'
 
 @SkipThrottle()
 @Controller(RoutesEnum.pairGameQuizPairs)
@@ -42,34 +44,33 @@ export class GamesController {
   ): Promise<any> {
     const atciveGame =
       await this.gamesRepository.getActiveGameOfUser(currentUserId)
-    console.log("----atciveGame:", atciveGame)
 
     if (!!atciveGame) {
       return {
         id: atciveGame.id,
         firstPlayerProgress: {
-          answers: atciveGame.firstPlayerProgress.answers.map(answer => ({
+          answers: sortAnswers(atciveGame.firstPlayerProgress?.answers || []).map(answer => ({
             questionId: answer.questionId,
             answerStatus: answer.answerStatus,
             addedAt: answer.createdAt
           })),
           player: {
-            id: atciveGame.firstPlayerProgress.userId,
-            login: atciveGame.firstPlayerProgress.user.login
+            id: atciveGame.firstPlayerProgress?.userId,
+            login: atciveGame.firstPlayerProgress?.user.login
           },
-          score: atciveGame.firstPlayerProgress.score,
+          score: atciveGame.firstPlayerProgress?.score,
         },
         secondPlayerProgress: {
-          answers: atciveGame.secondPlayerProgress.answers.map(answer => ({
+          answers: sortAnswers(atciveGame.secondPlayerProgress?.answers || []).map(answer => ({
             questionId: answer.questionId,
             answerStatus: answer.answerStatus,
             addedAt: answer.createdAt
           })),
           player: {
-            id: atciveGame.secondPlayerProgress.userId,
-            login: atciveGame.secondPlayerProgress.user.login
+            id: atciveGame.secondPlayerProgress?.userId,
+            login: atciveGame.secondPlayerProgress?.user.login
           },
-          score: atciveGame.secondPlayerProgress.score
+          score: atciveGame.secondPlayerProgress?.score
         },
         questions: atciveGame.questions?.map(question => ({
           id: question.id,
@@ -93,10 +94,10 @@ export class GamesController {
         firstPlayerProgress: {
           answers: [],
           player: {
-            id: myCurrentGameIdPendingSecondUser.firstPlayerProgress.player.id,
-            login: myCurrentGameIdPendingSecondUser.firstPlayerProgress.player.login
+            id: myCurrentGameIdPendingSecondUser.firstPlayerProgress?.player.id,
+            login: myCurrentGameIdPendingSecondUser.firstPlayerProgress?.player.login
           },
-          score: myCurrentGameIdPendingSecondUser.firstPlayerProgress.score,
+          score: myCurrentGameIdPendingSecondUser.firstPlayerProgress?.score,
         },
         secondPlayerProgress: null,
         questions: myCurrentGameIdPendingSecondUser.questions,
@@ -148,7 +149,7 @@ export class GamesController {
       id: game.id,
       firstPlayerProgress: {
         answers: game.firstPlayerProgress.answers.length
-          ? game.firstPlayerProgress.answers.map((answer) => ({
+          ? sortAnswers(game.firstPlayerProgress.answers).map((answer) => ({
               questionId: answer.questionId,
               answerStatus: answer.answerStatus,
               addedAt: answer.createdAt
@@ -172,7 +173,7 @@ export class GamesController {
       return {
         ...preparedGame,
         secondPlayerProgress: {
-          answers: game.secondPlayerProgress.answers.map(answer => ({
+          answers: sortAnswers(game.secondPlayerProgress.answers).map(answer => ({
             questionId: answer.questionId,
             answerStatus: answer.answerStatus,
             addedAt: answer.createdAt
@@ -233,7 +234,7 @@ export class GamesController {
   async answerToQuestion(
     @CurrentUserId() currentUserId: string,
     @Body() data: CreateAnswerDto
-  ): Promise<any> {
+  ): Promise<Answer | null> {
     const queryRunner = this.dataSource.createQueryRunner();
 
     try {
@@ -251,13 +252,8 @@ export class GamesController {
       )
     }
 
-    const progressId =
-      atciveGame.firstPlayerProgress.userId === currentUserId
-        ? atciveGame.firstPlayerProgressId
-        : atciveGame.secondPlayerProgressId
-
-    const firstPlayerId = atciveGame.firstPlayerProgress.userId
-    const secondPlayerId = atciveGame.secondPlayerProgress.userId
+    const firstPlayerId = atciveGame.firstPlayerProgress?.userId
+    const secondPlayerId = atciveGame.secondPlayerProgress?.userId
     const firstPlayerProgressId = atciveGame.firstPlayerProgressId
     const secondPlayerProgressId = atciveGame.secondPlayerProgressId
 
@@ -275,12 +271,12 @@ export class GamesController {
       firstPlayerId !== currentUserId ? firstPlayerId : secondPlayerId
 
     const currentPlayerProgressId =
-      atciveGame.firstPlayerProgress.userId === currentUserId
+      atciveGame.firstPlayerProgress?.userId === currentUserId
         ? firstPlayerProgressId
         : secondPlayerProgressId
 
     const anotherPlayerProgressId =
-      atciveGame.firstPlayerProgress.userId !== currentUserId
+      atciveGame.firstPlayerProgress?.userId !== currentUserId
         ? firstPlayerProgressId
         : secondPlayerProgressId
 
@@ -306,8 +302,7 @@ export class GamesController {
       currentPlayerId
     )
 
-    // TODO fix hardcoded numbers
-    if (answersOfCurrentPlayer.length >= 5) {
+    if (answersOfCurrentPlayer.length >= ANSWERS_MAX_LENGTH) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.FORBIDDEN
@@ -322,14 +317,21 @@ export class GamesController {
     const answeredQuestion = await this.gamesRepository.answerToGameQuestion(
       data.answer,
       questions,
-      progressId ?? '',
+      currentPlayerProgressId ?? '',
       currentUserId,
       manager,
       answersOfCurrentPlayer
     )
 
-    // TODO fix hardcoded numbers
-    if (answersOfAnotherPlayer.length >= 5 && answersOfCurrentPlayer.length >= 4) {
+    if (
+      answersOfAnotherPlayer.length >= ANSWERS_MAX_LENGTH &&
+      answersOfCurrentPlayer.length >= ANSWERS_MAX_LENGTH - 1
+    ) {
+      await this.progressesRepository.increaseScore(
+        anotherPlayerProgressId,
+        manager
+      )
+
       await this.gamesService.finishCurrentGame(atciveGame.id, manager)
     }
 
@@ -337,8 +339,8 @@ export class GamesController {
       return null
     }
 
-    if (answeredQuestion.answerStatus === AnswerStatusEnum.correct && progressId) {
-      await this.progressesRepository.increaseScore(progressId, manager)
+    if (answeredQuestion.answerStatus === AnswerStatusEnum.correct && currentPlayerProgressId) {
+      await this.progressesRepository.increaseScore(currentPlayerProgressId, manager)
     }
 
     await queryRunner.commitTransaction();
