@@ -6,6 +6,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm'
@@ -13,6 +14,7 @@ import {
 import { IGameQuestion } from '../types/game-question'
 import { GameEntity } from './game'
 import { QuestionEntity } from './question'
+import { AnswerEntity } from './answer'
 
 @Entity({
   name: 'game_questions'
@@ -42,6 +44,9 @@ export class GameQuestionEntity extends BaseEntity implements IGameQuestion {
     name: 'questionId'
   })
   question: QuestionEntity
+
+  @OneToMany(() => AnswerEntity, answer => answer.question, { eager: true })
+  answers: AnswerEntity[]
 
   @CreateDateColumn({
     type: 'timestamp',

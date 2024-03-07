@@ -49,7 +49,7 @@ export class AnswerEntity extends BaseEntity implements IAnswer {
   })
   progress: ProgressEntity
 
-  @ManyToOne(() => GameQuestionEntity)
+  @ManyToOne(() => GameQuestionEntity, question => question.answers)
   @JoinColumn({
     name: 'questionId'
   })
