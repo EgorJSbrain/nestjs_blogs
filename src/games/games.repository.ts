@@ -1,4 +1,4 @@
-import { EntityManager, IsNull, Not, Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 import { ProgressesRepository } from '../progresses/progresses.repository';
@@ -7,13 +7,14 @@ import { ProgressEntity } from '../entities/progress';
 import { GameStatusEnum } from '../enums/gameStatusEnum';
 import { GameEntity } from '../entities/game';
 import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case';
-import { IExtendedGame } from '../types/game';
+import { IExtendedGame, IExtendedGameWithPlayer } from '../types/game';
 import { appMessages } from '../constants/messages';
 import { GameQuestionEntity } from '../entities/game-question';
 import { GetRandomQuestionsForGameUseCase } from './use-cases/get-random-questions-for-game-use-case';
 import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questions-for-game-use-case';
 import { AnswerStatusEnum } from '../constants/answer';
 import { AnswerEntity } from '../entities/answer';
+import { sortQuestions } from '../utils/sortQuestions';
 
 @Injectable()
 export class GamesRepository {
@@ -66,7 +67,7 @@ export class GamesRepository {
 
   async getMyCurrentGameInPendingSecondPalyer(
     userId: string
-  ): Promise<IExtendedGame | null> {
+  ): Promise<IExtendedGameWithPlayer | null> {
     try {
       const existedGame = await this.gamesRepo.findOne({
         where: {
@@ -105,7 +106,7 @@ export class GamesRepository {
     }
   }
 
-  async getActiveGameOfUser(userId: string): Promise<any | null> {
+  async getActiveGameOfUser(userId: string): Promise<IExtendedGame | null> {
     try {
       const game = await this.gamesRepo.findOne({
         where: [
@@ -135,7 +136,7 @@ export class GamesRepository {
 
       return {
         ...game,
-        questions: game.questions?.length ? game.questions.sort((a, b) => a.order - b.order) : null
+        questions: game.questions?.length ? sortQuestions(game.questions) : null
       }
     } catch (e) {
       throw new HttpException(
@@ -312,7 +313,7 @@ export class GamesRepository {
 
       return {
         ...game,
-        questions: game.questions?.length ? game.questions.sort((a, b) => a.order - b.order) : null
+        questions: game.questions?.length ? sortQuestions(game.questions) : null
       }
     } catch (e) {
       throw new HttpException(
@@ -390,7 +391,7 @@ export class GamesRepository {
       }
     })
 
-    return questions.sort((a, b) => a.order - b.order)
+    return sortQuestions(questions)
   }
 
   async getAnswersByProgressIdAndUserId(progressId: string, userId: string) {

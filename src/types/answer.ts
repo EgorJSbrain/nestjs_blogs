@@ -9,3 +9,9 @@ export interface IAnswer {
   updatedAt: Date | null
   deletedAt: Date | null
 }
+
+export type Answer = {
+  questionId: string,
+  answerStatus: AnswerStatusEnum,
+  addedAt: Date
+}
