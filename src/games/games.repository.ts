@@ -15,6 +15,7 @@ import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questio
 import { AnswerStatusEnum } from '../constants/answer';
 import { AnswerEntity } from '../entities/answer';
 import { sortQuestions } from '../utils/sortQuestions';
+import { IAnswer } from 'src/types/answer';
 
 @Injectable()
 export class GamesRepository {
@@ -67,7 +68,8 @@ export class GamesRepository {
 
   async getMyCurrentGameInPendingSecondPalyer(
     userId: string
-  ): Promise<IExtendedGameWithPlayer | null> {
+  ): Promise<GameEntity | null> {
+  // ): Promise<IExtendedGameWithPlayer | null> {
     try {
       const existedGame = await this.gamesRepo.findOne({
         where: {
@@ -85,19 +87,20 @@ export class GamesRepository {
         return null
       }
 
-      return {
-        ...existedGame,
-        firstPlayerProgress: {
-          answers: existedGame.firstPlayerProgress.answers || undefined,
-          score: existedGame.firstPlayerProgress.score ?? 0,
-          player: {
-            id: existedGame.firstPlayerProgress.userId,
-            login: existedGame.firstPlayerProgress.user.login
-          }
-        },
-        questions: null,
-        userId
-      }
+      return existedGame
+      // return {
+      //   ...existedGame,
+      //   firstPlayerProgress: {
+      //     answers: existedGame.firstPlayerProgress.answers || undefined,
+      //     score: existedGame.firstPlayerProgress.score ?? 0,
+      //     player: {
+      //       id: existedGame.firstPlayerProgress.userId,
+      //       login: existedGame.firstPlayerProgress.user.login
+      //     }
+      //   },
+      //   questions: null,
+      //   userId
+      // }
     } catch (e) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
@@ -134,10 +137,7 @@ export class GamesRepository {
         return null
       }
 
-      return {
-        ...game,
-        questions: game.questions?.length ? sortQuestions(game.questions) : null
-      }
+      return game
     } catch (e) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
@@ -178,37 +178,38 @@ export class GamesRepository {
         return null
       }
 
-      const preparedQuestions = game
-        .questions!.sort((a, b) => a.order - b.order)
-        .map((question) => ({
-          id: question.id,
-          body: question.question.body
-        }))
+      return game
+      // const preparedQuestions = game
+      //   .questions!.sort((a, b) => a.order - b.order)
+      //   .map((question) => ({
+      //     id: question.id,
+      //     body: question.question.body
+      //   }))
 
-      return {
-        id: game.id,
-        questions: preparedQuestions,
-        status: game.status,
-        firstPlayerProgress: {
-          answers: [],
-          player: {
-            id: game.firstPlayerProgress.user.id,
-            login: game.firstPlayerProgress.user.login
-          },
-          score: game.firstPlayerProgress.score
-        },
-        secondPlayerProgress: {
-          answers: [],
-          player: {
-            id: game.secondPlayerProgress.user.id,
-            login: game.secondPlayerProgress.user.login
-          },
-          score: game.secondPlayerProgress.score
-        },
-        pairCreatedDate: game.createdAt,
-        startGameDate: game.startGameDate,
-        finishGameDate: game.finishGameDate
-      }
+      // return {
+      //   id: game.id,
+      //   questions: preparedQuestions,
+      //   status: game.status,
+      //   firstPlayerProgress: {
+      //     answers: [],
+      //     player: {
+      //       id: game.firstPlayerProgress.user.id,
+      //       login: game.firstPlayerProgress.user.login
+      //     },
+      //     score: game.firstPlayerProgress.score
+      //   },
+      //   secondPlayerProgress: {
+      //     answers: [],
+      //     player: {
+      //       id: game.secondPlayerProgress.user.id,
+      //       login: game.secondPlayerProgress.user.login
+      //     },
+      //     score: game.secondPlayerProgress.score
+      //   },
+      //   pairCreatedDate: game.createdAt,
+      //   startGameDate: game.startGameDate,
+      //   finishGameDate: game.finishGameDate
+      // }
     } catch {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
@@ -409,7 +410,7 @@ export class GamesRepository {
     progressId: string,
     userId: string,
     manager: EntityManager
-  ): Promise<any> {
+  ): Promise<AnswerEntity> {
     const isCorrectAnswer = (
       JSON.parse(question.question.correctAnswers) as string[]
     ).includes(answer)
@@ -425,6 +426,35 @@ export class GamesRepository {
     newAnswer.userId = userId;
     newAnswer.questionId = question.id;
 
-    return  await manager.save(newAnswer)
+    return await manager.save(newAnswer)
+  }
+
+  async getAllGamesByUserId(
+    userId: string,
+  ): Promise<GameEntity[]> {
+    const games = await this.gamesRepo.find({
+      where: [
+        {
+          firstPlayerProgress: {
+            userId
+          }
+        },
+        {
+          secondPlayerProgress: {
+            userId
+          }
+        }
+      ],
+      relations: {
+        questions: true,
+        firstPlayerProgress: true,
+        secondPlayerProgress: true
+      },
+      order: {
+        
+      }
+    })
+
+    return games
   }
 }
