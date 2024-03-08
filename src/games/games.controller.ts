@@ -25,9 +25,11 @@ import { ANSWERS_MAX_LENGTH, AnswerStatusEnum } from '../constants/answer'
 import { GamesService } from './games.service'
 import { sortAnswers } from '../utils/sortAnswers'
 import { Answer } from '../types/answer'
+import { IExtendedGameWithPlayer } from 'src/types/game'
+import { prepareGame } from 'src/utils/prepareGame'
 
 @SkipThrottle()
-@Controller(RoutesEnum.pairGameQuizPairs)
+@Controller(RoutesEnum.pairGameQuiz)
 export class GamesController {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
@@ -37,50 +39,17 @@ export class GamesController {
     private readonly gamesService: GamesService,
   ) {}
 
-  @Get('/my-current')
+  @Get('pairs/my-current')
   @UseGuards(JWTAuthGuard)
   async getMyCurrentGame(
     @CurrentUserId() currentUserId: string
   ): Promise<any> {
+    console.log('===!!!===')
     const atciveGame =
       await this.gamesRepository.getActiveGameOfUser(currentUserId)
 
     if (!!atciveGame) {
-      return {
-        id: atciveGame.id,
-        firstPlayerProgress: {
-          answers: sortAnswers(atciveGame.firstPlayerProgress?.answers || []).map(answer => ({
-            questionId: answer.questionId,
-            answerStatus: answer.answerStatus,
-            addedAt: answer.createdAt
-          })),
-          player: {
-            id: atciveGame.firstPlayerProgress?.userId,
-            login: atciveGame.firstPlayerProgress?.user.login
-          },
-          score: atciveGame.firstPlayerProgress?.score,
-        },
-        secondPlayerProgress: {
-          answers: sortAnswers(atciveGame.secondPlayerProgress?.answers || []).map(answer => ({
-            questionId: answer.questionId,
-            answerStatus: answer.answerStatus,
-            addedAt: answer.createdAt
-          })),
-          player: {
-            id: atciveGame.secondPlayerProgress?.userId,
-            login: atciveGame.secondPlayerProgress?.user.login
-          },
-          score: atciveGame.secondPlayerProgress?.score
-        },
-        questions: atciveGame.questions?.map(question => ({
-          id: question.id,
-          body: question.question.body
-        })),
-        status: atciveGame.status,
-        pairCreatedDate: atciveGame.createdAt,
-        startGameDate: atciveGame.startGameDate,
-        finishGameDate: atciveGame.finishGameDate
-      }
+      return prepareGame(atciveGame)
     }
 
     const myCurrentGameIdPendingSecondUser =
@@ -89,23 +58,7 @@ export class GamesController {
       )
 
     if (!!myCurrentGameIdPendingSecondUser) {
-      return {
-        id: myCurrentGameIdPendingSecondUser.id,
-        firstPlayerProgress: {
-          answers: [],
-          player: {
-            id: myCurrentGameIdPendingSecondUser.firstPlayerProgress?.player.id,
-            login: myCurrentGameIdPendingSecondUser.firstPlayerProgress?.player.login
-          },
-          score: myCurrentGameIdPendingSecondUser.firstPlayerProgress?.score,
-        },
-        secondPlayerProgress: null,
-        questions: myCurrentGameIdPendingSecondUser.questions,
-        status: myCurrentGameIdPendingSecondUser.status,
-        pairCreatedDate: myCurrentGameIdPendingSecondUser.createdAt,
-        startGameDate: myCurrentGameIdPendingSecondUser.startGameDate,
-        finishGameDate: myCurrentGameIdPendingSecondUser.finishGameDate
-      }
+      return prepareGame(myCurrentGameIdPendingSecondUser)
     }
 
     throw new HttpException(
@@ -114,12 +67,25 @@ export class GamesController {
     )
   }
 
-  @Get(':id')
+  @Get('pairs/my')
+  @UseGuards(JWTAuthGuard)
+  async getStatisticByUserId(
+    @CurrentUserId() currentUserId: string
+  ): Promise<any> {
+    console.log('MY CURRR')
+    const myGames = await this.gamesRepository.getAllGamesByUserId(currentUserId)
+
+    return myGames.map(game => prepareGame(game))
+  }
+
+  @Get('pairs/:id')
   @UseGuards(JWTAuthGuard)
   async getGameById(
     @Param() params: { id: string },
     @CurrentUserId() currentUserId: string
-  ): Promise<any> {
+  ) {
+    console.log('BY ID____')
+
     const game = await this.gamesRepository.getExtendedGameById(params.id)
 
     if (!game) {
@@ -145,56 +111,19 @@ export class GamesController {
       )
     }
 
-    const preparedGame = {
-      id: game.id,
-      firstPlayerProgress: {
-        answers: game.firstPlayerProgress.answers.length
-          ? sortAnswers(game.firstPlayerProgress.answers).map((answer) => ({
-              questionId: answer.questionId,
-              answerStatus: answer.answerStatus,
-              addedAt: answer.createdAt
-            }))
-          : [],
-        player: {
-          id: game.firstPlayerProgress.userId,
-          login: game.firstPlayerProgress.user.login
-        },
-        score: game.firstPlayerProgress.score
-      },
-      questions: null,
-      status: game.status,
-      pairCreatedDate: game.createdAt,
-      startGameDate: game.startGameDate,
-      finishGameDate: game.finishGameDate,
-      secondPlayerProgress: null
-    }
-
-    if (!!secondPlayerId) {
-      return {
-        ...preparedGame,
-        secondPlayerProgress: {
-          answers: sortAnswers(game.secondPlayerProgress.answers).map(answer => ({
-            questionId: answer.questionId,
-            answerStatus: answer.answerStatus,
-            addedAt: answer.createdAt
-          })),
-          player: {
-            id: game.secondPlayerProgress.userId,
-            login: game.secondPlayerProgress.user.login
-          },
-          score: game.secondPlayerProgress.score
-        },
-        questions: game.questions?.map(question => ({
-          id: question.id,
-          body: question.question.body
-        })),
-      }
-    }
-
-    return preparedGame
+    return prepareGame(game)
   }
 
-  @Post('connection')
+  // @Get('pairs/my-statistic')
+  // @UseGuards(JWTAuthGuard)
+  // async getStatisticByUserId(
+  //   @Param() params: { id: string },
+  //   @CurrentUserId() currentUserId: string
+  // ): Promise<any> {
+    
+  // }
+
+  @Post('pairs/connection')
   @UseGuards(JWTAuthGuard)
   @HttpCode(HttpStatus.OK)
   async connectToGame(@CurrentUserId() currentUserId: string): Promise<any> {
@@ -222,13 +151,15 @@ export class GamesController {
       )
     }
 
-    return await this.gamesRepository.connectToGame(
+    const game = await this.gamesRepository.connectToGame(
       currentUserId,
       gameInPendindSecondUser
     )
+
+    return prepareGame(game)
   }
 
-  @Post('my-current/answers')
+  @Post('pairs/my-current/answers')
   @UseGuards(JWTAuthGuard)
   @HttpCode(HttpStatus.OK)
   async answerToQuestion(
