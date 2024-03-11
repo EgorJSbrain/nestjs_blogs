@@ -1,16 +1,14 @@
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
-import { RequestParams, ResponseBody } from '../types/request';
-import { UpdatePostDto } from '../dtos/posts/update-post.dto';
+import { ResponseBody } from '../types/request';
 import { SortDirections, SortType } from '../constants/global';
 import { appMessages } from '../constants/messages';
 import { QuestionEntity } from '../entities/question';
 import { IQuestion, IQuestionData, QuestionsRequestParams } from '../types/questions';
-import { CreateQuestionDto } from 'src/dtos/questions/create-question.dto';
-import { UpdateQuestionDto } from 'src/dtos/questions/update-question.dto';
-import { QuestionPublishDto } from 'src/dtos/questions/question.dto';
+import { CreateQuestionDto } from '../dtos/questions/create-question.dto';
+import { QuestionPublishDto } from '../dtos/questions/question.dto';
 
 @Injectable()
 export class QuestionsRepository {

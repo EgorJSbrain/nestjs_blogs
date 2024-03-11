@@ -10,7 +10,7 @@ import {
   UpdateDateColumn
 } from 'typeorm'
 
-import { IProgress } from 'src/types/progress'
+import { IProgress } from '../types/progress'
 import { AnswerEntity } from './answer'
 import { UserEntity } from './user'
 

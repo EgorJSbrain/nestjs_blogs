@@ -9,6 +9,7 @@ import {
   HttpCode,
   UseGuards,
   Body,
+  Query,
 } from '@nestjs/common'
 import { InjectDataSource } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
@@ -23,10 +24,9 @@ import { CreateAnswerDto } from '../dtos/answers/create-answer.dto'
 import { ProgressesRepository } from '../progresses/progresses.repository'
 import { ANSWERS_MAX_LENGTH, AnswerStatusEnum } from '../constants/answer'
 import { GamesService } from './games.service'
-import { sortAnswers } from '../utils/sortAnswers'
 import { Answer } from '../types/answer'
-import { IExtendedGameWithPlayer } from 'src/types/game'
-import { prepareGame } from 'src/utils/prepareGame'
+import { prepareGame } from '../utils/prepareGame'
+import { RequestParams } from '../types/request'
 
 @SkipThrottle()
 @Controller(RoutesEnum.pairGameQuiz)
@@ -44,7 +44,6 @@ export class GamesController {
   async getMyCurrentGame(
     @CurrentUserId() currentUserId: string
   ): Promise<any> {
-    console.log('===!!!===')
     const atciveGame =
       await this.gamesRepository.getActiveGameOfUser(currentUserId)
 
@@ -69,13 +68,17 @@ export class GamesController {
 
   @Get('pairs/my')
   @UseGuards(JWTAuthGuard)
-  async getStatisticByUserId(
+  async getMyGames(
+    @Query() query: RequestParams,
     @CurrentUserId() currentUserId: string
   ): Promise<any> {
     console.log('MY CURRR')
-    const myGames = await this.gamesRepository.getAllGamesByUserId(currentUserId)
+    const data = await this.gamesRepository.getAllGamesByUserId({
+      userId: currentUserId,
+      params: query
+    })
 
-    return myGames.map(game => prepareGame(game))
+    return data
   }
 
   @Get('pairs/:id')
@@ -84,8 +87,6 @@ export class GamesController {
     @Param() params: { id: string },
     @CurrentUserId() currentUserId: string
   ) {
-    console.log('BY ID____')
-
     const game = await this.gamesRepository.getExtendedGameById(params.id)
 
     if (!game) {
@@ -114,14 +115,13 @@ export class GamesController {
     return prepareGame(game)
   }
 
-  // @Get('pairs/my-statistic')
-  // @UseGuards(JWTAuthGuard)
-  // async getStatisticByUserId(
-  //   @Param() params: { id: string },
-  //   @CurrentUserId() currentUserId: string
-  // ): Promise<any> {
-    
-  // }
+  @Get('pairs/my-statistic')
+  @UseGuards(JWTAuthGuard)
+  async getStatisticByUserId(
+    @CurrentUserId() currentUserId: string
+  ): Promise<any> {
+    const statistic = await this.gamesRepository.getStatisticByUserId(currentUserId)
+  }
 
   @Post('pairs/connection')
   @UseGuards(JWTAuthGuard)
