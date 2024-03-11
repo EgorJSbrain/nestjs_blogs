@@ -6,8 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ProgressEntity } from '../entities/progress';
 import { GameStatusEnum } from '../enums/gameStatusEnum';
 import { GameEntity } from '../entities/game';
-import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-case';
-import { IExtendedGame, IExtendedGameWithPlayer } from '../types/game';
+import { IExtendedGame, Statistic } from '../types/game';
 import { appMessages } from '../constants/messages';
 import { GameQuestionEntity } from '../entities/game-question';
 import { GetRandomQuestionsForGameUseCase } from './use-cases/get-random-questions-for-game-use-case';
@@ -15,7 +14,9 @@ import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questio
 import { AnswerStatusEnum } from '../constants/answer';
 import { AnswerEntity } from '../entities/answer';
 import { sortQuestions } from '../utils/sortQuestions';
-import { IAnswer } from 'src/types/answer';
+import { RequestParams, ResponseBody } from '../types/request';
+import { SortDirections } from '../constants/global';
+import { prepareGame } from '../utils/prepareGame';
 
 @Injectable()
 export class GamesRepository {
@@ -28,7 +29,6 @@ export class GamesRepository {
     private readonly answersRepo: Repository<AnswerEntity>,
 
     private progressesRepository: ProgressesRepository,
-    private checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
     private getRandomQuestionsForGameUseCase: GetRandomQuestionsForGameUseCase,
     private setRandomQuestionsForGameUseCase: SetRandomQuestionsForGameUseCase,
   ) {}
@@ -88,19 +88,6 @@ export class GamesRepository {
       }
 
       return existedGame
-      // return {
-      //   ...existedGame,
-      //   firstPlayerProgress: {
-      //     answers: existedGame.firstPlayerProgress.answers || undefined,
-      //     score: existedGame.firstPlayerProgress.score ?? 0,
-      //     player: {
-      //       id: existedGame.firstPlayerProgress.userId,
-      //       login: existedGame.firstPlayerProgress.user.login
-      //     }
-      //   },
-      //   questions: null,
-      //   userId
-      // }
     } catch (e) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
@@ -179,37 +166,6 @@ export class GamesRepository {
       }
 
       return game
-      // const preparedQuestions = game
-      //   .questions!.sort((a, b) => a.order - b.order)
-      //   .map((question) => ({
-      //     id: question.id,
-      //     body: question.question.body
-      //   }))
-
-      // return {
-      //   id: game.id,
-      //   questions: preparedQuestions,
-      //   status: game.status,
-      //   firstPlayerProgress: {
-      //     answers: [],
-      //     player: {
-      //       id: game.firstPlayerProgress.user.id,
-      //       login: game.firstPlayerProgress.user.login
-      //     },
-      //     score: game.firstPlayerProgress.score
-      //   },
-      //   secondPlayerProgress: {
-      //     answers: [],
-      //     player: {
-      //       id: game.secondPlayerProgress.user.id,
-      //       login: game.secondPlayerProgress.user.login
-      //     },
-      //     score: game.secondPlayerProgress.score
-      //   },
-      //   pairCreatedDate: game.createdAt,
-      //   startGameDate: game.startGameDate,
-      //   finishGameDate: game.finishGameDate
-      // }
     } catch {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
@@ -429,10 +385,22 @@ export class GamesRepository {
     return await manager.save(newAnswer)
   }
 
-  async getAllGamesByUserId(
-    userId: string,
-  ): Promise<GameEntity[]> {
-    const games = await this.gamesRepo.find({
+  async getAllGamesByUserId({
+    userId,
+    params,
+  }: { userId: string, params: RequestParams }): Promise<ResponseBody<any> | []> {
+    const {
+      sortBy = 'createdAt',
+      sortDirection = SortDirections.desc,
+      pageNumber = 1,
+      pageSize = 10,
+    } = params
+
+    const pageSizeNumber = Number(pageSize)
+    const pageNumberNum = Number(pageNumber)
+    const skip = (pageNumberNum - 1) * pageSizeNumber
+
+    const gettingObject = {
       where: [
         {
           firstPlayerProgress: {
@@ -451,10 +419,40 @@ export class GamesRepository {
         secondPlayerProgress: true
       },
       order: {
-        
-      }
-    })
+        [sortBy]: sortDirection,
+        [sortBy !== 'createdAt' ? 'createdAt' : '']: SortDirections.desc
+      },
+      skip,
+      take: pageSizeNumber
+    }
 
-    return games
+    const games = await this.gamesRepo.find(gettingObject)
+    const count = await this.gamesRepo.count(gettingObject)
+    const pagesCount = Math.ceil(count / pageSizeNumber)
+
+    return {
+      pagesCount,
+      page: pageNumberNum,
+      pageSize: pageSizeNumber,
+      totalCount: count,
+      items: games.map(game => prepareGame(game))
+    }
+  }
+
+  async getStatisticByUserId(userId: string): Promise<Statistic> {
+    // const qwe = this.gamesRepo
+    //   .createQueryBuilder('game')
+    //   .select('SUM(game.)')
+    //   .groupBy('game.id')
+    //   .getRawMany();
+
+    return {
+      sumScore: 0,
+      avgScores: 0,
+      gamesCount: 0,
+      winsCount: 0,
+      lossesCount: 0,
+      drawsCount: 0
+    }
   }
 }

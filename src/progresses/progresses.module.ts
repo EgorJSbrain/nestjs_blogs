@@ -7,7 +7,7 @@ import { UserEntity } from '../entities/user';
 import { ProgressesRepository } from './progresses.repository';
 import { HashService } from '../hash/hash.service';
 import { JWTService } from '../jwt/jwt.service';
-import { ProgressEntity } from 'src/entities/progress';
+import { ProgressEntity } from '../entities/progress';
 
 @Module({
   imports: [
