@@ -1,4 +1,4 @@
-import { ProgressEntity } from 'src/entities/progress'
+import { ProgressEntity } from '../entities/progress'
 import { prepareAnswers } from './prepareAnswers'
 
 export const prepareGameProgress = (progress: ProgressEntity) => ({

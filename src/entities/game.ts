@@ -13,7 +13,7 @@ import {
 } from 'typeorm'
 
 import { ProgressEntity } from './progress'
-import { IGame } from 'src/types/game'
+import { IGame } from '../types/game'
 import { GameStatusEnum } from '../enums/gameStatusEnum'
 import { GameQuestionEntity } from './game-question'
 
