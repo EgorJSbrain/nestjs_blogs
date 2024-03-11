@@ -1,4 +1,4 @@
-import { IExtendedGame } from 'src/types/game'
+import { IExtendedGame } from '../types/game'
 import { prepareGameProgress } from './prepareGameProgress'
 import { prepareQuestions } from './prepareQuestions'
 

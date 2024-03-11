@@ -1,8 +1,7 @@
 import { ProgressEntity } from '../entities/progress'
 import { GameStatusEnum } from '../enums/gameStatusEnum'
 import { AnswerEntity } from '../entities/answer'
-import { QuestionEntity } from '../entities/question'
-import { GameQuestionEntity } from 'src/entities/game-question'
+import { GameQuestionEntity } from '../entities/game-question'
 
 export interface IGame {
   id: string
@@ -41,9 +40,11 @@ export interface IExtendedGame extends IGame {
   questions: GameQuestionEntity[] | null
 }
 
-// export interface IExtendedGameWithGameQuestions extends IGame {
-//   userId?: string
-//   firstPlayerProgress?: ProgressEntity
-//   secondPlayerProgress?: ProgressEntity
-//   questions: GameQuestionEntity[] | null
-// }
+export type Statistic = {
+  sumScore: number,
+  avgScores: number,
+  gamesCount: number,
+  winsCount: number,
+  lossesCount: number,
+  drawsCount: number
+}
