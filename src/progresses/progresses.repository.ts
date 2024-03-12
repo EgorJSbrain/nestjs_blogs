@@ -1,10 +1,10 @@
 import { EntityManager, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
-import { RequestParams } from '../types/request';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProgressEntity } from '../entities/progress';
 import { UserEntity } from '../entities/user';
+import { formatNumber } from '../utils/formaNumberForStatistic';
 
 @Injectable()
 export class ProgressesRepository {
@@ -76,5 +76,32 @@ export class ProgressesRepository {
     }
 
     return progress
+  }
+
+  async getAllByUserId(userId: string) {
+      const statistic = await this.progressesRepo
+      .createQueryBuilder('progress')
+      .select([
+        'COUNT(*) as gamesCount',
+        'SUM(progress.score) as sumScore',
+        'AVG(progress.score) as avgScores'
+      ])
+      .where('progress.userId = :userId', { userId })
+      .groupBy('progress.userId')
+      .getRawOne()
+
+    if (!statistic) {
+      return {
+        gamesCount: 0,
+        sumScore: 0,
+        avgScores: 0
+      }
+    }
+
+    return {
+      gamesCount: Number(statistic.gamescount) ?? 0,
+      sumScore: Number(statistic.sumscore) ?? 0,
+      avgScores: Number(formatNumber(statistic.avgscores)) ?? 0,
+    }
   }
 }
