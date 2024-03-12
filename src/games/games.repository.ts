@@ -28,7 +28,7 @@ export class GamesRepository {
     @InjectRepository(AnswerEntity)
     private readonly answersRepo: Repository<AnswerEntity>,
 
-    private progressesRepository: ProgressesRepository,
+    private progressesRepo: ProgressesRepository,
     private getRandomQuestionsForGameUseCase: GetRandomQuestionsForGameUseCase,
     private setRandomQuestionsForGameUseCase: SetRandomQuestionsForGameUseCase,
   ) {}
@@ -138,7 +138,7 @@ export class GamesRepository {
     existedGame: IExtendedGame
   ): Promise<any> {
     try {
-      const progress = await this.progressesRepository.createProgress(userId)
+      const progress = await this.progressesRepo.createProgress(userId)
       const questions = await this.getRandomQuestionsForGameUseCase.execute()
 
       await this.setRandomQuestionsForGameUseCase.execute(
@@ -179,7 +179,7 @@ export class GamesRepository {
       const query = this.gamesRepo.createQueryBuilder('game')
 
       const firstUserProgress =
-        await this.progressesRepository.createProgress(userId)
+        await this.progressesRepo.createProgress(userId)
 
       if (!firstUserProgress) {
         return null
@@ -400,6 +400,18 @@ export class GamesRepository {
     const pageNumberNum = Number(pageNumber)
     const skip = (pageNumberNum - 1) * pageSizeNumber
 
+    // TODO to check for getting my games
+    let order = {
+      [sortBy]: sortDirection,
+    }
+
+    // if (sortBy !== 'createdAt') {
+    //   order = {
+    //     [sortBy]: sortDirection,
+    //     createdAt: SortDirections.desc
+    //   }
+    // }
+
     const gettingObject = {
       where: [
         {
@@ -440,16 +452,10 @@ export class GamesRepository {
   }
 
   async getStatisticByUserId(userId: string): Promise<Statistic> {
-    // const qwe = this.gamesRepo
-    //   .createQueryBuilder('game')
-    //   .select('SUM(game.)')
-    //   .groupBy('game.id')
-    //   .getRawMany();
+    const statistic = await this.progressesRepo.getAllByUserId(userId)
 
     return {
-      sumScore: 0,
-      avgScores: 0,
-      gamesCount: 0,
+      ...statistic,
       winsCount: 0,
       lossesCount: 0,
       drawsCount: 0

@@ -36,14 +36,12 @@ export class GamesController {
     private readonly gamesRepository: GamesRepository,
     private readonly progressesRepository: ProgressesRepository,
     private readonly checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
-    private readonly gamesService: GamesService,
+    private readonly gamesService: GamesService
   ) {}
 
   @Get('pairs/my-current')
   @UseGuards(JWTAuthGuard)
-  async getMyCurrentGame(
-    @CurrentUserId() currentUserId: string
-  ): Promise<any> {
+  async getMyCurrentGame(@CurrentUserId() currentUserId: string): Promise<any> {
     const atciveGame =
       await this.gamesRepository.getActiveGameOfUser(currentUserId)
 
@@ -66,13 +64,20 @@ export class GamesController {
     )
   }
 
+  @Get('users/my-statistic')
+  @UseGuards(JWTAuthGuard)
+  async getStatisticByUserId(
+    @CurrentUserId() currentUserId: string
+  ): Promise<any> {
+    return await this.gamesRepository.getStatisticByUserId(currentUserId)
+  }
+
   @Get('pairs/my')
   @UseGuards(JWTAuthGuard)
   async getMyGames(
     @Query() query: RequestParams,
     @CurrentUserId() currentUserId: string
   ): Promise<any> {
-    console.log('MY CURRR')
     const data = await this.gamesRepository.getAllGamesByUserId({
       userId: currentUserId,
       params: query
@@ -96,8 +101,12 @@ export class GamesController {
       )
     }
 
-    const firstPlayerId = game.firstPlayerProgress ? game.firstPlayerProgress.userId : null
-    const secondPlayerId = game.secondPlayerProgress ? game.secondPlayerProgress.userId : null
+    const firstPlayerId = game.firstPlayerProgress
+      ? game.firstPlayerProgress.userId
+      : null
+    const secondPlayerId = game.secondPlayerProgress
+      ? game.secondPlayerProgress.userId
+      : null
 
     const isCurrentUserGame = await this.checkPalyerInGameUseCase.execute(
       currentUserId,
@@ -113,14 +122,6 @@ export class GamesController {
     }
 
     return prepareGame(game)
-  }
-
-  @Get('pairs/my-statistic')
-  @UseGuards(JWTAuthGuard)
-  async getStatisticByUserId(
-    @CurrentUserId() currentUserId: string
-  ): Promise<any> {
-    const statistic = await this.gamesRepository.getStatisticByUserId(currentUserId)
   }
 
   @Post('pairs/connection')
@@ -166,131 +167,152 @@ export class GamesController {
     @CurrentUserId() currentUserId: string,
     @Body() data: CreateAnswerDto
   ): Promise<Answer | null> {
-    const queryRunner = this.dataSource.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner()
 
     try {
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-      const manager = queryRunner.manager;
+      await queryRunner.connect()
+      await queryRunner.startTransaction()
+      const manager = queryRunner.manager
 
       const atciveGame =
         await this.gamesRepository.getActiveGameOfUser(currentUserId)
 
-    if (!atciveGame) {
-      throw new HttpException(
-        { message: appMessages(appMessages().game).errors.notFound, field: '' },
-        HttpStatus.FORBIDDEN
-      )
-    }
+      if (!atciveGame) {
+        throw new HttpException(
+          {
+            message: appMessages(appMessages().game).errors.notFound,
+            field: ''
+          },
+          HttpStatus.FORBIDDEN
+        )
+      }
 
-    const firstPlayerId = atciveGame.firstPlayerProgress?.userId
-    const secondPlayerId = atciveGame.secondPlayerProgress?.userId
-    const firstPlayerProgressId = atciveGame.firstPlayerProgressId
-    const secondPlayerProgressId = atciveGame.secondPlayerProgressId
+      const firstPlayerId = atciveGame.firstPlayerProgress?.userId
+      const secondPlayerId = atciveGame.secondPlayerProgress?.userId
+      const firstPlayerProgressId = atciveGame.firstPlayerProgressId
+      const secondPlayerProgressId = atciveGame.secondPlayerProgressId
 
-    if (!firstPlayerId || !secondPlayerId || !firstPlayerProgressId || !secondPlayerProgressId) {
-      throw new HttpException(
-        { message: appMessages().errors.somethingIsWrong, field: '' },
-        HttpStatus.BAD_REQUEST
-      )
-    }
+      if (
+        !firstPlayerId ||
+        !secondPlayerId ||
+        !firstPlayerProgressId ||
+        !secondPlayerProgressId
+      ) {
+        throw new HttpException(
+          { message: appMessages().errors.somethingIsWrong, field: '' },
+          HttpStatus.BAD_REQUEST
+        )
+      }
 
-    const currentPlayerId =
-      firstPlayerId === currentUserId ? firstPlayerId : secondPlayerId
+      const currentPlayerId =
+        firstPlayerId === currentUserId ? firstPlayerId : secondPlayerId
 
-    const anotherPlayerId =
-      firstPlayerId !== currentUserId ? firstPlayerId : secondPlayerId
+      const anotherPlayerId =
+        firstPlayerId !== currentUserId ? firstPlayerId : secondPlayerId
 
-    const currentPlayerProgressId =
-      atciveGame.firstPlayerProgress?.userId === currentUserId
-        ? firstPlayerProgressId
-        : secondPlayerProgressId
+      const currentPlayerProgressId =
+        atciveGame.firstPlayerProgress?.userId === currentUserId
+          ? firstPlayerProgressId
+          : secondPlayerProgressId
 
-    const anotherPlayerProgressId =
-      atciveGame.firstPlayerProgress?.userId !== currentUserId
-        ? firstPlayerProgressId
-        : secondPlayerProgressId
+      const anotherPlayerProgressId =
+        atciveGame.firstPlayerProgress?.userId !== currentUserId
+          ? firstPlayerProgressId
+          : secondPlayerProgressId
 
-    const isCurrentUserGame = await this.checkPalyerInGameUseCase.execute(
-      currentUserId,
-      firstPlayerId,
-      secondPlayerId
-    )
-
-    if (!isCurrentUserGame) {
-      throw new HttpException(
-        { message: appMessages(appMessages().game).errors.notFound, field: '' },
-        HttpStatus.FORBIDDEN
-      )
-    }
-
-    const questions = await this.gamesRepository.getGameQuestionsByGameId(
-      atciveGame.id
-    )
-
-    const answersOfCurrentPlayer = await this.gamesRepository.getAnswersByProgressIdAndUserId(
-      currentPlayerProgressId,
-      currentPlayerId
-    )
-
-    if (answersOfCurrentPlayer.length >= ANSWERS_MAX_LENGTH) {
-      throw new HttpException(
-        { message: appMessages().errors.somethingIsWrong, field: '' },
-        HttpStatus.FORBIDDEN
-      )
-    }
-
-    const answersOfAnotherPlayer = await this.gamesRepository.getAnswersByProgressIdAndUserId(
-      anotherPlayerProgressId,
-      anotherPlayerId
-    )
-
-    const answeredQuestion = await this.gamesRepository.answerToGameQuestion(
-      data.answer,
-      questions,
-      currentPlayerProgressId ?? '',
-      currentUserId,
-      manager,
-      answersOfCurrentPlayer
-    )
-
-    if (
-      answersOfAnotherPlayer.length >= ANSWERS_MAX_LENGTH &&
-      answersOfCurrentPlayer.length >= ANSWERS_MAX_LENGTH - 1
-    ) {
-      await this.progressesRepository.increaseScore(
-        anotherPlayerProgressId,
-        manager
+      const isCurrentUserGame = await this.checkPalyerInGameUseCase.execute(
+        currentUserId,
+        firstPlayerId,
+        secondPlayerId
       )
 
-      await this.gamesService.finishCurrentGame(atciveGame.id, manager)
-    }
+      if (!isCurrentUserGame) {
+        throw new HttpException(
+          {
+            message: appMessages(appMessages().game).errors.notFound,
+            field: ''
+          },
+          HttpStatus.FORBIDDEN
+        )
+      }
 
-    if (!answeredQuestion) {
-      return null
-    }
+      const questions = await this.gamesRepository.getGameQuestionsByGameId(
+        atciveGame.id
+      )
 
-    if (answeredQuestion.answerStatus === AnswerStatusEnum.correct && currentPlayerProgressId) {
-      await this.progressesRepository.increaseScore(currentPlayerProgressId, manager)
-    }
+      const answersOfCurrentPlayer =
+        await this.gamesRepository.getAnswersByProgressIdAndUserId(
+          currentPlayerProgressId,
+          currentPlayerId
+        )
 
-    await queryRunner.commitTransaction();
+      if (answersOfCurrentPlayer.length >= ANSWERS_MAX_LENGTH) {
+        throw new HttpException(
+          { message: appMessages().errors.somethingIsWrong, field: '' },
+          HttpStatus.FORBIDDEN
+        )
+      }
 
-    return {
-      questionId: answeredQuestion.questionId,
-      answerStatus: answeredQuestion.answerStatus,
-      addedAt: answeredQuestion.createdAt,
-    }
+      const answersOfAnotherPlayer =
+        await this.gamesRepository.getAnswersByProgressIdAndUserId(
+          anotherPlayerProgressId,
+          anotherPlayerId
+        )
 
+      const answeredQuestion = await this.gamesRepository.answerToGameQuestion(
+        data.answer,
+        questions,
+        currentPlayerProgressId ?? '',
+        currentUserId,
+        manager,
+        answersOfCurrentPlayer
+      )
+
+      if (
+        answersOfAnotherPlayer.length >= ANSWERS_MAX_LENGTH &&
+        answersOfCurrentPlayer.length >= ANSWERS_MAX_LENGTH - 1
+      ) {
+        await this.progressesRepository.increaseScore(
+          anotherPlayerProgressId,
+          manager
+        )
+
+        await this.gamesService.finishCurrentGame(atciveGame.id, manager)
+      }
+
+      if (!answeredQuestion) {
+        return null
+      }
+
+      if (
+        answeredQuestion.answerStatus === AnswerStatusEnum.correct &&
+        currentPlayerProgressId
+      ) {
+        await this.progressesRepository.increaseScore(
+          currentPlayerProgressId,
+          manager
+        )
+      }
+
+      await queryRunner.commitTransaction()
+
+      return {
+        questionId: answeredQuestion.questionId,
+        answerStatus: answeredQuestion.answerStatus,
+        addedAt: answeredQuestion.createdAt
+      }
     } catch (err) {
-      await queryRunner.rollbackTransaction();
+      await queryRunner.rollbackTransaction()
 
       throw new HttpException(
-        { message: err.message || appMessages().errors.somethingIsWrong, field: '' },
+        {
+          message: err.message || appMessages().errors.somethingIsWrong,
+          field: ''
+        },
         err.status || HttpStatus.BAD_REQUEST
       )
     } finally {
-      await queryRunner.release();
+      await queryRunner.release()
     }
   }
 }
