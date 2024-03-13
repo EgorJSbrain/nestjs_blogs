@@ -42,14 +42,12 @@ export class ProgressesRepository {
         })
         .execute()
 
-      const progress = await this.getById(newProgress.raw[0].id)
-
-      if (!progress) {
+      if (!newProgress.raw[0]) {
         return null
       }
 
-      return progress
-    } catch {
+      return newProgress.raw[0]
+    } catch(e) {
       return null
     }
   }
@@ -65,11 +63,7 @@ export class ProgressesRepository {
   }
 
   async getById(id: string): Promise<ProgressEntity | null> {
-    const progress = await this.progressesRepo
-      .createQueryBuilder('progress')
-      .select(['progress.id', 'progress.userId'])
-      .where('progress.id = :id', { id })
-      .getOne()
+    const progress = await this.progressesRepo.findOne({ where: { id } })
 
     if (!progress) {
       return null
@@ -86,7 +80,7 @@ export class ProgressesRepository {
         'SUM(progress.score) as sumScore',
         'AVG(progress.score) as avgScores'
       ])
-      .where('progress.userId = :userId', { userId })
+      .where('progress.userId = :userId AND progress.status IS NOT NULL', { userId })
       .groupBy('progress.userId')
       .getRawOne()
 

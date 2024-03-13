@@ -8,6 +8,7 @@ import { ProgressesRepository } from './progresses.repository';
 import { HashService } from '../hash/hash.service';
 import { JWTService } from '../jwt/jwt.service';
 import { ProgressEntity } from '../entities/progress';
+import { ProgressService } from './progress.service';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ProgressEntity } from '../entities/progress';
     JWTService,
     ProgressesRepository,
     HashService,
+    ProgressService,
   ]
 })
 export class ProgressesModule {}
