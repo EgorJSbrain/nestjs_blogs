@@ -27,6 +27,7 @@ import { GamesService } from './games.service'
 import { Answer } from '../types/answer'
 import { prepareGame } from '../utils/prepareGame'
 import { RequestParams } from '../types/request'
+import { ProgressService } from '../progresses/progress.service'
 
 @SkipThrottle()
 @Controller(RoutesEnum.pairGameQuiz)
@@ -36,7 +37,8 @@ export class GamesController {
     private readonly gamesRepository: GamesRepository,
     private readonly progressesRepository: ProgressesRepository,
     private readonly checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
-    private readonly gamesService: GamesService
+    private readonly gamesService: GamesService,
+    private readonly progressService: ProgressService
   ) {}
 
   @Get('pairs/my-current')
@@ -268,18 +270,6 @@ export class GamesController {
         answersOfCurrentPlayer
       )
 
-      if (
-        answersOfAnotherPlayer.length >= ANSWERS_MAX_LENGTH &&
-        answersOfCurrentPlayer.length >= ANSWERS_MAX_LENGTH - 1
-      ) {
-        await this.progressesRepository.increaseScore(
-          anotherPlayerProgressId,
-          manager
-        )
-
-        await this.gamesService.finishCurrentGame(atciveGame.id, manager)
-      }
-
       if (!answeredQuestion) {
         return null
       }
@@ -292,6 +282,26 @@ export class GamesController {
           currentPlayerProgressId,
           manager
         )
+      }
+
+      if (
+        answersOfAnotherPlayer.length >= ANSWERS_MAX_LENGTH &&
+        answersOfCurrentPlayer.length >= ANSWERS_MAX_LENGTH - 1
+      ) {
+        await this.progressesRepository.increaseScore(
+          anotherPlayerProgressId,
+          manager
+        )
+
+        const finishedGame = await this.gamesService.finishCurrentGame(atciveGame.id, manager)
+
+        if (finishedGame) {
+          await this.progressService.markProgressesByResult(
+            currentPlayerProgressId,
+            anotherPlayerProgressId,
+            manager
+          )
+        }
       }
 
       await queryRunner.commitTransaction()
