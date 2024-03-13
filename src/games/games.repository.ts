@@ -69,7 +69,6 @@ export class GamesRepository {
   async getMyCurrentGameInPendingSecondPalyer(
     userId: string
   ): Promise<GameEntity | null> {
-  // ): Promise<IExtendedGameWithPlayer | null> {
     try {
       const existedGame = await this.gamesRepo.findOne({
         where: {
@@ -158,15 +157,13 @@ export class GamesRepository {
           id: existedGame.id
         })
         .execute()
-
       const game = await this.getExtendedGameById(existedGame.id)
 
       if (!game) {
         return null
       }
-
       return game
-    } catch {
+    } catch(e) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.BAD_REQUEST
@@ -216,7 +213,7 @@ export class GamesRepository {
         startGameDate: game.startGameDate,
         finishGameDate: game.finishGameDate
       }
-    } catch {
+    } catch(e) {
       throw new HttpException(
         { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.BAD_REQUEST

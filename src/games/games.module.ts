@@ -18,6 +18,7 @@ import { CheckPalyerInGameUseCase } from './use-cases/check-player-in-game-use-c
 import { GetRandomQuestionsForGameUseCase } from './use-cases/get-random-questions-for-game-use-case';
 import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questions-for-game-use-case';
 import { GamesService } from './games.service';
+import { ProgressService } from '../progresses/progress.service';
 
 const useCases = [
   CheckPalyerInGameUseCase,
@@ -45,6 +46,7 @@ const useCases = [
     HashService,
     ProgressesRepository,
     GamesService,
+    ProgressService,
     ...useCases
   ]
 })
