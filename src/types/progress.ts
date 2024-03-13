@@ -1,3 +1,4 @@
+import { ProgressStatusEnum } from "src/enums/ProgressStatusEnum"
 import { IAnswer } from "./answer"
 
 export interface IProgress {
@@ -5,6 +6,7 @@ export interface IProgress {
   score: number
   userId: string
   answers: IAnswer[]
+  status: ProgressStatusEnum | null
   createdAt: Date
   updatedAt: Date | null
   deletedAt: Date | null

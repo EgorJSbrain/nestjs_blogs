@@ -13,6 +13,7 @@ import {
 import { IProgress } from '../types/progress'
 import { AnswerEntity } from './answer'
 import { UserEntity } from './user'
+import { ProgressStatusEnum } from 'src/enums/ProgressStatusEnum'
 
 @Entity({
   name: 'progresses'
@@ -24,33 +25,36 @@ export class ProgressEntity extends BaseEntity implements IProgress {
   @Column()
   score: number
 
+  @Column({ type: 'enum', enum: ProgressStatusEnum, nullable: true })
+  status: ProgressStatusEnum
+
   @Column({ default: false })
   userId: string
 
-  @ManyToOne(() => UserEntity, user => user.progresses, { eager: true })
+  @ManyToOne(() => UserEntity, (user) => user.progresses, { eager: true })
   user: UserEntity
 
-  @OneToMany(() => AnswerEntity, answer => answer.progress, { eager: true })
+  @OneToMany(() => AnswerEntity, (answer) => answer.progress, { eager: true })
   answers: AnswerEntity[]
 
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
-    name: 'createdAt',
+    name: 'createdAt'
   })
   createdAt: Date
 
   @UpdateDateColumn({
     type: 'timestamp',
     nullable: true,
-    name: 'updatedAt',
+    name: 'updatedAt'
   })
-  updatedAt: Date | null;
+  updatedAt: Date | null
 
   @DeleteDateColumn({
     type: 'timestamp',
     nullable: true,
-    name: 'deletedAt',
+    name: 'deletedAt'
   })
-  deletedAt: Date | null;
+  deletedAt: Date | null
 }

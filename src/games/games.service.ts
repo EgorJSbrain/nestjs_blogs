@@ -12,17 +12,16 @@ export class GamesService {
     private readonly gamesRepository: GamesRepository,
   ) {}
 
-  async checkAnsweredQuestions(gameId: string) {
-    // const questions = await this.gamesRepository.getGameQuestionsByGameId(gameId)
-
-    // return !!questions.every(question => question.answer)
-  }
-
   async finishCurrentGame(gameId: string, manager: EntityManager) {
-    return await manager.update(
-      GameEntity,
-      { id: gameId },
-      { finishGameDate: new Date(), status: GameStatusEnum.finished }
-    )
+     const currentGame = await this.gamesRepository.getById(gameId)
+
+     if (!currentGame) {
+      return null
+     }
+
+     currentGame.finishGameDate = new Date()
+     currentGame.status = GameStatusEnum.finished
+
+     return manager.save(currentGame)
   }
 }
