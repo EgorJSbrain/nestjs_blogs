@@ -245,7 +245,8 @@ export class GamesController {
       const answersOfCurrentPlayer =
         await this.gamesRepository.getAnswersByProgressIdAndUserId(
           currentPlayerProgressId,
-          currentPlayerId
+          currentPlayerId,
+          manager
         )
 
       if (answersOfCurrentPlayer.length >= ANSWERS_MAX_LENGTH) {
@@ -258,7 +259,8 @@ export class GamesController {
       const answersOfAnotherPlayer =
         await this.gamesRepository.getAnswersByProgressIdAndUserId(
           anotherPlayerProgressId,
-          anotherPlayerId
+          anotherPlayerId,
+          manager
         )
 
       const answeredQuestion = await this.gamesRepository.answerToGameQuestion(
@@ -288,11 +290,11 @@ export class GamesController {
         answersOfAnotherPlayer.length >= ANSWERS_MAX_LENGTH &&
         answersOfCurrentPlayer.length >= ANSWERS_MAX_LENGTH - 1
       ) {
-        await this.progressesRepository.increaseScore(
+        await this.gamesService.increasScoreToFirstFinishedGame(
           anotherPlayerProgressId,
+          anotherPlayerId,
           manager
         )
-
         const finishedGame = await this.gamesService.finishCurrentGame(atciveGame.id, manager)
 
         if (finishedGame) {

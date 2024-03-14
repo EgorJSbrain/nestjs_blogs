@@ -72,13 +72,16 @@ export class ProgressesRepository {
     return progress
   }
 
-  async getAllByUserId(userId: string) {
+  async getGamesStatisticByUserId(userId: string) {
       const statistic = await this.progressesRepo
       .createQueryBuilder('progress')
       .select([
-        'COUNT(*) as gamesCount',
-        'SUM(progress.score) as sumScore',
-        'AVG(progress.score) as avgScores'
+        "COUNT(*) as gamesCount",
+        "SUM(progress.score) as sumScore",
+        "AVG(progress.score) as avgScores",
+        "COUNT(CASE WHEN progress.status = 'Win' THEN 1 END) as wins",
+        "COUNT(CASE WHEN progress.status = 'Lose' THEN 1 END) as loses",
+        "COUNT(CASE WHEN progress.status = 'Draw' THEN 1 END) as draws",
       ])
       .where('progress.userId = :userId AND progress.status IS NOT NULL', { userId })
       .groupBy('progress.userId')
@@ -88,7 +91,10 @@ export class ProgressesRepository {
       return {
         gamesCount: 0,
         sumScore: 0,
-        avgScores: 0
+        avgScores: 0,
+        winsCount: 0,
+        lossesCount: 0,
+        drawsCount: 0,
       }
     }
 
@@ -96,6 +102,9 @@ export class ProgressesRepository {
       gamesCount: Number(statistic.gamescount) ?? 0,
       sumScore: Number(statistic.sumscore) ?? 0,
       avgScores: Number(formatNumber(statistic.avgscores)) ?? 0,
+      winsCount: Number(formatNumber(statistic.wins)) ?? 0,
+      lossesCount: Number(formatNumber(statistic.loses)) ?? 0,
+      drawsCount: Number(formatNumber(statistic.draws)) ?? 0,
     }
   }
 }
