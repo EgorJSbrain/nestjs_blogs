@@ -348,8 +348,8 @@ export class GamesRepository {
     return sortQuestions(questions)
   }
 
-  async getAnswersByProgressIdAndUserId(progressId: string, userId: string) {
-    return await this.answersRepo.find({
+  async getAnswersByProgressIdAndUserId(progressId: string, userId: string, manager: EntityManager) {
+    return await manager.find(AnswerEntity, {
       where: {
         progressId,
         userId
@@ -449,13 +449,6 @@ export class GamesRepository {
   }
 
   async getStatisticByUserId(userId: string): Promise<Statistic> {
-    const statistic = await this.progressesRepo.getAllByUserId(userId)
-
-    return {
-      ...statistic,
-      winsCount: 0,
-      lossesCount: 0,
-      drawsCount: 0
-    }
+    return await this.progressesRepo.getGamesStatisticByUserId(userId)
   }
 }

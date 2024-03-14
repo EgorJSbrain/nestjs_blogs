@@ -1,15 +1,16 @@
 import { Injectable } from '@nestjs/common'
 
-import { CreateDeviceDto } from '../dtos/devices/create-device.dto'
 import { GamesRepository } from './games.repository'
 import { EntityManager } from 'typeorm'
-import { GameEntity } from '../entities/game'
 import { GameStatusEnum } from '../enums/gameStatusEnum'
+import { AnswerStatusEnum } from '../constants/answer'
+import { ProgressesRepository } from '../progresses/progresses.repository'
 
 @Injectable()
 export class GamesService {
   constructor(
     private readonly gamesRepository: GamesRepository,
+    private readonly progressesRepository: ProgressesRepository,
   ) {}
 
   async finishCurrentGame(gameId: string, manager: EntityManager) {
@@ -23,5 +24,22 @@ export class GamesService {
      currentGame.status = GameStatusEnum.finished
 
      return manager.save(currentGame)
+  }
+
+  async increasScoreToFirstFinishedGame(anotherPlayerProgressId: string, anotherPlayerId: string, manager: EntityManager) {
+    const answers = await this.gamesRepository.getAnswersByProgressIdAndUserId(
+      anotherPlayerProgressId,
+      anotherPlayerId,
+      manager
+    )
+
+    const allAnswersIncorrect = answers.every(answer => answer.answerStatus === AnswerStatusEnum.incorrect)
+
+    if (!allAnswersIncorrect) {
+      return await this.progressesRepository.increaseScore(
+        anotherPlayerProgressId,
+        manager
+      )
+    }
   }
 }

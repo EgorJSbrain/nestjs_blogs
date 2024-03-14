@@ -12,14 +12,14 @@ export class JWTService {
   generateAcessToken(userId: string): string {
     return this.jwtService.sign(
       { userId },
-      { secret: this.configService.get<string>('ACCESS_SECRET_KEY'), expiresIn: '10m' }
+      { secret: this.configService.get<string>('ACCESS_SECRET_KEY'), expiresIn: '30m' }
     )
   }
 
   generateRefreshToken(userId: string, lastActiveDate: string, deviceId: string): string {
     return this.jwtService.sign(
       { userId, lastActiveDate, deviceId },
-      { secret: this.configService.get<string>('REFRESH_SECRET_KEY'), expiresIn: '20m' }
+      { secret: this.configService.get<string>('REFRESH_SECRET_KEY'), expiresIn: '60m' }
     )
   }
 
