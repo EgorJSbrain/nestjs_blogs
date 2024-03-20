@@ -33,7 +33,9 @@ export class GamesService {
       manager
     )
 
-    const allAnswersIncorrect = answers.every(answer => answer.answerStatus === AnswerStatusEnum.incorrect)
+    const allAnswersIncorrect = answers.every(
+      (answer) => answer.answerStatus === AnswerStatusEnum.incorrect
+    )
 
     if (!allAnswersIncorrect) {
       return await this.progressesRepository.increaseScore(
