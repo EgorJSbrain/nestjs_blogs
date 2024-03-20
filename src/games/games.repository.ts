@@ -402,13 +402,6 @@ export class GamesRepository {
       [sortBy]: sortDirection,
     }
 
-    // if (sortBy !== 'createdAt') {
-    //   order = {
-    //     [sortBy]: sortDirection,
-    //     createdAt: SortDirections.desc
-    //   }
-    // }
-
     const gettingObject = {
       where: [
         {
@@ -446,9 +439,5 @@ export class GamesRepository {
       totalCount: count,
       items: games.map(game => prepareGame(game))
     }
-  }
-
-  async getStatisticByUserId(userId: string): Promise<Statistic> {
-    return await this.progressesRepo.getGamesStatisticByUserId(userId)
   }
 }

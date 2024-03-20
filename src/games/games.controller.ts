@@ -28,6 +28,7 @@ import { Answer } from '../types/answer'
 import { prepareGame } from '../utils/prepareGame'
 import { RequestParams } from '../types/request'
 import { ProgressService } from '../progresses/progress.service'
+import { Statistic } from '../types/game'
 
 @SkipThrottle()
 @Controller(RoutesEnum.pairGameQuiz)
@@ -38,7 +39,7 @@ export class GamesController {
     private readonly progressesRepository: ProgressesRepository,
     private readonly checkPalyerInGameUseCase: CheckPalyerInGameUseCase,
     private readonly gamesService: GamesService,
-    private readonly progressService: ProgressService
+    private readonly progressService: ProgressService,
   ) {}
 
   @Get('pairs/my-current')
@@ -70,8 +71,15 @@ export class GamesController {
   @UseGuards(JWTAuthGuard)
   async getStatisticByUserId(
     @CurrentUserId() currentUserId: string
-  ): Promise<any> {
-    return await this.gamesRepository.getStatisticByUserId(currentUserId)
+  ): Promise<Statistic> {
+    return await this.progressService.getStatisticByUserId(currentUserId)
+  }
+
+  @Get('users/top')
+  async getStatisticTopUsers(
+    @Query() query: RequestParams
+  ) {
+    return await this.progressService.getTopUsersStatistic(query)
   }
 
   @Get('pairs/my')
