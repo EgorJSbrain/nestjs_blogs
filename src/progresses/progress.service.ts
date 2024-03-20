@@ -2,11 +2,14 @@ import { Injectable } from '@nestjs/common'
 import { EntityManager } from 'typeorm'
 
 import { ProgressEntity } from '../entities/progress'
-import { ProgressStatusEnum } from 'src/enums/ProgressStatusEnum'
+import { ProgressStatusEnum } from '../enums/ProgressStatusEnum'
+import { ProgressesRepository } from './progresses.repository'
+import { Statistic } from '../types/game'
+import { RequestParams } from '../types/request'
 
 @Injectable()
 export class ProgressService {
-  constructor() {}
+  constructor(private readonly progressesRepository: ProgressesRepository) {}
 
   async markProgressesByResult(firstProgressId: string, secondProgressId: string, manager: EntityManager) {
     const currentUserProgress = await manager.findOne(ProgressEntity, {
@@ -44,5 +47,13 @@ export class ProgressService {
       manager.save(currentUserProgress)
       return manager.save(anotherUserProgress)
     }
+  }
+
+  async getStatisticByUserId(userId: string): Promise<Statistic> {
+    return await this.progressesRepository.getGamesStatisticByUserId(userId)
+  }
+
+  async getTopUsersStatistic(params: RequestParams) {
+    return await this.progressesRepository.getStatisticOfTopUsers(params)
   }
 }
