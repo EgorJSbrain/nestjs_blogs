@@ -440,4 +440,30 @@ export class GamesRepository {
       items: games.map(game => prepareGame(game))
     }
   }
+
+  async getActiveGames(): Promise<IExtendedGame[] | null> {
+    try {
+      const games = await this.gamesRepo.find({
+        where: {
+          status: GameStatusEnum.active
+        },
+        relations: {
+          questions: true,
+          firstPlayerProgress: true,
+          secondPlayerProgress: true,
+        }
+      })
+
+      if (!games) {
+        return null
+      }
+
+      return games
+    } catch (e) {
+      throw new HttpException(
+        { message: appMessages().errors.somethingIsWrong, field: '' },
+        HttpStatus.BAD_REQUEST
+      )
+    }
+  }
 }

@@ -35,6 +35,7 @@ import { GamesModule } from './games/games.module'
 import { ProgressesModule } from './progresses/progresses.module'
 import { GameQuestionEntity } from './entities/game-question'
 import { GameEntity } from './entities/game'
+import { CronModule } from './cron/cron.module'
 
 @Module({
   imports: [
@@ -96,6 +97,7 @@ import { GameEntity } from './entities/game'
     QuestionsModule,
     GamesModule,
     ProgressesModule,
+    CronModule,
   ],
   controllers: [],
   providers: [
