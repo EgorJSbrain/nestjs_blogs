@@ -44,4 +44,8 @@ export class GamesService {
       )
     }
   }
+
+  async getAciveGames() {
+    return await this.gamesRepository.getActiveGames()
+  }
 }
