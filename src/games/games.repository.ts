@@ -312,31 +312,31 @@ export class GamesRepository {
     }
   }
 
-  async answerToGameQuestion(
-    answer: string,
-    questions: GameQuestionEntity[],
-    progressId: string,
-    userId: string,
-    manager: EntityManager,
-    answers: AnswerEntity[]
-  ): Promise<any> {
-    let answerForQuestion: AnswerEntity | null = null
+  // async answerToGameQuestion(
+  //   answer: string,
+  //   questions: GameQuestionEntity[],
+  //   progressId: string,
+  //   userId: string,
+  //   manager: EntityManager,
+  //   answers: AnswerEntity[]
+  // ): Promise<any> {
+  //   let answerForQuestion: AnswerEntity | null = null
 
-    for (let i = 0; i <= questions.length; i++) {
-      const question = questions[i]
-      const isQuestionAnswered = answers.find(answer => answer.questionId === question.id)
+  //   for (let i = 0; i <= questions.length; i++) {
+  //     const question = questions[i]
+  //     const isQuestionAnswered = answers.find(answer => answer.questionId === question.id)
 
-      if (!isQuestionAnswered) {
-        answerForQuestion = await this.answerToQuestion(answer, question, progressId, userId, manager)
+  //     if (!isQuestionAnswered) {
+  //       answerForQuestion = await this.answerToQuestion(answer, question, progressId, userId, manager)
 
-        break;
-      } else {
-        continue;
-      }
-    }
+  //       break;
+  //     } else {
+  //       continue;
+  //     }
+  //   }
 
-    return answerForQuestion
-  }
+  //   return answerForQuestion
+  // }
 
   async getGameQuestionsByGameId(gameId: string) {
     const questions = await this.gameQuestionsRepo.find({
@@ -357,30 +357,30 @@ export class GamesRepository {
     })
   }
 
-  private async answerToQuestion(
-    answer: string,
-    question: GameQuestionEntity,
-    progressId: string,
-    userId: string,
-    manager: EntityManager
-  ): Promise<AnswerEntity> {
-    const isCorrectAnswer = (
-      JSON.parse(question.question.correctAnswers) as string[]
-    ).includes(answer)
+  // private async answerToQuestion(
+  //   answer: string,
+  //   question: GameQuestionEntity,
+  //   progressId: string,
+  //   userId: string,
+  //   manager: EntityManager
+  // ): Promise<AnswerEntity> {
+  //   const isCorrectAnswer = (
+  //     JSON.parse(question.question.correctAnswers) as string[]
+  //   ).includes(answer)
 
-    const answerStatus = isCorrectAnswer
-      ? AnswerStatusEnum.correct
-      : AnswerStatusEnum.incorrect
+  //   const answerStatus = isCorrectAnswer
+  //     ? AnswerStatusEnum.correct
+  //     : AnswerStatusEnum.incorrect
 
-    const newAnswer = manager.create(AnswerEntity)
+  //   const newAnswer = manager.create(AnswerEntity)
 
-    newAnswer.answerStatus = answerStatus;
-    newAnswer.progressId = progressId;
-    newAnswer.userId = userId;
-    newAnswer.questionId = question.id;
+  //   newAnswer.answerStatus = answerStatus;
+  //   newAnswer.progressId = progressId;
+  //   newAnswer.userId = userId;
+  //   newAnswer.questionId = question.id;
 
-    return await manager.save(newAnswer)
-  }
+  //   return await manager.save(newAnswer)
+  // }
 
   async getAllGamesByUserId({
     userId,

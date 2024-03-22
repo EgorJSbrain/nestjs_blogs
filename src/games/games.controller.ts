@@ -271,7 +271,7 @@ export class GamesController {
           manager
         )
 
-      const answeredQuestion = await this.gamesRepository.answerToGameQuestion(
+      const answeredQuestion = await this.gamesService.answerToGameQuestion(
         data.answer,
         questions,
         currentPlayerProgressId ?? '',
