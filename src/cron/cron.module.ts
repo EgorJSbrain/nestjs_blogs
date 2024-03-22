@@ -14,6 +14,7 @@ import { GetRandomQuestionsForGameUseCase } from 'src/games/use-cases/get-random
 import { SetRandomQuestionsForGameUseCase } from 'src/games/use-cases/set-random-questions-for-game-use-case';
 import { ProgressEntity } from 'src/entities/progress';
 import { QuestionEntity } from 'src/entities/question';
+import { ProgressService } from 'src/progresses/progress.service';
 
 @Module({
   imports: [
@@ -43,7 +44,8 @@ import { QuestionEntity } from 'src/entities/question';
     GamesRepository,
     ProgressesRepository,
     GetRandomQuestionsForGameUseCase,
-    SetRandomQuestionsForGameUseCase
+    SetRandomQuestionsForGameUseCase,
+    ProgressService,
   ],
   exports: [CronService]
 })
