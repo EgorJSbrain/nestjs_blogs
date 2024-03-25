@@ -1,5 +1,5 @@
-import { ProgressStatusEnum } from "src/enums/ProgressStatusEnum"
-import { IAnswer } from "./answer"
+import { ProgressStatusEnum } from '../enums/ProgressStatusEnum'
+import { IAnswer } from './answer'
 
 export interface IProgress {
   id: string
