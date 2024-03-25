@@ -29,9 +29,9 @@ export class GeneralSqlRepository {
     await this.dataSource.query(queryComments)
     await this.dataSource.query(queryPostsLikes)
     await this.dataSource.query(queryDevices)
+    await this.dataSource.query(queryBlogs)
     await this.dataSource.query(queryUsers)
     await this.dataSource.query(queryPosts)
-    await this.dataSource.query(queryBlogs)
     await this.dataSource.query(queryQuestions)
     return true
   }

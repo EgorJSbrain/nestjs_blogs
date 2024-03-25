@@ -13,7 +13,7 @@ import {
 import { IProgress } from '../types/progress'
 import { AnswerEntity } from './answer'
 import { UserEntity } from './user'
-import { ProgressStatusEnum } from 'src/enums/ProgressStatusEnum'
+import { ProgressStatusEnum } from '../enums/ProgressStatusEnum'
 
 @Entity({
   name: 'progresses'
