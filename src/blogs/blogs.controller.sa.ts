@@ -30,6 +30,7 @@ import { RoutesEnum } from '../constants/global'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
 import { BlogsRepository } from './blogs.repository'
 import { PostsRepository } from '../posts/posts.repository'
+import { UsersRepository } from '../users/users.repository'
 
 @SkipThrottle()
 @Controller(RoutesEnum.saBlogs)
@@ -37,6 +38,7 @@ export class BlogsSAController {
   constructor(
     private blogsRepository: BlogsRepository,
     private postsRepository: PostsRepository,
+    private usersRepository: UsersRepository,
     private JWTService: JWTService
   ) {}
 
@@ -45,7 +47,7 @@ export class BlogsSAController {
   async getAll(
     @Query() query: BlogsRequestParams
   ): Promise<ResponseBody<IBlog> | []> {
-    const blogs = await this.blogsRepository.getAll(query)
+    const blogs = await this.blogsRepository.getAllBySA(query)
 
     return blogs
   }
@@ -269,6 +271,53 @@ export class BlogsSAController {
     }
 
     await this.postsRepository.deletePost(params.postId)
+  }
+
+  @Put(':id/bind-with-user/:userId')
+  @UseGuards(BasicAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async bindBlogToUser(
+    @Param() params: { id: string, userId: string },
+  ): Promise<any> {
+    const { id, userId } = params
+    console.log("🚀 ~ BlogsSAController ~ params:", params)
+
+    if (!id) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blogId).errors.isRequiredField },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const blog = await this.blogsRepository.getById(id)
+
+    if (!blog) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const user = await this.usersRepository.getById(userId)
+
+    if (!user) {
+      throw new HttpException(
+        { message: appMessages(appMessages().user).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const updatedBlog = await this.blogsRepository.bindBlog(
+      id,
+      userId,
+    )
+
+    if (!updatedBlog) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
   }
 }
 
