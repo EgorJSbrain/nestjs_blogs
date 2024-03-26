@@ -16,6 +16,7 @@ export enum RoutesEnum {
   saQuizQuestions = 'sa/quiz/questions',
   pairGameQuiz = 'pair-game-quiz',
   blogs = 'blogs',
+  bloggerBlogs = 'blogger/blogs',
   posts = 'posts',
   saUsers = 'sa/users',
   users = 'users',
