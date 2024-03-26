@@ -250,10 +250,10 @@ export class PostsController {
   @HttpCode(HttpStatus.CREATED)
   async createCommentByPost(
     @Param() params: { postId: string },
-    @CurrentUserId() currentUseruserId: string,
+    @CurrentUserId() userId: string,
     @Body() data: CommentDto
   ): Promise<any> {
-    const existedUser = await this.usersRepository.getById(currentUseruserId)
+    const existedUser = await this.usersRepository.getById(userId)
 
     if (!existedUser) {
       throw new HttpException(

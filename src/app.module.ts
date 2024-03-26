@@ -19,6 +19,8 @@ import { JWTModule } from './jwt/jwt.module'
 import { LikesModule } from './likes/likes.module'
 import { HashModule } from './hash/hash.module'
 import { DeviceModule } from './devices/devices.module'
+import { BloggerBlogsModule } from './blogger-blogs/blogger-blogs.module'
+import { CronModule } from './cron/cron.module'
 
 import { UserEntity } from './entities/user'
 import { BlogEntity } from './entities/blog'
@@ -35,7 +37,6 @@ import { GamesModule } from './games/games.module'
 import { ProgressesModule } from './progresses/progresses.module'
 import { GameQuestionEntity } from './entities/game-question'
 import { GameEntity } from './entities/game'
-import { CronModule } from './cron/cron.module'
 
 @Module({
   imports: [
@@ -98,6 +99,7 @@ import { CronModule } from './cron/cron.module'
     GamesModule,
     ProgressesModule,
     CronModule,
+    BloggerBlogsModule,
   ],
   controllers: [],
   providers: [

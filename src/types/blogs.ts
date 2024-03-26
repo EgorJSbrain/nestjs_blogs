@@ -27,3 +27,10 @@ export interface IBlogForSA {
   createdAt: string
   blogOwnerInfo: BlogOwnerInfo
 }
+
+export type CreatingBlogData = {
+  name: string
+  description: string
+  websiteUrl: string
+  ownerId?: string
+}

@@ -210,8 +210,8 @@ export class AuthController {
   @Get('me')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JWTAuthGuard)
-  async getMe(@CurrentUserId() currentUseruserId: string) {
-    const user = await this.authRepository.getMe(currentUseruserId)
+  async getMe(@CurrentUserId() userId: string) {
+    const user = await this.authRepository.getMe(userId)
 
     if (!user) {
       throw new HttpException(

@@ -1,15 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto';
 import { ResponseBody } from '../types/request';
-import { BlogsRequestParams, IBlogForSA } from '../types/blogs';
+import { BlogsRequestParams, CreatingBlogData, IBlogForSA } from '../types/blogs';
 import { IBlog } from '../types/blogs';
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto';
 import { SortDirections, SortType } from '../constants/global';
 import { BlogEntity } from '../entities/blog';
 import { UserEntity } from '../entities/user';
+import { appMessages } from '../constants/messages';
 
 @Injectable()
 export class BlogsRepository {
@@ -21,7 +22,8 @@ export class BlogsRepository {
   ) {}
 
   async getAll(
-    params: BlogsRequestParams
+    params: BlogsRequestParams,
+    ownerId?: string
   ): Promise<ResponseBody<IBlog> | []> {
     try {
       const {
@@ -33,6 +35,7 @@ export class BlogsRepository {
       } = params
 
       let whereFilter = ''
+      let whereParams: Record<string, string> = {}
       const pageSizeNumber = Number(pageSize)
       const pageNumberNum = Number(pageNumber)
       const skip = (pageNumberNum - 1) * pageSizeNumber
@@ -41,20 +44,17 @@ export class BlogsRepository {
 
       if (searchNameTerm) {
         whereFilter = 'blog.name ILIKE :name'
+        whereParams.name = `%${searchNameTerm}%`
+      }
+
+      if (ownerId) {
+        whereFilter = `${whereFilter ? whereFilter + ' AND ' : ''} blog.ownerId = :ownerId`,
+        whereParams.ownerId = ownerId
       }
 
       const searchObject = query
-        .where(whereFilter, {
-          name: searchNameTerm ? `%${searchNameTerm}%` : undefined
-        })
-        .select([
-          'blog.id',
-          'blog.name',
-          'blog.description',
-          'blog.websiteUrl',
-          'blog.createdAt',
-          'blog.isMembership'
-        ])
+        .where(whereFilter, whereParams)
+        .select('blog.*')
         .addOrderBy(
           `blog.${sortBy}`,
           sortDirection?.toLocaleUpperCase() as SortType
@@ -62,19 +62,31 @@ export class BlogsRepository {
         .skip(skip)
         .take(pageSizeNumber)
 
-      const blogs = await searchObject.getMany()
+      const blogs = await searchObject.getRawMany<BlogEntity>()
       const count = await searchObject.getCount()
       const pagesCount = Math.ceil(count / pageSizeNumber)
+
+      const preparedBlogs = blogs.map(blog => ({
+        id: blog.id,
+        name: blog.name,
+        description: blog.description,
+        websiteUrl: blog.websiteUrl,
+        isMembership: blog.isMembership,
+        createdAt: blog.createdAt,
+      }))
 
       return {
         pagesCount,
         page: pageNumberNum,
         pageSize: pageSizeNumber,
         totalCount: count,
-        items: blogs
+        items: preparedBlogs
       }
-    } catch {
-      return []
+    } catch(e) {
+      throw new HttpException(
+        { message: e.message || appMessages().errors.somethingIsWrong },
+        HttpStatus.BAD_REQUEST
+      )
     }
   }
 
@@ -120,7 +132,6 @@ export class BlogsRepository {
         .take(pageSizeNumber)
 
       const blogs = await searchObject.getRawMany()
-      console.log("🚀 ~ BlogsRepository ~ blogs:", blogs)
       const count = await searchObject.getCount()
       const pagesCount = Math.ceil(count / pageSizeNumber)
 
@@ -170,17 +181,37 @@ export class BlogsRepository {
     return blog
   }
 
-  async createBlog(data: CreateBlogDto): Promise<BlogEntity | null> {
+  async getByIdAndOwnerId(id: string, ownerId: string): Promise<BlogEntity | null> {
+    const blog = this.blogsRepo
+      .createQueryBuilder('blog')
+      .select('blog.id')
+      .where('blog.id = :id AND blog.ownerId = :ownerId', { id, ownerId })
+      .getOne()
+
+    if (!blog) {
+      return null
+    }
+
+    return blog
+  }
+
+  async createBlog(data: CreateBlogDto, ownerId?: string): Promise<BlogEntity | null> {
     try {
       const query = this.blogsRepo.createQueryBuilder('blog')
 
+      const valuesForCreating: CreatingBlogData = {
+        name: data.name,
+        description: data.description,
+        websiteUrl: data.websiteUrl,
+      }
+
+      if (ownerId) {
+        valuesForCreating.ownerId = ownerId
+      }
+
       const newBlog = await query
         .insert()
-        .values({
-          name: data.name,
-          description: data.description,
-          websiteUrl: data.websiteUrl,
-        })
+        .values(valuesForCreating)
         .execute()
 
       const blog = await this.getById(newBlog.raw[0].id)
@@ -195,14 +226,23 @@ export class BlogsRepository {
     }
   }
 
-  async updateBlog(blogId: string, data: UpdateBlogDto): Promise<boolean> {
+  async updateBlog(blogId: string, data: UpdateBlogDto, ownerId?: string): Promise<boolean> {
+    const whereParams: Record<string, string> = {
+      id: blogId
+    }
+
+    let whereStr = 'id = :id'
+
+    if (ownerId) {
+      whereStr = 'id = :id AND ownerId = :ownerId'
+      whereParams.ownerId = ownerId
+    }
+
     const updatedBlog = await this.blogsRepo
         .createQueryBuilder('blog')
         .update()
         .set({ name: data.name, description: data.description, websiteUrl: data.websiteUrl })
-        .where('id = :id', {
-          id: blogId
-        })
+        .where(whereStr, whereParams)
         .execute()
 
       if (!updatedBlog.affected) {
@@ -235,6 +275,20 @@ export class BlogsRepository {
         .createQueryBuilder('blog')
         .delete()
         .where('id = :id', { id })
+        .execute()
+
+      return !!blog.affected
+    } catch (e) {
+      return false
+    }
+  }
+
+  async deleteBlogByOwner(id: string, ownerId: string) {
+    try {
+      const blog = await this.blogsRepo
+        .createQueryBuilder('blog')
+        .delete()
+        .where('id = :id AND ownerId = :ownerId', { id, ownerId })
         .execute()
 
       return !!blog.affected
