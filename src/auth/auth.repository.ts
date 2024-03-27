@@ -32,7 +32,17 @@ export class AuthRepository {
       return null
     }
 
-    return user
+    return {
+      id: user!.id,
+      login: user!.login,
+      email: user!.email,
+      createdAt: user!.createdAt,
+      banInfo: {
+        isBanned: user.isBanned,
+        banDate: user.banDate,
+        banReason: user.banReason,
+      }
+    }
   }
 
   async register(data: CreateUserDto): Promise<IExtendedUser | null> {

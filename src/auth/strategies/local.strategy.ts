@@ -1,6 +1,7 @@
 import { Strategy } from 'passport-local';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+
 import { AuthRepository } from '../auth.repository';
 
 @Injectable()
@@ -15,6 +16,10 @@ export class LocalSqlStrategy extends PassportStrategy(Strategy) {
     const user = await this.authRepository.verifyUser({ loginOrEmail, password })
 
     if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    if (user && user.banInfo?.isBanned) {
       throw new UnauthorizedException();
     }
 

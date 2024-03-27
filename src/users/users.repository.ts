@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { EntityManager, Repository, UpdateResult } from 'typeorm'
 import { v4 } from 'uuid'
 
 import { SortDirections, SortType } from '../constants/global'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { HashService } from '../hash/hash.service'
-import { IExtendedUser, UsersRequestParams } from '../types/users'
+import { IExtendedUser, UserBanData, UsersRequestParams } from '../types/users'
 import { UserEntity } from '../entities/user'
+import { UserBanStatusEnum } from '../enums/UserBanStatusEnum'
 
 @Injectable()
 export class UsersRepository {
@@ -25,7 +26,8 @@ export class UsersRepository {
       pageNumber = 1,
       pageSize = 10,
       searchLoginTerm = '',
-      searchEmailTerm = ''
+      searchEmailTerm = '',
+      banStatus = UserBanStatusEnum.all
     } = params
 
     const pageSizeNumber = Number(pageSize)
@@ -34,16 +36,20 @@ export class UsersRepository {
 
     let whereFilter = ''
 
-    if (searchEmailTerm) {
-      whereFilter = 'user.email ILIKE :email'
+    if (banStatus !== UserBanStatusEnum.all) {
+      whereFilter = 'user.isBanned = :isBanned'
     }
 
-    if (searchLoginTerm) {
-      whereFilter = 'user.login ILIKE :login'
+    if (searchEmailTerm && !searchLoginTerm) {
+      whereFilter = `${whereFilter ? whereFilter + ' AND ' : ''} user.email ILIKE :email`
+    }
+
+    if (searchLoginTerm && !searchEmailTerm) {
+      whereFilter = `${whereFilter ? whereFilter + ' AND ' : ''} user.login ILIKE :login`
     }
 
     if (searchLoginTerm && searchEmailTerm) {
-      whereFilter = 'user.email ILIKE :email OR user.login ILIKE :login'
+      whereFilter = `${whereFilter ? whereFilter + ' AND ' : ''} user.email ILIKE :email OR user.login ILIKE :login`
     }
 
     const query = this.usersRepo.createQueryBuilder('user')
@@ -55,9 +61,10 @@ export class UsersRepository {
           : undefined,
         login: searchLoginTerm
           ? `%${searchLoginTerm.toLocaleLowerCase()}%`
-          : undefined
+          : undefined,
+        isBanned: banStatus === UserBanStatusEnum.all ? undefined : banStatus === UserBanStatusEnum.banned ? true : false
       })
-      .select(['user.id', 'user.login', 'user.email', 'user.createdAt'])
+      .select()
       .addOrderBy(
         `user.${sortBy}`,
         sortDirection?.toLocaleUpperCase() as SortType
@@ -67,15 +74,26 @@ export class UsersRepository {
 
     const users = await searchObject.take(pageSizeNumber).getMany()
     const count = await searchObject.getCount()
-
     const pagesCount = Math.ceil(count / pageSizeNumber)
+
+    const preparedUsers = users.map(user => ({
+      id: user.id,
+      login: user.login,
+      email: user.email,
+      createdAt: user.createdAt,
+      banInfo: {
+        isBanned: user.isBanned,
+        banDate: user.banDate,
+        banReason: user.banReason,
+      },
+    }))
 
     return {
       pagesCount,
       page: pageNumberNum || 1,
       pageSize: pageSizeNumber,
       totalCount: count,
-      items: users
+      items: preparedUsers
     }
   }
 
@@ -154,13 +172,7 @@ export class UsersRepository {
       .execute()
 
     const user = await query
-      .select([
-        'user.id',
-        'user.login',
-        'user.email',
-        'user.createdAt',
-        'user.confirmationCode'
-      ])
+      .select('user')
       .where('user.id = :id', { id: newUser.raw[0].id })
       .getOne()
 
@@ -211,6 +223,28 @@ export class UsersRepository {
     }
 
     return user
+  }
+
+  async banUnbanUser(
+    userId: string,
+    data: UserBanData,
+    manager: EntityManager
+  ): Promise<UpdateResult | null> {
+    try {
+      const { isBanned, banReason } = data
+      const banDate = isBanned ? new Date().toISOString() : null
+      const banReasonText = isBanned && banReason ? banReason : null
+
+      return await manager.update<UserEntity>(
+        UserEntity,
+        {
+          id: userId
+        },
+        { banReason: banReasonText, isBanned, banDate }
+      )
+    } catch (e) {
+      throw new Error(e.message)
+    }
   }
 
   async setNewConfirmationCodeOfUser(
