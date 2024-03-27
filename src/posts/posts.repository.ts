@@ -153,7 +153,7 @@ export class PostsRepository {
     }
   }
 
-  async getById(id: string, userId?: string): Promise<IExtendedPost | null> {
+  async getById(id: string): Promise<IExtendedPost | null> {
     const query = this.postsRepo.createQueryBuilder('post')
 
     const post = await query
@@ -196,37 +196,43 @@ export class PostsRepository {
       }
 
       const post = await this.dataSource
-      .createQueryBuilder()
-      .select('post.*')
-      .where('post.id = :id', { id })
-      .addSelect((subQuery) => {
-        return subQuery
-          .select('blog.name', 'blogname')
-          .from(BlogEntity, 'blog')
-          .where('post.blogId = blog.id')
-      }, 'blogname')
-      .from(PostEntity, 'post')
-      .addSelect((subQuery) => {
-        return subQuery
-          .select('count(*)', 'likesCount')
-          .from(PostLikeEntity, 'l')
-          .where("l.sourceId = post.id AND l.status = 'Like'")
-      }, 'likesCount')
-      .addSelect((subQuery) => {
-        return subQuery
-          .select('count(*)', 'dislikesCount')
-          .from(PostLikeEntity, 'l')
-          .where("l.sourceId = post.id AND l.status = 'Dislike'")
-      }, 'dislikesCount')
-      .addSelect((subQuery) => {
-        return subQuery
-          .select('l.status', 'myStatus')
-          .from(PostLikeEntity, 'l')
-          .where('l.sourceId = post.id AND l.authorId = :userId', {
-            userId
-          })
-      }, 'myStatus')
-      .getRawOne()
+        .createQueryBuilder()
+        .select('post.*')
+        .where('post.id = :id', { id })
+        // .leftJoinAndSelect('post.user', 'user')
+        // .andWhere('post.authorId = user.id AND user.isBanned = NOT(true)')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('blog.name', 'blogname')
+            .from(BlogEntity, 'blog')
+            .where('post.blogId = blog.id')
+        }, 'blogname')
+        .from(PostEntity, 'post')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('count(*)', 'likesCount')
+            .from(PostLikeEntity, 'l')
+            .leftJoin('l.user', 'user')
+            .where("l.sourceId = post.id AND l.status = 'Like'")
+            .andWhere('user.isBanned = NOT(true)')
+        }, 'likesCount')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('count(*)', 'dislikesCount')
+            .from(PostLikeEntity, 'l')
+            .leftJoin('l.user', 'user')
+            .where("l.sourceId = post.id AND l.status = 'Dislike'")
+            .andWhere('user.isBanned = NOT(true)')
+        }, 'dislikesCount')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('l.status', 'myStatus')
+            .from(PostLikeEntity, 'l')
+            .where('l.sourceId = post.id AND l.authorId = :userId', {
+              userId
+            })
+        }, 'myStatus')
+        .getRawOne()
 
     const likeQuery = this.postLikesRepo.createQueryBuilder(
       LikeSourceTypeEnum.posts
@@ -259,7 +265,7 @@ export class PostsRepository {
       }
     }
     } catch(e) {
-      throw new Error('-1-')
+      throw new Error(e.message)
     }
   }
 

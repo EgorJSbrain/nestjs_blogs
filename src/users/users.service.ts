@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common'
+import { EntityManager } from 'typeorm'
 
 import { CreateUserDto } from '../dtos/users/create-user.dto'
-import { UsersRequestParams } from '../types/users'
+import { UserBanData, UsersRequestParams } from '../types/users'
 import { UsersRepository } from './users.repository'
+import { DevicesRepository } from '../devices/devices.repository'
 
 @Injectable()
 export class UsersService {
   constructor(
     private usersRepository: UsersRepository,
+    private devicesRepository: DevicesRepository,
   ) {}
 
   async getAll(params: UsersRequestParams) {
@@ -49,5 +52,11 @@ export class UsersService {
 
   async deleteById(id: string) {
     return await this.usersRepository.deleteById(id)
+  }
+
+  async banUnbanUser(userId: string, data: UserBanData, manager: EntityManager) {
+    await this.usersRepository.banUnbanUser(userId, data, manager)
+
+    await this.devicesRepository.deleteDevicesbyUserIdForSA(userId, manager)
   }
 }

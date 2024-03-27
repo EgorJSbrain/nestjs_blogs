@@ -31,19 +31,24 @@ export class LikesRepository {
       const querySearch = query
         .createQueryBuilder()
         .select('likes.*')
-        .where("likes.sourceId = :sourceId AND likes.status = 'Like'", { sourceId })
+        .from(entity, 'likes')
+        .where("likes.sourceId = :sourceId AND likes.status = 'Like'", {
+          sourceId
+        })
+        .leftJoinAndSelect('likes.user', 'user')
+        .andWhere('user.isBanned = NOT(true)')
         .addSelect((subQuery) => {
           return subQuery
             .select('u.login', 'login')
             .from(UserEntity, 'u')
             .where('likes.authorId = u.id')
         }, 'login')
-        .from(entity, 'likes')
-      .addOrderBy('likes.createdAt', 'DESC')
-      .skip(0)
-      .take(limit)
+        .addOrderBy('likes.createdAt', 'DESC')
+        .skip(0)
+        .take(limit)
 
       const newLikes = await querySearch.getRawMany()
+
       const sortedNewsetLikes = newLikes.sort((a, b) => {
         if (Number(new Date(a.createdAt)) > Number(new Date(b.createdAt)))
           return -1

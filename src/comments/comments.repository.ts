@@ -141,21 +141,27 @@ export class CommentsRepository {
           .where('comment.authorId = user.id')
       }, 'userLogin')
       .from(CommentEntity, 'comment')
+      .leftJoinAndSelect('comment.user', 'user')
+      .andWhere('comment.authorId = user.id AND user.isBanned = NOT(true)')
       .addSelect((subQuery) => {
         return subQuery
           .select('count(*)', 'likesCount')
           .from(CommentLikeEntity, 'l')
+          .leftJoin('l.user', 'user')
           .where("l.sourceId = comment.id AND l.status = 'Like'", {
             userId: userId
           })
+          .andWhere('user.isBanned = NOT(true)')
       }, 'likesCount')
       .addSelect((subQuery) => {
         return subQuery
           .select('count(*)', 'dislikesCount')
           .from(CommentLikeEntity, 'l')
+          .leftJoin('l.user', 'user')
           .where("l.sourceId = comment.id AND l.status = 'Dislike'", {
             userId: userId
           })
+          .andWhere('user.isBanned = NOT(true)')
       }, 'dislikesCount')
       .addSelect((subQuery) => {
         return subQuery
