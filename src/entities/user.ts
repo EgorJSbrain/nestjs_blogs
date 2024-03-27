@@ -26,6 +26,15 @@ export class UserEntity extends BaseEntity implements IExtendedUser {
   @Column()
   email: string
 
+  @Column({ length: STRING_MAX_LENGTH, nullable: true, type: 'character varying' })
+  banReason: string | null
+
+  @Column({ nullable: true })
+  isBanned: boolean
+
+  @Column({ nullable: true, type: 'timestamp' })
+  banDate: string | null
+
   @Column()
   confirmationCode: string
 

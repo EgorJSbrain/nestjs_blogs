@@ -32,6 +32,7 @@ import { IExtendedComment } from '../types/comments'
 import { PostsRepository } from './posts.repository'
 import { UsersRepository } from '../users/users.repository'
 import { CommentsRepository } from '../comments/comments.repository'
+import { BlogsRepository } from '../blogs/blogs.repository'
 
 @SkipThrottle()
 @Controller(RoutesEnum.posts)
@@ -41,6 +42,7 @@ export class PostsController {
     private usersRepository: UsersRepository,
     private JWTService: JWTService,
     private CommentsRepository: CommentsRepository,
+    private blogssRepository: BlogsRepository,
   ) {}
 
   @Get()
@@ -136,7 +138,7 @@ export class PostsController {
       )
     }
 
-    const blog: any = {}
+    const blog = await this.blogssRepository.getById(data.blogId)
 
     if (!blog) {
       throw new HttpException(
@@ -147,8 +149,7 @@ export class PostsController {
 
     const creatingData = {
       ...data,
-      blogId: blog.id,
-      blogName: blog.name
+      blogId: blog.id
     }
 
     return this.postsRepository.createPost(creatingData)

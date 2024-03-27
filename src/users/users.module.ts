@@ -7,13 +7,15 @@ import { UsersSAController } from './users.controller.sa';
 import { UsersService } from './users.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../entities/user';
+import { DevicesRepository } from '../devices/devices.repository';
+import { DeviceEntity } from '../entities/devices';
 
 const adapters = [BasicAuthStrategy]
-const repositories = [UsersRepository, HashService]
+const repositories = [UsersRepository, HashService, DevicesRepository]
 const useCases = []
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity])],
+  imports: [TypeOrmModule.forFeature([UserEntity, DeviceEntity])],
   controllers: [UsersSAController],
   providers: [UsersService, ...repositories, ...adapters, ...useCases]
 })

@@ -1,4 +1,4 @@
-import { DataSource, Repository } from 'typeorm'
+import { DataSource, DeleteResult, EntityManager, Repository } from 'typeorm'
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
 import add from 'date-fns/add'
@@ -15,11 +15,18 @@ export class DevicesRepository {
     private readonly devicesRepo: Repository<DeviceEntity>
   ) {}
 
-  async getAllDevicesByUserId(userId: string | null): Promise<DeviceEntity[] | null> {
+  async getAllDevicesByUserId(
+    userId: string | null
+  ): Promise<DeviceEntity[] | null> {
     try {
       const devices = await this.devicesRepo
         .createQueryBuilder('device')
-        .select(["device.deviceId", "device.ip", "device.title", "device.lastActiveDate"])
+        .select([
+          'device.deviceId',
+          'device.ip',
+          'device.title',
+          'device.lastActiveDate'
+        ])
         .where('device.userId = :userId', { userId })
         .getMany()
 
@@ -28,8 +35,8 @@ export class DevicesRepository {
       }
 
       return devices
-    } catch(e) {
-      return []
+    } catch (e) {
+      throw new Error(e.message)
     }
   }
 
@@ -45,8 +52,8 @@ export class DevicesRepository {
       }
 
       return device
-    } catch {
-      return null
+    } catch(e) {
+      throw new Error(e.message)
     }
   }
 
@@ -62,8 +69,8 @@ export class DevicesRepository {
       }
 
       return device
-    } catch(e) {
-      return null
+    } catch (e) {
+      throw new Error(e.message)
     }
   }
 
@@ -102,8 +109,8 @@ export class DevicesRepository {
         ip: createdDevice.ip,
         expiredDate: createdDevice.expiredDate
       }
-    } catch {
-      return null
+    } catch(e) {
+      throw new Error(e.message)
     }
   }
 
@@ -138,8 +145,8 @@ export class DevicesRepository {
       }
 
       return device
-    } catch {
-      return null
+    } catch(e) {
+      throw new Error(e.message)
     }
   }
 
@@ -158,9 +165,16 @@ export class DevicesRepository {
         .execute()
 
       return true
-    } catch {
-      return false
+    } catch(e) {
+      throw new Error(e.message)
     }
+  }
+
+  async deleteDevicesbyUserIdForSA(
+    userId: string,
+    manager: EntityManager
+  ): Promise<DeleteResult> {
+    return manager.delete(DeviceEntity, { userId })
   }
 
   async deleteDevice(deviceId: string): Promise<boolean> {
@@ -172,8 +186,8 @@ export class DevicesRepository {
         .execute()
 
       return true
-    } catch(e) {
-      return false
+    } catch (e) {
+      throw new Error(e.message)
     }
   }
 }
