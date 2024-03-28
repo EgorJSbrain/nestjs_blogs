@@ -9,12 +9,14 @@ import { HashService } from '../hash/hash.service';
 import { JWTService } from '../jwt/jwt.service';
 import { ProgressEntity } from '../entities/progress';
 import { ProgressService } from './progress.service';
+import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       UserEntity,
       ProgressEntity,
+      BanUsersBlogsEntity
     ])
   ],
   providers: [

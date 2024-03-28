@@ -37,6 +37,7 @@ import { GamesModule } from './games/games.module'
 import { ProgressesModule } from './progresses/progresses.module'
 import { GameQuestionEntity } from './entities/game-question'
 import { GameEntity } from './entities/game'
+import { BanUsersBlogsEntity } from './entities/ban-users-blogs'
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { GameEntity } from './entities/game'
           AnswerEntity,
           GameEntity,
           GameQuestionEntity,
+          BanUsersBlogsEntity,
         ],
         autoLoadEntities: true,
         synchronize: false
