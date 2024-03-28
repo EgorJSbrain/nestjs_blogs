@@ -16,6 +16,7 @@ import { PostsRepository } from '../posts/posts.repository';
 import { LikesRepository } from '../likes/likes.repository';
 import { UsersRepository } from '../users/users.repository';
 import { HashService } from '../hash/hash.service';
+import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { HashService } from '../hash/hash.service';
       PostEntity,
       CommentLikeEntity,
       PostLikeEntity,
-      UserEntity
+      UserEntity,
+      BanUsersBlogsEntity
     ]),
     LikesModule
   ],

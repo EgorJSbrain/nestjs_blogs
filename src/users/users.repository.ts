@@ -9,12 +9,16 @@ import { HashService } from '../hash/hash.service'
 import { IExtendedUser, UserBanData, UsersRequestParams } from '../types/users'
 import { UserEntity } from '../entities/user'
 import { UserBanStatusEnum } from '../enums/UserBanStatusEnum'
+import { BanUsersBlogsEntity } from '../entities/ban-users-blogs'
 
 @Injectable()
 export class UsersRepository {
   constructor(
     @InjectRepository(UserEntity)
     private readonly usersRepo: Repository<UserEntity>,
+
+    @InjectRepository(BanUsersBlogsEntity)
+    private readonly banUserBlogRepo: Repository<BanUsersBlogsEntity>,
 
     private hashService: HashService
   ) {}
@@ -242,6 +246,71 @@ export class UsersRepository {
         },
         { banReason: banReasonText, isBanned, banDate }
       )
+    } catch (e) {
+      throw new Error(e.message)
+    }
+  }
+
+  async updateBanUserForBlog(
+    userId: string,
+    blogId: string,
+    data: UserBanData,
+    manager: EntityManager
+  ): Promise<UpdateResult | null> {
+    try {
+      const { isBanned, banReason } = data
+      const banReasonText = isBanned && banReason ? banReason : null
+
+      return await manager.update(
+        BanUsersBlogsEntity,
+        {
+          userId,
+          blogId,
+        },
+        { banReason: banReasonText, isBanned }
+      )
+    } catch (e) {
+      throw new Error(e.message)
+    }
+  }
+
+  async createBanUserForBlog(
+    userId: string,
+    blogId: string,
+    data: UserBanData,
+    manager: EntityManager
+  ): Promise<BanUsersBlogsEntity | null> {
+    try {
+      const bannedUser = BanUsersBlogsEntity.create()
+
+      bannedUser.banReason = data.banReason
+      bannedUser.userId = userId
+      bannedUser.blogId = blogId
+      bannedUser.isBanned = data.isBanned
+
+      return await manager.save(bannedUser)
+    } catch (e) {
+      throw new Error(e.message)
+    }
+  }
+
+  async checkBanOfUserForBlog(
+    userId: string,
+    blogId: string,
+  ): Promise<BanUsersBlogsEntity | null> {
+    try {
+      const bannedUserForBlog = await this.banUserBlogRepo.findOne({
+        where: {
+          userId,
+          blogId
+        }
+      })
+
+      if (!bannedUserForBlog) {
+        return null
+      }
+
+      return bannedUserForBlog
     } catch (e) {
       throw new Error(e.message)
     }

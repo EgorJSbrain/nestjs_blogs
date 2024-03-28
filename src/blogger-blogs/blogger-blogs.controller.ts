@@ -1,3 +1,5 @@
+import { InjectDataSource } from '@nestjs/typeorm'
+import { DataSource } from 'typeorm'
 import { SkipThrottle } from '@nestjs/throttler'
 import {
   Body,
@@ -22,6 +24,7 @@ import { IBlog } from '../types/blogs'
 import { appMessages } from '../constants/messages'
 import { IExtendedPost } from '../types/posts'
 import { JWTService } from '../jwt/jwt.service'
+import { UsersService } from '../users/users.service'
 import { RoutesEnum } from '../constants/global'
 import { PostsRepository } from '../posts/posts.repository'
 import { BlogsRepository } from '../blogs/blogs.repository'
@@ -32,18 +35,21 @@ import { UsersRepository } from '../users/users.repository'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { CreatePostDto } from '../dtos/posts/create-post.dto'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
+import { BanUserBlogDto } from '../dtos/users/ban-user-blog.dto'
 
 @SkipThrottle()
-@Controller(RoutesEnum.bloggerBlogs)
+@Controller(RoutesEnum.blogger)
 export class BlogsController {
   constructor(
+    @InjectDataSource() protected dataSource: DataSource,
     private blogsRepository: BlogsRepository,
     private postsRepository: PostsRepository,
     private usersRepository: UsersRepository,
-    private JWTService: JWTService,
+    private usersService: UsersService,
+    private JWTService: JWTService
   ) {}
 
-  @Get()
+  @Get('/blogs')
   @UseGuards(JWTAuthGuard)
   async getAll(
     @Query() query: BlogsRequestParams,
@@ -54,7 +60,7 @@ export class BlogsController {
     return blogs
   }
 
-  @Get(':id')
+  @Get('/blogs/:id')
   async getBlogById(@Param() params: { id: string }): Promise<IBlog | null> {
     const blog = await this.blogsRepository.getById(params.id)
 
@@ -68,7 +74,7 @@ export class BlogsController {
     return blog
   }
 
-  @Post()
+  @Post('/blogs')
   @UseGuards(JWTAuthGuard)
   async creatBlog(
     @Body() data: CreateBlogDto,
@@ -77,7 +83,7 @@ export class BlogsController {
     return this.blogsRepository.createBlog(data, userId)
   }
 
-  @Get(':blogId/posts')
+  @Get('/blogs/:blogId/posts')
   async getPostsByBlogId(
     @Query() query: RequestParams,
     @Param() params: { blogId: string },
@@ -115,74 +121,22 @@ export class BlogsController {
       }
     }
 
-    const posts = await this.postsRepository.getAll(query, currentUserId, blog.id)
+    const posts = await this.postsRepository.getAll(
+      query,
+      currentUserId,
+      blog.id
+    )
 
     return posts
   }
 
-  @Put(':id')
-  @UseGuards(JWTAuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async updateBlog(
-    @Param() params: { id: string },
-    @Body() data: UpdateBlogDto,
-    @CurrentUserId() userId: string
-  ): Promise<any> {
-    if (!params.id) {
-      throw new HttpException(
-        { message: appMessages(appMessages().blogId).errors.isRequiredField },
-        HttpStatus.NOT_FOUND
-      )
-    }
-
-    const user = await this.usersRepository.getById(userId)
-
-    if (!user) {
-      throw new HttpException(
-        { message: appMessages(appMessages().user).errors.notFound },
-        HttpStatus.NOT_FOUND
-      )
-    }
-
-    const blog = await this.blogsRepository.getById(params.id)
-
-    if (!blog) {
-      throw new HttpException(
-        { message: appMessages(appMessages().blog).errors.notFound },
-        HttpStatus.NOT_FOUND
-      )
-    }
-
-    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(params.id, userId)
-
-    if (!blogOfUser) {
-      throw new HttpException(
-        { message: appMessages(appMessages().blog).errors.notFound },
-        HttpStatus.FORBIDDEN
-      )
-    }
-
-    const updatedBlog = await this.blogsRepository.updateBlog(
-      params.id,
-      data,
-      userId,
-    )
-
-    if (!updatedBlog) {
-      throw new HttpException(
-        { message: appMessages(appMessages().blog).errors.notFound },
-        HttpStatus.NOT_FOUND
-      )
-    }
-  }
-
-  @Delete(':id')
+  @Delete('/blogs/:id')
   @UseGuards(JWTAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBlog(
     @Param() params: { id: string },
     @CurrentUserId() userId: string
-  ): Promise<any> {
+  ) {
     const user = await this.usersRepository.getById(userId)
 
     if (!user) {
@@ -201,7 +155,10 @@ export class BlogsController {
       )
     }
 
-    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(params.id, userId)
+    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(
+      params.id,
+      userId
+    )
 
     if (!blogOfUser) {
       throw new HttpException(
@@ -213,7 +170,7 @@ export class BlogsController {
     await this.blogsRepository.deleteBlogByOwner(params.id, userId)
   }
 
-  @Post(':blogId/posts')
+  @Post('/blogs/:blogId/posts')
   @UseGuards(JWTAuthGuard)
   async creatPostByBlogId(
     @Param() params: { blogId: string },
@@ -229,7 +186,10 @@ export class BlogsController {
       )
     }
 
-    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(params.blogId, userId)
+    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(
+      params.blogId,
+      userId
+    )
 
     if (!blogOfUser) {
       throw new HttpException(
@@ -238,7 +198,7 @@ export class BlogsController {
       )
     }
 
-    const newPost = await  this.postsRepository.createPost({
+    const newPost = await this.postsRepository.createPost({
       ...data,
       blogId: blog.id
     })
@@ -255,14 +215,14 @@ export class BlogsController {
     return post
   }
 
-  @Put(':blogId/posts/:postId')
+  @Put('/blogs/:blogId/posts/:postId')
   @UseGuards(JWTAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async updatePost(
-    @Param() params: { blogId: string, postId: string },
+    @Param() params: { blogId: string; postId: string },
     @Body() data: UpdatePostDto,
     @CurrentUserId() userId: string
-  ): Promise<undefined> {
+  ) {
     if (!params.postId) {
       throw new HttpException(
         { message: appMessages(appMessages().postId).errors.isRequiredField },
@@ -286,7 +246,10 @@ export class BlogsController {
       )
     }
 
-    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(params.blogId, userId)
+    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(
+      params.blogId,
+      userId
+    )
 
     if (!blogOfUser) {
       throw new HttpException(
@@ -304,20 +267,26 @@ export class BlogsController {
       )
     }
 
-    const updatedPost = await this.postsRepository.updatePost(params.postId, data)
+    const updatedPost = await this.postsRepository.updatePost(
+      params.postId,
+      data
+    )
 
     if (!updatedPost) {
-      throw new HttpException({ message: appMessages(appMessages().post).errors.notFound }, HttpStatus.NOT_FOUND)
+      throw new HttpException(
+        { message: appMessages(appMessages().post).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
     }
   }
 
-  @Delete(':blogId/posts/:postId')
+  @Delete('/blogs/:blogId/posts/:postId')
   @UseGuards(JWTAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deletePost(
-    @Param() params: { blogId: string, postId: string },
+    @Param() params: { blogId: string; postId: string },
     @CurrentUserId() userId: string
-  ): Promise<any> {
+  ) {
     if (!params.postId) {
       throw new HttpException(
         { message: appMessages(appMessages().postId).errors.isRequiredField },
@@ -341,7 +310,10 @@ export class BlogsController {
       )
     }
 
-    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(params.blogId, userId)
+    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(
+      params.blogId,
+      userId
+    )
 
     if (!blogOfUser) {
       throw new HttpException(
@@ -360,5 +332,109 @@ export class BlogsController {
     }
 
     await this.postsRepository.deletePost(params.postId)
+  }
+
+  @Put('/users/:userId/ban')
+  @UseGuards(JWTAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateBlog(
+    @Param() params: { userId: string },
+    @Body() data: BanUserBlogDto,
+    @CurrentUserId() currenUserId: string
+  ) {
+    const queryRunner = this.dataSource.createQueryRunner()
+
+    try {
+      await queryRunner.connect()
+      await queryRunner.startTransaction()
+      const manager = queryRunner.manager
+
+      const { userId } = params
+      if (!userId) {
+        throw new HttpException(
+          { message: appMessages(appMessages().blogId).errors.isRequiredField },
+          HttpStatus.NOT_FOUND
+        )
+      }
+
+      const user = await this.usersRepository.getById(userId)
+
+      if (!user) {
+        throw new HttpException(
+          { message: appMessages(appMessages().user).errors.notFound },
+          HttpStatus.NOT_FOUND
+        )
+      }
+
+      const blog = await this.blogsRepository.getById(data.blogId)
+
+      if (!blog) {
+        throw new HttpException(
+          { message: appMessages(appMessages().blog).errors.notFound },
+          HttpStatus.NOT_FOUND
+        )
+      }
+
+      const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(
+        data.blogId,
+        currenUserId
+      )
+
+      if (!blogOfUser) {
+        throw new HttpException(
+          { message: appMessages(appMessages().blog).errors.notFound },
+          HttpStatus.FORBIDDEN
+        )
+      }
+
+      const userBanned = await this.usersService.checkBanOfUserForBlog(
+        userId,
+        data.blogId
+      )
+
+      if (!userBanned && !data.isBanned) {
+        return null
+      }
+
+      if (userBanned && userBanned.isBanned === data.isBanned) {
+        return null
+      }
+
+      if (userBanned) {
+        return await this.usersService.updateBanUserForBlog(
+          userId,
+          data.blogId,
+          {
+            banReason: data.banReason,
+            isBanned: data.isBanned
+          },
+          manager
+        )
+      }
+
+      await this.usersService.createBanUserForBlog(
+        userId,
+        data.blogId,
+        {
+          banReason: data.banReason,
+          isBanned: data.isBanned
+        },
+        manager
+      )
+
+      await queryRunner.commitTransaction()
+    } catch (err) {
+      await queryRunner.rollbackTransaction()
+
+      throw new HttpException(
+        {
+          message: err.message || appMessages().errors.somethingIsWrong,
+          field: ''
+        },
+        err.status || HttpStatus.BAD_REQUEST
+      )
+    } finally {
+      await queryRunner.release()
+    }
   }
 }

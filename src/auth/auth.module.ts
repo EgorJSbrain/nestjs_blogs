@@ -17,10 +17,11 @@ import { UserEntity } from '../entities/user'
 import { DevicesService } from '../devices/devices.service'
 import { DeviceEntity } from '../entities/devices'
 import { DevicesRepository } from '../devices/devices.repository'
+import { BanUsersBlogsEntity } from '../entities/ban-users-blogs'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, DeviceEntity]),
+    TypeOrmModule.forFeature([UserEntity, DeviceEntity, BanUsersBlogsEntity]),
     forwardRef(() => EmailsModule),
     forwardRef(() => JwtModule),
   ],

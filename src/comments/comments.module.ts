@@ -12,6 +12,7 @@ import { UserEntity } from '../entities/user';
 import { CommentEntity } from '../entities/comment';
 import { CommentLikeEntity } from '../entities/comment-like';
 import { PostLikeEntity } from '../entities/post-like';
+import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { PostLikeEntity } from '../entities/post-like';
       UserEntity,
       CommentEntity,
       CommentLikeEntity,
-      PostLikeEntity
+      PostLikeEntity,
+      BanUsersBlogsEntity
     ])
   ],
   controllers: [CommentsController],
