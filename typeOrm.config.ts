@@ -15,6 +15,7 @@ import { ProgressEntity } from './src/entities/progress';
 import { AnswerEntity } from './src/entities/answer';
 import { GameQuestionEntity } from './src/entities/game-question';
 import { GameEntity } from './src/entities/game';
+import { BanUsersBlogsEntity } from './src/entities/ban-users-blogs';
 
 dotenv.config({
   path: path.resolve(process.cwd(), '.env'),
@@ -42,6 +43,7 @@ export default new DataSource({
     AnswerEntity,
     GameQuestionEntity,
     GameEntity,
+    BanUsersBlogsEntity,
   ],
   synchronize: false,
   migrations:

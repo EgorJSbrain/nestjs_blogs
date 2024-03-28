@@ -5,12 +5,13 @@ import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { UserBanData, UsersRequestParams } from '../types/users'
 import { UsersRepository } from './users.repository'
 import { DevicesRepository } from '../devices/devices.repository'
+import { BanUsersBlogsEntity } from '../entities/ban-users-blogs'
 
 @Injectable()
 export class UsersService {
   constructor(
     private usersRepository: UsersRepository,
-    private devicesRepository: DevicesRepository,
+    private devicesRepository: DevicesRepository
   ) {}
 
   async getAll(params: UsersRequestParams) {
@@ -21,9 +22,7 @@ export class UsersService {
     return await this.usersRepository.getById(id)
   }
 
-  async getUserByLoginOrEmail(
-    loginOrEmail: string
-  ) {
+  async getUserByLoginOrEmail(loginOrEmail: string) {
     return await this.usersRepository.getUserByLoginOrEmail(loginOrEmail)
   }
 
@@ -46,17 +45,67 @@ export class UsersService {
   async setNewConfirmationCodeOfUser(code: string, id: string) {
     return await this.usersRepository.setNewConfirmationCodeOfUser(code, id)
   }
-  async setNewHashesOfUser(passwordHash: string, passwordSalt: string, id: string) {
-    return await this.usersRepository.setNewHashesOfUser(passwordHash, passwordSalt, id)
+  async setNewHashesOfUser(
+    passwordHash: string,
+    passwordSalt: string,
+    id: string
+  ) {
+    return await this.usersRepository.setNewHashesOfUser(
+      passwordHash,
+      passwordSalt,
+      id
+    )
   }
 
   async deleteById(id: string) {
     return await this.usersRepository.deleteById(id)
   }
 
-  async banUnbanUser(userId: string, data: UserBanData, manager: EntityManager) {
+  async banUnbanUser(
+    userId: string,
+    data: UserBanData,
+    manager: EntityManager
+  ) {
     await this.usersRepository.banUnbanUser(userId, data, manager)
 
     await this.devicesRepository.deleteDevicesbyUserIdForSA(userId, manager)
+  }
+
+  async checkBanOfUserForBlog(
+    userId: string,
+    blogId: string,
+  ): Promise<BanUsersBlogsEntity | null> {
+    return await this.usersRepository.checkBanOfUserForBlog(
+      userId,
+      blogId,
+    )
+  }
+
+  async createBanUserForBlog(
+    userId: string,
+    blogId: string,
+    data: UserBanData,
+    manager: EntityManager
+  ) {
+    await this.usersRepository.createBanUserForBlog(
+      userId,
+      blogId,
+      data,
+      manager
+    )
+  }
+
+  async updateBanUserForBlog(
+    userId: string,
+    blogId: string,
+    data: UserBanData,
+    manager: EntityManager
+  ) {
+    await this.usersRepository.updateBanUserForBlog(
+      userId,
+      blogId,
+      data,
+      manager
+    )
   }
 }

@@ -19,6 +19,7 @@ import { GetRandomQuestionsForGameUseCase } from './use-cases/get-random-questio
 import { SetRandomQuestionsForGameUseCase } from './use-cases/set-random-questions-for-game-use-case';
 import { GamesService } from './games.service';
 import { ProgressService } from '../progresses/progress.service';
+import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
 
 const useCases = [
   CheckPalyerInGameUseCase,
@@ -34,7 +35,8 @@ const useCases = [
       QuestionEntity,
       GameEntity,
       ProgressEntity,
-      GameQuestionEntity
+      GameQuestionEntity,
+      BanUsersBlogsEntity
     ])
   ],
   controllers: [GamesController],
