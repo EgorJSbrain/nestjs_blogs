@@ -6,7 +6,12 @@ import { v4 } from 'uuid'
 import { SortDirections, SortType } from '../constants/global'
 import { CreateUserDto } from '../dtos/users/create-user.dto'
 import { HashService } from '../hash/hash.service'
-import { IExtendedUser, UserBanData, UsersRequestParams } from '../types/users'
+import {
+  BloggerUsersRequestParams,
+  IExtendedUser,
+  UserBanData,
+  UsersRequestParams
+} from '../types/users'
 import { UserEntity } from '../entities/user'
 import { UserBanStatusEnum } from '../enums/UserBanStatusEnum'
 import { BanUsersBlogsEntity } from '../entities/ban-users-blogs'
@@ -260,6 +265,7 @@ export class UsersRepository {
     try {
       const { isBanned, banReason } = data
       const banReasonText = isBanned && banReason ? banReason : null
+      const banDate = isBanned ? new Date().toISOString() : null
 
       return await manager.update(
         BanUsersBlogsEntity,
@@ -267,7 +273,7 @@ export class UsersRepository {
           userId,
           blogId,
         },
-        { banReason: banReasonText, isBanned }
+        { banReason: banReasonText, isBanned, banDate }
       )
     } catch (e) {
       throw new Error(e.message)
@@ -281,12 +287,15 @@ export class UsersRepository {
     manager: EntityManager
   ): Promise<BanUsersBlogsEntity | null> {
     try {
+      const { isBanned, banReason } = data
       const bannedUser = BanUsersBlogsEntity.create()
+      const banDate = isBanned ? new Date().toISOString() : null
 
-      bannedUser.banReason = data.banReason
+      bannedUser.banReason = banReason
       bannedUser.userId = userId
       bannedUser.blogId = blogId
-      bannedUser.isBanned = data.isBanned
+      bannedUser.isBanned = isBanned
+      bannedUser.banDate = banDate
 
       return await manager.save(bannedUser)
     } catch (e) {
@@ -373,5 +382,82 @@ export class UsersRepository {
     } catch (e) {
       return false
     }
+  }
+
+
+  async getBannedUsersForBlog(blogId: string, params: BloggerUsersRequestParams) {
+    const {
+      sortBy = 'createdAt',
+      sortDirection = SortDirections.desc,
+      pageNumber = 1,
+      pageSize = 10,
+      searchLoginTerm = '',
+    } = params
+
+    const pageSizeNumber = Number(pageSize)
+    const pageNumberNum = Number(pageNumber)
+    const skip = (pageNumberNum - 1) * pageSizeNumber
+
+    let whereFilter = 'ban.blogId = :blogId AND ban.isBanned = true'
+
+    if (searchLoginTerm) {
+      whereFilter = `${whereFilter + ' AND '} user.login ILIKE :login`
+    }
+
+    const query = this.banUserBlogRepo.createQueryBuilder('ban')
+
+    const searchObject = query
+      .where(whereFilter, {
+        blogId,
+        login: searchLoginTerm
+          ? `%${searchLoginTerm.toLocaleLowerCase()}%`
+          : undefined,
+      })
+      .select([
+        'ban.*',
+        'ban.createdAt as createdat'
+      ])
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('user.login', 'login')
+          .from(UserEntity, 'user')
+          .where('ban.userId = user.id')
+      }, 'login')
+      .addOrderBy(
+        sortBy,
+        sortDirection?.toLocaleUpperCase() as SortType
+      )
+      .skip(skip)
+      .take(pageSizeNumber)
+
+    const bans = await searchObject.getRawMany()
+    const count = await searchObject.getCount()
+    const pagesCount = Math.ceil(count / pageSizeNumber)
+
+    const preparedBannedUsers = bans.map(ban => ({
+      id: ban.userId,
+      login: ban.login,
+      banInfo: {
+        isBanned: ban.isBanned,
+        banReason: ban.banReason,
+        banDate: ban.banDate,
+      },
+    }))
+
+    return {
+      pagesCount,
+      page: pageNumberNum || 1,
+      pageSize: pageSizeNumber,
+      totalCount: count,
+      items: preparedBannedUsers
+    }
+  }
+
+  async checkBanUserForBlog(userId: string, blogId: string) {
+    return await this.banUserBlogRepo
+      .createQueryBuilder('ban')
+      .select()
+      .where('ban.userId = :userId AND ban.blogId = :blogId', { userId, blogId })
+      .getOne()
   }
 }

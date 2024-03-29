@@ -32,10 +32,10 @@ import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { UsersRepository } from '../users/users.repository'
-import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { CreatePostDto } from '../dtos/posts/create-post.dto'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
 import { BanUserBlogDto } from '../dtos/users/ban-user-blog.dto'
+import { BloggerUsersRequestParams } from '../types/users'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogger)
@@ -337,7 +337,7 @@ export class BlogsController {
   @Put('/users/:userId/ban')
   @UseGuards(JWTAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async updateBlog(
+  async banUnbanUserForBlog(
     @Param() params: { userId: string },
     @Body() data: BanUserBlogDto,
     @CurrentUserId() currenUserId: string
@@ -436,5 +436,57 @@ export class BlogsController {
     } finally {
       await queryRunner.release()
     }
+  }
+
+  @Get('/users/blog/:blogId')
+  @UseGuards(JWTAuthGuard)
+  async updateBlog(
+    @Query() query: BloggerUsersRequestParams,
+    @Param() params: { blogId: string },
+    @CurrentUserId() currenUserId: string
+  ) {
+    const { blogId } = params
+
+    if (!blogId) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blogId).errors.isRequiredField },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const user = await this.usersRepository.getById(currenUserId)
+
+    if (!user) {
+      throw new HttpException(
+        { message: appMessages(appMessages().user).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const blog = await this.blogsRepository.getById(blogId)
+
+    if (!blog) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(
+      blogId,
+      currenUserId
+    )
+
+    if (!blogOfUser) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.FORBIDDEN
+      )
+    }
+
+    return await this.usersRepository.getBannedUsersForBlog(
+      blogId,
+      query
+    )
   }
 }
