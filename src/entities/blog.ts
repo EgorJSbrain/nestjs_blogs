@@ -32,6 +32,12 @@ export class BlogEntity extends BaseEntity implements IBlog {
   @Column({ default: false })
   isMembership: boolean
 
+  @Column({ default: false })
+  isBanned?: boolean
+
+  @Column({ nullable: true, type: 'timestamp' })
+  banDate?: string | null
+
   @Column({ nullable: true })
   ownerId: string
 

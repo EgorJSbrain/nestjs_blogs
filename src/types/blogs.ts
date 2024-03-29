@@ -10,12 +10,19 @@ export interface IBlog {
   description: string
   websiteUrl: string
   isMembership: boolean
+  isBanned?: boolean
   createdAt: string
+  banDate?: string | null
 }
 
 type BlogOwnerInfo = {
   userId: string,
   userLogin: string
+}
+
+type BanBlogInfo = {
+  isBanned: boolean,
+  banDate: string
 }
 
 export interface IBlogForSA {
@@ -26,6 +33,7 @@ export interface IBlogForSA {
   isMembership: boolean
   createdAt: string
   blogOwnerInfo: BlogOwnerInfo
+  banInfo: BanBlogInfo
 }
 
 export type CreatingBlogData = {
