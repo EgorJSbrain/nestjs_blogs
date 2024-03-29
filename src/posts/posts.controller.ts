@@ -272,6 +272,13 @@ export class PostsController {
       )
     }
 
+    const isBannedUserForCurrentBlog =
+      await this.usersRepository.checkBanUserForBlog(userId, existedPost.blogId)
+
+    if (isBannedUserForCurrentBlog) {
+      throw new HttpException('', HttpStatus.FORBIDDEN)
+    }
+
     const comment = await this.CommentsRepository.createComment({
       content: data.content,
       userId: existedUser.id,

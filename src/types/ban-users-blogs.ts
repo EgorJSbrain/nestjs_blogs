@@ -4,4 +4,5 @@ export interface IBanUsersBlogs {
   userId: string
   banReason: string | null
   isBanned: boolean
+  banDate: string | null
 }
