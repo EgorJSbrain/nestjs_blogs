@@ -40,6 +40,11 @@ export class AddTableBanUsersBlogs1711626471467 implements MigrationInterface {
             isNullable: true
           },
           {
+            name: 'banDate',
+            type: 'timestamp',
+            isNullable: true
+          },
+          {
             name: 'createdAt',
             type: 'timestamp',
             default: 'now()',

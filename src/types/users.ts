@@ -7,6 +7,10 @@ export type UsersRequestParams = RequestParams & {
   banStatus?: UserBanStatusEnum
 }
 
+export type BloggerUsersRequestParams = RequestParams & {
+  searchLoginTerm?: string
+}
+
 export type UserBanData = {
   isBanned: boolean
   banReason: string
