@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository, UpdateResult } from 'typeorm';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto';
@@ -48,12 +48,17 @@ export class BlogsRepository {
       }
 
       if (ownerId) {
-        whereFilter = `${whereFilter ? whereFilter + ' AND ' : ''} blog.ownerId = :ownerId`,
-        whereParams.ownerId = ownerId
+        if (ownerId) {
+          whereFilter = `${
+            whereFilter ? whereFilter + ' AND ' : ''
+          } blog.ownerId = :ownerId`
+          whereParams.ownerId = ownerId
+        }
       }
 
       const searchObject = query
         .where(whereFilter, whereParams)
+        .andWhere('blog.isBanned = NOT(true)')
         .select('blog.*')
         .addOrderBy(
           `blog.${sortBy}`,
@@ -66,7 +71,7 @@ export class BlogsRepository {
       const count = await searchObject.getCount()
       const pagesCount = Math.ceil(count / pageSizeNumber)
 
-      const preparedBlogs = blogs.map(blog => ({
+      const preparedBlogs = blogs.map((blog) => ({
         id: blog.id,
         name: blog.name,
         description: blog.description,
@@ -82,7 +87,7 @@ export class BlogsRepository {
         totalCount: count,
         items: preparedBlogs
       }
-    } catch(e) {
+    } catch (e) {
       throw new HttpException(
         { message: e.message || appMessages().errors.somethingIsWrong },
         HttpStatus.BAD_REQUEST
@@ -135,7 +140,7 @@ export class BlogsRepository {
       const count = await searchObject.getCount()
       const pagesCount = Math.ceil(count / pageSizeNumber)
 
-      const preparedBlogs = blogs.map(blog => ({
+      const preparedBlogs = blogs.map((blog) => ({
         id: blog.id,
         name: blog.name,
         description: blog.description,
@@ -145,6 +150,10 @@ export class BlogsRepository {
         blogOwnerInfo: {
           userId: blog.ownerId,
           userLogin: blog.userLogin
+        },
+        banInfo: {
+          isBanned: blog.isBanned,
+          banDate: blog.banDate
         }
       }))
 
@@ -171,6 +180,23 @@ export class BlogsRepository {
         'blog.createdAt',
         'blog.isMembership',
       ])
+      .where('blog.id = :id AND blog.isBanned = NOT(true)', { id })
+      .getOne()
+
+    if (!blog) {
+      return null
+    }
+
+    return blog
+  }
+
+  async getByIdWithBan(id: string): Promise<BlogEntity | null> {
+    const blog = this.blogsRepo
+      .createQueryBuilder('blog')
+      .select([
+        'blog.id',
+        'blog.isBanned',
+      ])
       .where('blog.id = :id', { id })
       .getOne()
 
@@ -181,7 +207,10 @@ export class BlogsRepository {
     return blog
   }
 
-  async getByIdAndOwnerId(id: string, ownerId: string): Promise<BlogEntity | null> {
+  async getByIdAndOwnerId(
+    id: string,
+    ownerId: string
+  ): Promise<BlogEntity | null> {
     const blog = this.blogsRepo
       .createQueryBuilder('blog')
       .select('blog.id')
@@ -195,24 +224,24 @@ export class BlogsRepository {
     return blog
   }
 
-  async createBlog(data: CreateBlogDto, ownerId?: string): Promise<BlogEntity | null> {
+  async createBlog(
+    data: CreateBlogDto,
+    ownerId?: string
+  ): Promise<BlogEntity | null> {
     try {
       const query = this.blogsRepo.createQueryBuilder('blog')
 
       const valuesForCreating: CreatingBlogData = {
         name: data.name,
         description: data.description,
-        websiteUrl: data.websiteUrl,
+        websiteUrl: data.websiteUrl
       }
 
       if (ownerId) {
         valuesForCreating.ownerId = ownerId
       }
 
-      const newBlog = await query
-        .insert()
-        .values(valuesForCreating)
-        .execute()
+      const newBlog = await query.insert().values(valuesForCreating).execute()
 
       const blog = await this.getById(newBlog.raw[0].id)
 
@@ -226,7 +255,11 @@ export class BlogsRepository {
     }
   }
 
-  async updateBlog(blogId: string, data: UpdateBlogDto, ownerId?: string): Promise<boolean> {
+  async updateBlog(
+    blogId: string,
+    data: UpdateBlogDto,
+    ownerId?: string
+  ): Promise<boolean> {
     const whereParams: Record<string, string> = {
       id: blogId
     }
@@ -239,34 +272,58 @@ export class BlogsRepository {
     }
 
     const updatedBlog = await this.blogsRepo
-        .createQueryBuilder('blog')
-        .update()
-        .set({ name: data.name, description: data.description, websiteUrl: data.websiteUrl })
-        .where(whereStr, whereParams)
-        .execute()
+      .createQueryBuilder('blog')
+      .update()
+      .set({
+        name: data.name,
+        description: data.description,
+        websiteUrl: data.websiteUrl
+      })
+      .where(whereStr, whereParams)
+      .execute()
 
-      if (!updatedBlog.affected) {
-        return false
-      }
+    if (!updatedBlog.affected) {
+      return false
+    }
 
-      return true
+    return true
   }
 
   async bindBlog(blogId: string, userId: string): Promise<boolean> {
     const updatedBlog = await this.blogsRepo
-        .createQueryBuilder('blog')
-        .update()
-        .set({ ownerId: userId })
-        .where('id = :id', {
-          id: blogId
-        })
-        .execute()
+      .createQueryBuilder('blog')
+      .update()
+      .set({ ownerId: userId })
+      .where('id = :id', {
+        id: blogId
+      })
+      .execute()
 
-      if (!updatedBlog.affected) {
-        return false
+    if (!updatedBlog.affected) {
+      return false
+    }
+
+    return true
+  }
+
+  async banUnbanBlog(
+    blogId: string,
+    isBanned: boolean,
+    manager: EntityManager
+  ): Promise<UpdateResult | null> {
+    try {
+      const banDate = isBanned ? new Date().toISOString() : null
+
+      const updatedBlog = await manager.update(BlogEntity, { id: blogId }, { isBanned, banDate })
+
+      if (!updatedBlog) {
+        return null
       }
 
-      return true
+      return updatedBlog
+    } catch(e) {
+      throw new Error(appMessages().errors.somethingIsWrong)
+    }
   }
 
   async deleteBlog(id: string) {
