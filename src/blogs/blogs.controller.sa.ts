@@ -15,6 +15,8 @@ import {
   Req
 } from '@nestjs/common'
 import { Request } from 'express'
+import { DataSource } from 'typeorm'
+import { InjectDataSource } from '@nestjs/typeorm'
 
 import { CreateBlogDto } from '../dtos/blogs/create-blog.dto'
 import { BlogsRequestParams } from '../types/blogs'
@@ -31,11 +33,13 @@ import { UpdatePostDto } from '../dtos/posts/update-post.dto'
 import { BlogsRepository } from './blogs.repository'
 import { PostsRepository } from '../posts/posts.repository'
 import { UsersRepository } from '../users/users.repository'
+import { BanBlogSADto } from 'src/dtos/blogs/ban-blog.dto'
 
 @SkipThrottle()
 @Controller(RoutesEnum.saBlogs)
 export class BlogsSAController {
   constructor(
+    @InjectDataSource() protected dataSource: DataSource,
     private blogsRepository: BlogsRepository,
     private postsRepository: PostsRepository,
     private usersRepository: UsersRepository,
@@ -167,6 +171,10 @@ export class BlogsSAController {
         { message: appMessages(appMessages().blog).errors.notFound },
         HttpStatus.NOT_FOUND
       )
+    }
+
+    if (!!blog.isBanned) {
+      return []
     }
 
     if (req.headers.authorization) {
@@ -316,6 +324,51 @@ export class BlogsSAController {
         { message: appMessages(appMessages().blog).errors.notFound },
         HttpStatus.NOT_FOUND
       )
+    }
+  }
+
+  @Put('/:blogId/ban')
+  @UseGuards(BasicAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async banUnbanUserForBlog(
+    @Param() params: { blogId: string },
+    @Body() data: BanBlogSADto,
+  ) {
+    const queryRunner = this.dataSource.createQueryRunner()
+
+    try {
+      await queryRunner.connect()
+      await queryRunner.startTransaction()
+      const manager = queryRunner.manager
+
+      const blog = await this.blogsRepository.getByIdWithBan(params.blogId)
+
+      if (!blog) {
+        throw new HttpException(
+          { message: appMessages(appMessages().blog).errors.notFound },
+          HttpStatus.NOT_FOUND
+        )
+      }
+
+      if (blog.isBanned === data.isBanned) {
+        return null
+      }
+
+      await this.blogsRepository.banUnbanBlog(params.blogId, data.isBanned, manager)
+
+      await queryRunner.commitTransaction()
+    } catch (err) {
+      await queryRunner.rollbackTransaction()
+
+      throw new HttpException(
+        {
+          message: err.message || appMessages().errors.somethingIsWrong,
+          field: ''
+        },
+        err.status || HttpStatus.BAD_REQUEST
+      )
+    } finally {
+      await queryRunner.release()
     }
   }
 }

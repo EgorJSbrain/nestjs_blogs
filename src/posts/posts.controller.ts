@@ -125,6 +125,15 @@ export class PostsController {
       )
     }
 
+    const blog = await this.blogssRepository.getByIdWithBan(post.blogId)
+
+    if (blog && blog.isBanned) {
+      throw new HttpException(
+        { message: appMessages(appMessages().post).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
     return post
   }
 
