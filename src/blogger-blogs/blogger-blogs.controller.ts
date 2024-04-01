@@ -36,6 +36,9 @@ import { CreatePostDto } from '../dtos/posts/create-post.dto'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
 import { BanUserBlogDto } from '../dtos/users/ban-user-blog.dto'
 import { BloggerUsersRequestParams } from '../types/users'
+import { CommentsRepository } from '../comments/comments.repository'
+import { IExtendedComment } from '../types/comments'
+import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogger)
@@ -45,6 +48,7 @@ export class BlogsController {
     private blogsRepository: BlogsRepository,
     private postsRepository: PostsRepository,
     private usersRepository: UsersRepository,
+    private commentsRepository: CommentsRepository,
     private usersService: UsersService,
     private JWTService: JWTService
   ) {}
@@ -55,9 +59,67 @@ export class BlogsController {
     @Query() query: BlogsRequestParams,
     @CurrentUserId() userId: string
   ): Promise<ResponseBody<IBlog> | []> {
-    const blogs = await this.blogsRepository.getAll(query, userId)
+    return await this.blogsRepository.getAll(query, userId)
+  }
 
-    return blogs
+  @Get('/blogs/comments')
+  @UseGuards(JWTAuthGuard)
+  async getAllComments(
+    @Query() query: BlogsRequestParams,
+    @CurrentUserId() userId: string
+  ): Promise<ResponseBody<IExtendedComment> | []> {
+    return await this.commentsRepository.getCommentsForAllPosts(query, userId)
+  }
+
+  @Put('/blogs/:blogId')
+  @UseGuards(JWTAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateBlog(
+    @Param() params: { blogId: string },
+    @Body() data: UpdateBlogDto,
+    @CurrentUserId() currenUserId: string
+  ) {
+    const { blogId } = params
+
+    if (!blogId) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blogId).errors.isRequiredField },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const blog = await this.blogsRepository.getById(blogId)
+
+    if (!blog) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(
+      blogId,
+      currenUserId
+    )
+
+    if (!blogOfUser) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.FORBIDDEN
+      )
+    }
+
+    const updatedBlog = await this.blogsRepository.updateBlog(
+      blogId,
+      data,
+    )
+
+    if (!updatedBlog) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
   }
 
   @Get('/blogs/:id')
@@ -440,7 +502,7 @@ export class BlogsController {
 
   @Get('/users/blog/:blogId')
   @UseGuards(JWTAuthGuard)
-  async updateBlog(
+  async getBannedUserForBlog(
     @Query() query: BloggerUsersRequestParams,
     @Param() params: { blogId: string },
     @CurrentUserId() currenUserId: string
