@@ -19,6 +19,8 @@ import { UsersService } from '../users/users.service';
 import { DevicesRepository } from '../devices/devices.repository';
 import { DeviceEntity } from '../entities/devices';
 import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
+import { CommentsRepository } from '../comments/comments.repository';
+import { CommentEntity } from '../entities/comment';
 
 @Module({
   imports: [
@@ -29,7 +31,8 @@ import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
       PostLikeEntity,
       UserEntity,
       DeviceEntity,
-      BanUsersBlogsEntity
+      BanUsersBlogsEntity,
+      CommentEntity
     ]),
     LikesModule
   ],
@@ -43,7 +46,8 @@ import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
     UsersRepository,
     HashService,
     UsersService,
-    DevicesRepository
+    DevicesRepository,
+    CommentsRepository
   ]
 })
 export class BloggerBlogsModule {}

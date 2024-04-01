@@ -15,8 +15,10 @@ import { BlogsRepository } from './blogs.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { LikesRepository } from '../likes/likes.repository';
 import { UsersRepository } from '../users/users.repository';
+import { CommentsRepository } from '../comments/comments.repository';
 import { HashService } from '../hash/hash.service';
 import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
+import { CommentEntity } from '../entities/comment';
 
 @Module({
   imports: [
@@ -26,7 +28,8 @@ import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
       CommentLikeEntity,
       PostLikeEntity,
       UserEntity,
-      BanUsersBlogsEntity
+      BanUsersBlogsEntity,
+      CommentEntity,
     ]),
     LikesModule
   ],
@@ -38,6 +41,7 @@ import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
     BlogsRepository,
     LikesRepository,
     UsersRepository,
+    CommentsRepository,
     HashService
   ]
 })
