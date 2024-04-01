@@ -21,14 +21,12 @@ import { CommentLikeEntity } from '../entities/comment-like'
 @Injectable()
 export class CommentsRepository {
   constructor(
+    @InjectDataSource() protected dataSource: DataSource,
     @InjectRepository(CommentEntity)
     private readonly commentsRepo: Repository<CommentEntity>,
-
-    @InjectDataSource() protected dataSource: DataSource,
-    private likeRepository: LikesRepository,
-
     @InjectRepository(CommentLikeEntity)
-    private readonly commentLikesRepo: Repository<CommentLikeEntity>
+    private readonly commentLikesRepo: Repository<CommentLikeEntity>,
+    private likeRepository: LikesRepository,
   ) {}
 
   async getAll(
@@ -121,6 +119,103 @@ export class CommentsRepository {
         items: commentsWithInfoAboutLikes
       }
     } catch {
+      return []
+    }
+  }
+
+  async getCommentsForAllPosts(
+    params: RequestParams,
+    userId: string | null
+  ): Promise<ResponseBody<IExtendedComment> | []> {
+    try {
+      const {
+        sortBy = 'createdAt',
+        sortDirection = SortDirections.desc,
+        pageNumber = 1,
+        pageSize = 10
+      } = params
+
+      const pageSizeNumber = Number(pageSize)
+      const pageNumberNum = Number(pageNumber)
+      const skip = (pageNumberNum - 1) * pageSizeNumber
+
+      const query = this.dataSource
+        .getRepository(CommentEntity)
+        .createQueryBuilder('comment')
+        .select('comment.*')
+        .leftJoinAndSelect('comment.post', 'post')
+        .leftJoinAndSelect('post.blog', 'blog')
+        .andWhere('blog.ownerId = :userId', { userId })
+        .leftJoinAndSelect('comment.user', 'user')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('count(*)', 'likesCount')
+            .from(CommentLikeEntity, 'l')
+            .where("l.sourceId = comment.id AND l.status = 'Like'", {
+              userId: userId
+            })
+        }, 'likesCount')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('count(*)', 'dislikesCount')
+            .from(CommentLikeEntity, 'l')
+            .where("l.sourceId = comment.id AND l.status = 'Dislike'", {
+              userId: userId
+            })
+        }, 'dislikesCount')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('l.status', 'myStatus')
+            .from(CommentLikeEntity, 'l')
+            .where('l.sourceId = comment.id AND l.authorId = :userId', {
+              userId
+            })
+        }, 'myStatus')
+        .addOrderBy(
+          `comment.${sortBy}`,
+          sortDirection?.toLocaleUpperCase() as SortType
+        )
+        .offset(skip)
+        .limit(pageSizeNumber)
+
+      const comments = await query.getRawMany()
+
+      const count = await query.getCount()
+      const pagesCount = Math.ceil(count / pageSizeNumber)
+
+      const commentsWithInfoAboutLikes = await Promise.all(
+        comments.map(async (comment) => {
+          return {
+            id: comment.id,
+            content: comment.content,
+            createdAt: comment.createdAt,
+            commentatorInfo: {
+              userId: comment.user_id,
+              userLogin: comment.user_login
+            },
+            likesInfo: {
+              likesCount: Number(comment.likesCount) ?? 0,
+              dislikesCount: Number(comment.dislikesCount) ?? 0,
+              myStatus: comment.myStatus || LikeStatusEnum.none
+            },
+            postInfo: {
+              blogId: comment.blog_id,
+              blogName: comment.blog_name,
+              title: comment.post_title,
+              id: comment.post_id,
+            }
+          }
+        })
+      )
+
+      return {
+        pagesCount,
+        page: pageNumberNum,
+        pageSize: pageSizeNumber,
+        totalCount: count,
+        items: commentsWithInfoAboutLikes
+      }
+    } catch(e) {
       return []
     }
   }
