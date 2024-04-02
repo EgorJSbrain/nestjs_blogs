@@ -10,11 +10,14 @@ import {
   HttpException,
   HttpStatus,
   Param,
+  ParseFilePipe,
   Post,
   Put,
   Query,
   Req,
-  UseGuards
+  UploadedFile,
+  UseGuards,
+  UseInterceptors
 } from '@nestjs/common'
 import { Request } from 'express'
 
@@ -39,6 +42,10 @@ import { BloggerUsersRequestParams } from '../types/users'
 import { CommentsRepository } from '../comments/comments.repository'
 import { IExtendedComment } from '../types/comments'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
+import { FileInterceptor } from '@nestjs/platform-express'
+import { UploadWallpaperUseCase } from './use-cases/upload-wallpaper.use-case'
+import { PipesConsumer } from '@nestjs/core/pipes'
+import { FileValidationPipe } from './pipes/file-validation.pipe'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogger)
@@ -50,7 +57,8 @@ export class BlogsController {
     private usersRepository: UsersRepository,
     private commentsRepository: CommentsRepository,
     private usersService: UsersService,
-    private JWTService: JWTService
+    private JWTService: JWTService,
+    private uploadWallpaperUseCase: UploadWallpaperUseCase,
   ) {}
 
   @Get('/blogs')
@@ -550,5 +558,35 @@ export class BlogsController {
       blogId,
       query
     )
+  }
+
+  @Post('/blogs/:blogId/images/wallpaper')
+  @UseGuards(JWTAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadWallper(
+    @UploadedFile(FileValidationPipe) file: Express.Multer.File,
+    @Param() params: { blogId: string },
+    @CurrentUserId() currenUserId: string
+  ) {
+    const { blogId } = params
+
+    if (!blogId) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blogId).errors.isRequiredField },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const blog = await this.blogsRepository.getById(params.blogId)
+
+    if (!blog) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    this.uploadWallpaperUseCase.execute(currenUserId, file.originalname, file.buffer)
   }
 }
