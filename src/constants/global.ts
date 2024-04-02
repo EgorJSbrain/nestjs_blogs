@@ -4,6 +4,9 @@ export const PASSWORD_MIN_LENGTH = 6;
 export const PASSWORD_MAX_LENGTH = 20;
 export const STRING_MIN_LENGTH = 20;
 export const STRING_MAX_LENGTH = 255;
+export const IMG_MAX_SIZE = 100000;
+export const IMG_MAX_WIDTH = 1028;
+export const IMG_MAX_HEIGHT = 312;
 export const LOGIN_REGEX = /^[a-zA-Z0-9_-]*$/;
 export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[0-9])(?=.*[A-Z]).+$/;
 export const EMAIL_REGEX =

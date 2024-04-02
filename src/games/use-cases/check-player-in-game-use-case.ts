@@ -1,7 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
-
-import { appMessages } from '../../constants/messages'
-import { IExtendedGame } from '../../types/game'
+import { Injectable } from '@nestjs/common'
 
 @Injectable()
 export class CheckPalyerInGameUseCase {
