@@ -21,6 +21,12 @@ import { DeviceEntity } from '../entities/devices';
 import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
 import { CommentsRepository } from '../comments/comments.repository';
 import { CommentEntity } from '../entities/comment';
+import { UploadWallpaperUseCase } from './use-cases/upload-wallpaper.use-case';
+import { S3StorageAdapter } from './adapters/s3-storage-adapter.service';
+
+const useCases = [
+  UploadWallpaperUseCase
+]
 
 @Module({
   imports: [
@@ -47,7 +53,9 @@ import { CommentEntity } from '../entities/comment';
     HashService,
     UsersService,
     DevicesRepository,
-    CommentsRepository
+    CommentsRepository,
+    S3StorageAdapter,
+    ...useCases
   ]
 })
 export class BloggerBlogsModule {}

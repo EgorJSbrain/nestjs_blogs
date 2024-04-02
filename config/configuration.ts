@@ -14,5 +14,12 @@ export default () => ({
     USER: process.env.DB_USER,
     NAME: process.env.DB_NAME,
     PASS: process.env.DB_PASS,
+  },
+  S3: {
+    BUCKET: process.env.S3_BUCKET,
+    REGION: process.env.S3_REGION,
+    ENDPOINT: process.env.S3_ENDPOINT,
+    ACCESS_ID: process.env.S3_ACCESS_ID,
+    ACCESS_SECRET_KEY: process.env.S3_ACCESS_SECRET_KEY,
   }
 });
