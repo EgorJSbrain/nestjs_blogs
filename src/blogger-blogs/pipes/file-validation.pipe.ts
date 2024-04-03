@@ -1,7 +1,6 @@
 import { Injectable, PipeTransform, BadRequestException } from '@nestjs/common'
-import { extname } from 'path'
-import sharp from 'sharp';
 import { IMG_MAX_HEIGHT, IMG_MAX_SIZE, IMG_MAX_WIDTH } from 'src/constants/global';
+import { getFileMetadata } from '../../utils/getFileMetadata'
 
 @Injectable()
 export class FileValidationPipe implements PipeTransform {
@@ -11,7 +10,7 @@ export class FileValidationPipe implements PipeTransform {
     if (!value) {
       throw new BadRequestException('No file uploaded')
     }
-    const { format, size, width, height } = await sharp(value.buffer).metadata()
+    const { format, size, width, height } = await getFileMetadata(value.buffer)
 
     if (format && !this.allowedExtensions.includes(format)) {
       throw new BadRequestException({
@@ -25,17 +24,17 @@ export class FileValidationPipe implements PipeTransform {
       })
     }
 
-    // if (width && width !== IMG_MAX_WIDTH) {
-    //   throw new BadRequestException({
-    //     message: ['File width exceeded. Max width: 1028px']
-    //   })
-    // }
+    if (width && width !== IMG_MAX_WIDTH) {
+      throw new BadRequestException({
+        message: ['File width exceeded. Max width: 1028px']
+      })
+    }
 
-    // if (height && height !== IMG_MAX_HEIGHT) {
-    //   throw new BadRequestException({
-    //     message: ['File height exceeded. Max height: 312px']
-    //   })
-    // }
+    if (height && height !== IMG_MAX_HEIGHT) {
+      throw new BadRequestException({
+        message: ['File height exceeded. Max height: 312px']
+      })
+    }
 
     return value
   }

@@ -22,7 +22,9 @@ export class GeneralSqlRepository {
     const queryGameQuestions = `DELETE FROM public.game_questions`
     const queryAnswers = `DELETE FROM public.answers`
     const queryBanUsersBlogs = `DELETE FROM public.ban_users_blogs`
+    const queryFiles = `DELETE FROM public.files`
     await this.dataSource.query(queryCommentsLikes)
+    await this.dataSource.query(queryFiles)
     await this.dataSource.query(queryBanUsersBlogs)
     await this.dataSource.query(queryAnswers)
     await this.dataSource.query(queryGameQuestions)

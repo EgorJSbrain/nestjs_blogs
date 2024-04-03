@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common'
 import { S3StorageAdapter } from '../adapters/s3-storage-adapter.service'
-import sharp from 'sharp';
-import { resizeImage } from 'src/utils/resizeImage';
 
 @Injectable()
 export class UploadWallpaperUseCase {
@@ -11,10 +9,11 @@ export class UploadWallpaperUseCase {
     userId: string,
     fileName: string,
     buffer: Buffer
-  ) {
-    this.s3StorageAdapter.saveWallpaper(userId, buffer, `wallpapers/${userId}/${fileName}`)
-    // console.log("buffer:", buffer)
-    // console.log("fileName:", fileName)
-    // console.log('userId', userId)
+  ): Promise<string | null> {
+    return await this.s3StorageAdapter.saveWallpaper(
+      userId,
+      buffer,
+      `wallpapers/${userId}/${fileName}`
+    )
   }
 }
