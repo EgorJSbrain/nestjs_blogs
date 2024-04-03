@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EmailManagerRepository } from '../email-manager/email-manager.repository';
 
 @Injectable()
-export class EmailsRepository {
+export class EmailsService {
   constructor(private emailManager: EmailManagerRepository) {}
   async sendRegistrationConfirmationMail(email: string, code: string): Promise<boolean> {
     const response = await this.emailManager.sendMailRegistrationConfirmation(email, code)

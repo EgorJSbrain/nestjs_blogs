@@ -23,6 +23,8 @@ import { CommentsRepository } from '../comments/comments.repository';
 import { CommentEntity } from '../entities/comment';
 import { UploadWallpaperUseCase } from './use-cases/upload-wallpaper.use-case';
 import { S3StorageAdapter } from './adapters/s3-storage-adapter.service';
+import { FilesRepository } from '../files/files.repository';
+import { FileEntity } from '../entities/files';
 
 const useCases = [
   UploadWallpaperUseCase
@@ -38,7 +40,8 @@ const useCases = [
       UserEntity,
       DeviceEntity,
       BanUsersBlogsEntity,
-      CommentEntity
+      CommentEntity,
+      FileEntity,
     ]),
     LikesModule
   ],
@@ -55,6 +58,7 @@ const useCases = [
     DevicesRepository,
     CommentsRepository,
     S3StorageAdapter,
+    FilesRepository,
     ...useCases
   ]
 })

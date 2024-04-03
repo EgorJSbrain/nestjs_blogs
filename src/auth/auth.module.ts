@@ -2,7 +2,7 @@ import { Module, forwardRef } from '@nestjs/common'
 import { JwtModule } from '@nestjs/jwt'
 import { TypeOrmModule } from '@nestjs/typeorm'
 
-import { EmailsRepository } from '../emails/emails.repository'
+import { EmailsService } from '../emails/emails.service'
 import { EmailsModule } from '../emails/emails.module'
 import { EmailManagerRepository } from '../email-manager/email-manager.repository'
 import { MailAdapterRepository } from '../email-adapter/email-adapter.repository'
@@ -32,7 +32,7 @@ import { BanUsersBlogsEntity } from '../entities/ban-users-blogs'
     MailAdapterRepository,
     EmailManagerRepository,
     JWTService,
-    EmailsRepository,
+    EmailsService,
     AuthRepository,
     UsersRepository,
     LocalSqlStrategy,

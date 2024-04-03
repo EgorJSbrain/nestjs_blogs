@@ -1,3 +1,4 @@
+import { Images } from './files'
 import { RequestParams } from './request'
 
 export type BlogsRequestParams = RequestParams & {
@@ -36,9 +37,26 @@ export interface IBlogForSA {
   banInfo: BanBlogInfo
 }
 
+export interface IBlogForSA {
+  id: string
+  name: string
+  description: string
+  websiteUrl: string
+  isMembership: boolean
+  createdAt: string
+  blogOwnerInfo: BlogOwnerInfo
+  banInfo: BanBlogInfo
+}
+
 export type CreatingBlogData = {
   name: string
   description: string
   websiteUrl: string
   ownerId?: string
+}
+
+
+
+export interface IBlogWithImages extends IBlog {
+  images: Images
 }

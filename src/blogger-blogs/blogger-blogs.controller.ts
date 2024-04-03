@@ -44,8 +44,10 @@ import { IExtendedComment } from '../types/comments'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { UploadWallpaperUseCase } from './use-cases/upload-wallpaper.use-case'
-import { PipesConsumer } from '@nestjs/core/pipes'
 import { FileValidationPipe } from './pipes/file-validation.pipe'
+import { getFileMetadata } from '../utils/getFileMetadata'
+import { FilesRepository } from '../files/files.repository'
+import { FileTypeEnum } from '../enums/FileTypeEnum'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogger)
@@ -59,6 +61,7 @@ export class BlogsController {
     private usersService: UsersService,
     private JWTService: JWTService,
     private uploadWallpaperUseCase: UploadWallpaperUseCase,
+    private filesRepository: FilesRepository,
   ) {}
 
   @Get('/blogs')
@@ -562,7 +565,7 @@ export class BlogsController {
 
   @Post('/blogs/:blogId/images/wallpaper')
   @UseGuards(JWTAuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor('file'))
   async uploadWallper(
     @UploadedFile(FileValidationPipe) file: Express.Multer.File,
@@ -587,6 +590,39 @@ export class BlogsController {
       )
     }
 
-    this.uploadWallpaperUseCase.execute(currenUserId, file.originalname, file.buffer)
+    const filePath = await this.uploadWallpaperUseCase.execute(
+      currenUserId,
+      file.originalname,
+      file.buffer
+    )
+
+    if (filePath) {
+      const { size, width, height } = await getFileMetadata(file.buffer)
+
+      const createdImage = await this.filesRepository.createFile({
+        url: filePath,
+        blogId,
+        userId: currenUserId,
+        width: width ?? 0,
+        height: height ?? 0,
+        fileSize: size ?? 0,
+        size: null,
+        type: FileTypeEnum.wallpaper
+      })
+
+      if (createdImage) {
+        return {
+          wallpaper: {
+            url: createdImage.url,
+            width: createdImage.width,
+            height: createdImage.height,
+            fileSize: createdImage.fileSize,
+          },
+          main: []
+        }
+      }
+    }
+
+    return null
   }
 }

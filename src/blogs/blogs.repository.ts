@@ -1,16 +1,21 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { DataSource, EntityManager, Repository, UpdateResult } from 'typeorm';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
+import { DataSource, EntityManager, Repository, UpdateResult } from 'typeorm'
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
 
-import { CreateBlogDto } from '../dtos/blogs/create-blog.dto';
-import { ResponseBody } from '../types/request';
-import { BlogsRequestParams, CreatingBlogData, IBlogForSA } from '../types/blogs';
-import { IBlog } from '../types/blogs';
-import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto';
-import { SortDirections, SortType } from '../constants/global';
-import { BlogEntity } from '../entities/blog';
-import { UserEntity } from '../entities/user';
-import { appMessages } from '../constants/messages';
+import { CreateBlogDto } from '../dtos/blogs/create-blog.dto'
+import { ResponseBody } from '../types/request'
+import {
+  BlogsRequestParams,
+  CreatingBlogData,
+  IBlogForSA,
+  IBlogWithImages
+} from '../types/blogs'
+import { IBlog } from '../types/blogs'
+import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
+import { SortDirections, SortType } from '../constants/global'
+import { BlogEntity } from '../entities/blog'
+import { UserEntity } from '../entities/user'
+import { appMessages } from '../constants/messages'
 
 @Injectable()
 export class BlogsRepository {
@@ -77,7 +82,7 @@ export class BlogsRepository {
         description: blog.description,
         websiteUrl: blog.websiteUrl,
         isMembership: blog.isMembership,
-        createdAt: blog.createdAt,
+        createdAt: blog.createdAt
       }))
 
       return {
@@ -178,7 +183,7 @@ export class BlogsRepository {
         'blog.description',
         'blog.websiteUrl',
         'blog.createdAt',
-        'blog.isMembership',
+        'blog.isMembership'
       ])
       .where('blog.id = :id AND blog.isBanned = NOT(true)', { id })
       .getOne()
@@ -193,10 +198,7 @@ export class BlogsRepository {
   async getByIdWithBan(id: string): Promise<BlogEntity | null> {
     const blog = this.blogsRepo
       .createQueryBuilder('blog')
-      .select([
-        'blog.id',
-        'blog.isBanned',
-      ])
+      .select(['blog.id', 'blog.isBanned'])
       .where('blog.id = :id', { id })
       .getOne()
 
@@ -227,7 +229,7 @@ export class BlogsRepository {
   async createBlog(
     data: CreateBlogDto,
     ownerId?: string
-  ): Promise<BlogEntity | null> {
+  ): Promise<IBlogWithImages | null> {
     try {
       const query = this.blogsRepo.createQueryBuilder('blog')
 
@@ -249,7 +251,13 @@ export class BlogsRepository {
         return null
       }
 
-      return blog
+      return {
+        ...blog,
+        images: {
+          wallpaper: null,
+          main: []
+        }
+      }
     } catch {
       return null
     }
@@ -314,14 +322,18 @@ export class BlogsRepository {
     try {
       const banDate = isBanned ? new Date().toISOString() : null
 
-      const updatedBlog = await manager.update(BlogEntity, { id: blogId }, { isBanned, banDate })
+      const updatedBlog = await manager.update(
+        BlogEntity,
+        { id: blogId },
+        { isBanned, banDate }
+      )
 
       if (!updatedBlog) {
         return null
       }
 
       return updatedBlog
-    } catch(e) {
+    } catch (e) {
       throw new Error(appMessages().errors.somethingIsWrong)
     }
   }
