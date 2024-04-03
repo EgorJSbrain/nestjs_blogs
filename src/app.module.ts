@@ -38,6 +38,8 @@ import { ProgressesModule } from './progresses/progresses.module'
 import { GameQuestionEntity } from './entities/game-question'
 import { GameEntity } from './entities/game'
 import { BanUsersBlogsEntity } from './entities/ban-users-blogs'
+import { FilesModule } from './files/files.module'
+import { FileEntity } from './entities/files'
 
 @Module({
   imports: [
@@ -64,6 +66,7 @@ import { BanUsersBlogsEntity } from './entities/ban-users-blogs'
           GameEntity,
           GameQuestionEntity,
           BanUsersBlogsEntity,
+          FileEntity,
         ],
         autoLoadEntities: true,
         synchronize: false
@@ -102,6 +105,7 @@ import { BanUsersBlogsEntity } from './entities/ban-users-blogs'
     ProgressesModule,
     CronModule,
     BloggerBlogsModule,
+    FilesModule,
   ],
   controllers: [],
   providers: [

@@ -5,6 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn
 } from 'typeorm'
 
@@ -12,6 +13,7 @@ import { STRING_MAX_LENGTH } from '../constants/global'
 import { IBlog } from '../types/blogs'
 import { PostEntity } from './post'
 import { UserEntity } from './user'
+import { FileEntity } from './files'
 
 @Entity({
   name: 'blogs'
@@ -52,4 +54,7 @@ export class BlogEntity extends BaseEntity implements IBlog {
 
   @OneToMany(() => PostEntity, (p) => p.blog)
   posts: PostEntity[]
+
+  @OneToOne(() => FileEntity)
+  wallpaper: FileEntity
 }

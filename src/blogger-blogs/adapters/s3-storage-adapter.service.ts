@@ -21,29 +21,32 @@ export class S3StorageAdapter {
     userId: string,
     buffer: Buffer,
     key: string
-  ) {
+  ): Promise<string | null> {
     const command = new PutObjectCommand({
       Bucket: this.configService.get<string>('S3.BUCKET') ?? '',
       Key: key,
       Body: buffer,
       ContentType: 'image/png'
     });
-
     try {
-      const response = await this.s3Client.send(command);
+      const response = await this.s3Client.send(command)
 
       if (!response) {
-        return false
+        return null
       }
 
       if (response.$metadata.httpStatusCode === 200) {
-        return true
+        const bucket = this.configService.get<string>('S3.BUCKET') ?? ''
+        const region = this.configService.get<string>('S3.REGION') ?? ''
+
+        return `https://${bucket}.s3.${region}.amazonaws.com/${key}`
       } else {
-        return false
+        return null
       }
-      console.log(response);
+
     } catch (err) {
-      console.error(err);
+      console.error(err)
+      throw new Error(err)
     }
   }
 }

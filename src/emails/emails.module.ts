@@ -1,5 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { EmailsRepository } from './emails.repository';
+import { EmailsService } from './emails.service';
 import { EmailManagerRepository } from '../email-manager/email-manager.repository';
 import { EmailManagerModule } from '../email-manager/email-manager.module';
 import { MailAdapterRepository } from '../email-adapter/email-adapter.repository';
@@ -10,7 +10,7 @@ import { MailAdapterRepository } from '../email-adapter/email-adapter.repository
   providers: [
     MailAdapterRepository,
     EmailManagerRepository,
-    EmailsRepository,
+    EmailsService,
   ]
 })
 

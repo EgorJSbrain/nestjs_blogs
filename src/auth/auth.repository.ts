@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { v4 } from 'uuid'
 
-import { EmailsRepository } from '../emails/emails.repository';
+import { EmailsService } from '../emails/emails.service';
 import { CreateUserDto } from '../dtos/users/create-user.dto';
 import { LoginDto } from '../dtos/auth/login.dto';
 import { HashService } from '../hash/hash.service';
@@ -11,7 +11,7 @@ import { IExtendedUser, IUser } from '../types/users';
 @Injectable()
 export class AuthRepository {
   constructor(
-    private emailsRepository: EmailsRepository,
+    private emailsService: EmailsService,
     private usersRepository: UsersRepository,
     private hashService: HashService,
   ) {}
@@ -52,7 +52,7 @@ export class AuthRepository {
       return null
     }
 
-    this.emailsRepository.sendRegistrationConfirmationMail(
+    this.emailsService.sendRegistrationConfirmationMail(
       user.email,
       user.confirmationCode
     )
@@ -89,7 +89,7 @@ export class AuthRepository {
 
     await this.usersRepository.setNewConfirmationCodeOfUser(v4(), user.id)
 
-    return await this.emailsRepository.sendRecoveryPasswordMail(
+    return await this.emailsService.sendRecoveryPasswordMail(
       user.email,
       user.confirmationCode
     )
@@ -142,7 +142,7 @@ export class AuthRepository {
 
     await this.usersRepository.setNewConfirmationCodeOfUser(confirmationCode, user.id)
 
-    return await this.emailsRepository.sendRegistrationConfirmationMail(
+    return await this.emailsService.sendRegistrationConfirmationMail(
       user.email,
       confirmationCode
     )
