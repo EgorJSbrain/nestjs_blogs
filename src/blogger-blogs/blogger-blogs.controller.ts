@@ -10,7 +10,6 @@ import {
   HttpException,
   HttpStatus,
   Param,
-  ParseFilePipe,
   Post,
   Put,
   Query,
@@ -19,6 +18,7 @@ import {
   UseGuards,
   UseInterceptors
 } from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
 import { Request } from 'express'
 
 import { BlogsRequestParams } from '../types/blogs'
@@ -42,12 +42,16 @@ import { BloggerUsersRequestParams } from '../types/users'
 import { CommentsRepository } from '../comments/comments.repository'
 import { IExtendedComment } from '../types/comments'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
-import { FileInterceptor } from '@nestjs/platform-express'
 import { UploadWallpaperUseCase } from './use-cases/upload-wallpaper.use-case'
-import { FileValidationPipe } from './pipes/file-validation.pipe'
+import { FileWallpaperValidationPipe } from './pipes/file-wallpaper-validation.pipe'
 import { getFileMetadata } from '../utils/getFileMetadata'
 import { FilesRepository } from '../files/files.repository'
 import { FileTypeEnum } from '../enums/FileTypeEnum'
+import { FileBlogMainValidationPipe } from './pipes/file-blog-main-validation.pipe'
+import { FileValidationPipe } from './pipes/file-validation.pipe'
+import { UploadBlogMainUseCase } from './use-cases/upload-blog-main.use-case'
+import { prepareFile } from '../utils/prepareFile'
+import { FileEntity } from '../entities/files'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogger)
@@ -61,6 +65,7 @@ export class BlogsController {
     private usersService: UsersService,
     private JWTService: JWTService,
     private uploadWallpaperUseCase: UploadWallpaperUseCase,
+    private uploadBlogMainUseCase: UploadBlogMainUseCase,
     private filesRepository: FilesRepository,
   ) {}
 
@@ -568,11 +573,19 @@ export class BlogsController {
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor('file'))
   async uploadWallper(
-    @UploadedFile(FileValidationPipe) file: Express.Multer.File,
+    @UploadedFile(FileValidationPipe, FileWallpaperValidationPipe) file: Express.Multer.File,
     @Param() params: { blogId: string },
     @CurrentUserId() currenUserId: string
   ) {
-    const { blogId } = params
+    const queryRunner = this.dataSource.createQueryRunner()
+
+    try {
+      await queryRunner.connect()
+      await queryRunner.startTransaction()
+      const manager = queryRunner.manager
+
+      const { blogId } = params
+      let responseData: any | null = null
 
     if (!blogId) {
       throw new HttpException(
@@ -587,6 +600,18 @@ export class BlogsController {
       throw new HttpException(
         { message: appMessages(appMessages().blog).errors.notFound },
         HttpStatus.NOT_FOUND
+      )
+    }
+
+    const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(
+      blogId,
+      currenUserId
+    )
+
+    if (!blogOfUser) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.FORBIDDEN
       )
     }
 
@@ -608,21 +633,135 @@ export class BlogsController {
         fileSize: size ?? 0,
         size: null,
         type: FileTypeEnum.wallpaper
-      })
+      },
+      manager
+      )
 
       if (createdImage) {
-        return {
-          wallpaper: {
-            url: createdImage.url,
-            width: createdImage.width,
-            height: createdImage.height,
-            fileSize: createdImage.fileSize,
-          },
-          main: []
+        const mains =
+            await this.filesRepository.getMainByBlogId(blogId)
+
+        responseData = {
+          wallpaper: prepareFile(createdImage),
+          main: mains.length ? mains.map((main: FileEntity) => prepareFile(main)) : []
         }
       }
     }
 
-    return null
+    await queryRunner.commitTransaction()
+    return responseData
+    } catch(err) {
+      await queryRunner.rollbackTransaction()
+
+      throw new HttpException(
+        {
+          message: err.message || appMessages().errors.somethingIsWrong,
+          field: ''
+        },
+        err.status || HttpStatus.BAD_REQUEST
+      )
+    } finally {
+      await queryRunner.release()
+    }
+  }
+
+  @Post('/blogs/:blogId/images/main')
+  @UseGuards(JWTAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadMain(
+    @UploadedFile(FileValidationPipe, FileBlogMainValidationPipe) file: Express.Multer.File,
+    @Param() params: { blogId: string },
+    @CurrentUserId() currenUserId: string
+  ) {
+    const queryRunner = this.dataSource.createQueryRunner()
+
+    try {
+      await queryRunner.connect()
+      await queryRunner.startTransaction()
+      const manager = queryRunner.manager
+
+      const { blogId } = params
+      let responseData: any | null = null
+
+      if (!blogId) {
+        throw new HttpException(
+          { message: appMessages(appMessages().blogId).errors.isRequiredField },
+          HttpStatus.NOT_FOUND
+        )
+      }
+
+      const blog = await this.blogsRepository.getById(params.blogId)
+
+      if (!blog) {
+        throw new HttpException(
+          { message: appMessages(appMessages().blog).errors.notFound },
+          HttpStatus.NOT_FOUND
+        )
+      }
+
+      const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(
+        blogId,
+        currenUserId
+      )
+
+      if (!blogOfUser) {
+        throw new HttpException(
+          { message: appMessages(appMessages().blog).errors.notFound },
+          HttpStatus.FORBIDDEN
+        )
+      }
+
+      const filePath = await this.uploadBlogMainUseCase.execute(
+        currenUserId,
+        file.originalname,
+        file.buffer
+      )
+
+      if (filePath) {
+        const { size, width, height } = await getFileMetadata(file.buffer)
+
+        const createdImage = await this.filesRepository.createFile({
+          url: filePath,
+          blogId,
+          userId: currenUserId,
+          width: width ?? 0,
+          height: height ?? 0,
+          fileSize: size ?? 0,
+          size: null,
+          type: FileTypeEnum.main,
+        },
+        manager
+        )
+
+        if (createdImage) {
+          const wallpaper =
+            await this.filesRepository.getWallpaperByBlogId(blogId)
+          const mains =
+            await this.filesRepository.getMainByBlogIdWithManager(blogId, manager)
+
+          responseData = {
+            wallpaper: wallpaper ? prepareFile(wallpaper) : null,
+            main: mains.length ? mains.map((main: FileEntity) => prepareFile(main)) : []
+          }
+        }
+      }
+
+      await queryRunner.commitTransaction()
+
+      return responseData
+    } catch (err) {
+      await queryRunner.rollbackTransaction()
+
+      throw new HttpException(
+        {
+          message: err.message || appMessages().errors.somethingIsWrong,
+          field: ''
+        },
+        err.status || HttpStatus.BAD_REQUEST
+      )
+    } finally {
+      await queryRunner.release()
+    }
   }
 }

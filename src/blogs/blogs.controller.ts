@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common'
 import { Request } from 'express'
 
-import { BlogsRequestParams } from '../types/blogs'
+import { BlogsRequestParams, IBlogWithImages } from '../types/blogs'
 import { RequestParams, ResponseBody } from '../types/request'
 import { IBlog } from '../types/blogs'
 import { appMessages } from '../constants/messages'
@@ -39,8 +39,8 @@ export class BlogsController {
   }
 
   @Get(':id')
-  async getBlogById(@Param() params: { id: string }): Promise<IBlog | null> {
-    const blog = await this.blogsRepository.getById(params.id)
+  async getBlogById(@Param() params: { id: string }): Promise<IBlogWithImages | null> {
+    const blog = await this.blogsRepository.getByIdWithImages(params.id)
 
     if (!blog) {
       throw new HttpException(
