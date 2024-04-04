@@ -55,6 +55,9 @@ export class BlogEntity extends BaseEntity implements IBlog {
   @OneToMany(() => PostEntity, (p) => p.blog)
   posts: PostEntity[]
 
-  @OneToOne(() => FileEntity)
+  @OneToOne(() => FileEntity, file => file.blog, { eager: true })
   wallpaper: FileEntity
+
+  @OneToMany(() => FileEntity, file => file.blog, { eager: true })
+  main: FileEntity[]
 }

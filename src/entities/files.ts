@@ -14,6 +14,7 @@ import {
 import { IFile } from '../types/files'
 import { ImageSizeEnum } from '../enums/ImageSizeEnum'
 import { FileTypeEnum } from '../enums/FileTypeEnum'
+import { BlogEntity } from './blog'
 
 @Entity({
   name: 'files'
@@ -28,6 +29,9 @@ export class FileEntity extends BaseEntity implements IFile {
 
   @Column()
   blogId: string
+
+  @Column({ type: 'uuid', nullable: true })
+  postId?: string | null
 
   @Column()
   url: string
@@ -67,4 +71,10 @@ export class FileEntity extends BaseEntity implements IFile {
     name: 'deletedAt',
   })
   deletedAt: Date | null;
+
+  @OneToOne(() => BlogEntity)
+  @JoinColumn({
+    name: 'blogId'
+  })
+  blog: BlogEntity
 }
