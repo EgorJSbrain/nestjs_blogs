@@ -10,12 +10,13 @@ import {
   IBlogForSA,
   IBlogWithImages
 } from '../types/blogs'
-import { IBlog } from '../types/blogs'
 import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { SortDirections, SortType } from '../constants/global'
 import { BlogEntity } from '../entities/blog'
 import { UserEntity } from '../entities/user'
 import { appMessages } from '../constants/messages'
+import { prepareFile } from '../utils/prepareFile'
+import { FileEntity } from '../entities/files'
 
 @Injectable()
 export class BlogsRepository {
@@ -29,7 +30,7 @@ export class BlogsRepository {
   async getAll(
     params: BlogsRequestParams,
     ownerId?: string
-  ): Promise<ResponseBody<IBlog> | []> {
+  ): Promise<ResponseBody<IBlogWithImages> | []> {
     try {
       const {
         sortBy = 'createdAt',
@@ -65,6 +66,18 @@ export class BlogsRepository {
         .where(whereFilter, whereParams)
         .andWhere('blog.isBanned = NOT(true)')
         .select('blog.*')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('json_agg(files)', 'wallpaper')
+            .from(FileEntity, 'files')
+            .where("files.blogId = blog.id AND files.type = 'wallpaper'")
+        }, 'wallpaper')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('json_agg(files)', 'main')
+            .from(FileEntity, 'files')
+            .where("files.blogId = blog.id AND files.type = 'main'")
+        }, 'main')
         .addOrderBy(
           `blog.${sortBy}`,
           sortDirection?.toLocaleUpperCase() as SortType
@@ -82,7 +95,11 @@ export class BlogsRepository {
         description: blog.description,
         websiteUrl: blog.websiteUrl,
         isMembership: blog.isMembership,
-        createdAt: blog.createdAt
+        createdAt: blog.createdAt,
+        images: {
+          wallpaper: blog.wallpaper ? prepareFile(blog.wallpaper[0]) : null,
+          main: blog.main ? blog.main.map(main => prepareFile(main)) : []
+        }
       }))
 
       return {
@@ -117,13 +134,12 @@ export class BlogsRepository {
       const pageNumberNum = Number(pageNumber)
       const skip = (pageNumberNum - 1) * pageSizeNumber
 
-      const query = this.blogsRepo.createQueryBuilder('blog')
-
       if (searchNameTerm) {
         whereFilter = 'blog.name ILIKE :name'
       }
 
-      const searchObject = query
+      const searchObject = this.blogsRepo
+        .createQueryBuilder('blog')
         .where(whereFilter, {
           name: searchNameTerm ? `%${searchNameTerm}%` : undefined
         })
@@ -175,7 +191,7 @@ export class BlogsRepository {
   }
 
   async getById(id: string): Promise<BlogEntity | null> {
-    const blog = this.blogsRepo
+    const blog = await this.blogsRepo
       .createQueryBuilder('blog')
       .select([
         'blog.id',
@@ -193,6 +209,50 @@ export class BlogsRepository {
     }
 
     return blog
+  }
+
+  async getByIdWithImages(id: string) {
+    const blog = await this.blogsRepo
+      .createQueryBuilder('blog')
+      .select([
+        'blog.id',
+        'blog.name',
+        'blog.description',
+        'blog.websiteUrl',
+        'blog.createdAt',
+        'blog.isMembership'
+      ])
+      .where('blog.id = :id AND blog.isBanned = NOT(true)', { id })
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('json_agg(files)', 'wallpaper')
+          .from(FileEntity, 'files')
+          .where("files.blogId = blog.id AND files.type = 'wallpaper'")
+      }, 'wallpaper')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('json_agg(files)', 'main')
+          .from(FileEntity, 'files')
+          .where("files.blogId = blog.id AND files.type = 'main'")
+      }, 'main')
+      .getRawOne()
+
+    if (!blog) {
+      return null
+    }
+
+    return {
+      id: blog.blog_id,
+      name: blog.blog_name,
+      description: blog.blog_description,
+      websiteUrl: blog.blog_websiteUrl,
+      createdAt: blog.blog_createdAt,
+      isMembership: blog.blog_isMembership,
+      images: {
+        wallpaper: blog.wallpaper ? prepareFile(blog.wallpaper[0]) : null,
+        main: blog.main ? blog.main.map(main => prepareFile(main)) : []
+      }
+    }
   }
 
   async getByIdWithBan(id: string): Promise<BlogEntity | null> {

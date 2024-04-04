@@ -10,6 +10,7 @@ interface FileBase {
   size: ImageSizeEnum | null
   userId: string
   blogId: string
+  postId?: string | null
 }
 
 export interface IFile extends FileBase {
