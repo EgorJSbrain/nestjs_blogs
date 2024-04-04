@@ -15,6 +15,7 @@ import { IFile } from '../types/files'
 import { ImageSizeEnum } from '../enums/ImageSizeEnum'
 import { FileTypeEnum } from '../enums/FileTypeEnum'
 import { BlogEntity } from './blog'
+import { PostEntity } from './post'
 
 @Entity({
   name: 'files'
@@ -76,5 +77,12 @@ export class FileEntity extends BaseEntity implements IFile {
   @JoinColumn({
     name: 'blogId'
   })
+
   blog: BlogEntity
+
+  @ManyToOne(() => PostEntity)
+  @JoinColumn({
+    name: 'postId'
+  })
+  post: PostEntity
 }

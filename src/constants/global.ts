@@ -8,6 +8,8 @@ export const IMG_MAX_SIZE = 100000
 export const BLOG_WALLPAPER_IMG_MAX_WIDTH = 1028
 export const BLOG_WALLPAPER_IMG_MAX_HEIGHT = 312
 export const BLOG_MAIN_IMG_MAX = 156
+export const POST_MAIN_IMG_MAX_WIDTH = 940
+export const POST_MAIN_IMG_MAX_HEIGHT = 432
 export const LOGIN_REGEX = /^[a-zA-Z0-9_-]*$/
 export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[0-9])(?=.*[A-Z]).+$/
 export const EMAIL_REGEX =
