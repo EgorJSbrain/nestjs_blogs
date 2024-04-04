@@ -69,6 +69,18 @@ export class FilesRepository {
     return main
   }
 
+  async getMainByPostId(
+    postId: string,
+    manager: EntityManager
+  ): Promise<FileEntity[] | []> {
+    return await manager.find(FileEntity, {
+      where: {
+        postId,
+        type: FileTypeEnum.main
+      }
+    })
+  }
+
   async getMainByBlogIdWithManager(
     blogId: string,
     manager: EntityManager

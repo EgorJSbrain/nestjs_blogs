@@ -26,10 +26,14 @@ import { S3StorageAdapter } from './adapters/s3-storage-adapter.service';
 import { FilesRepository } from '../files/files.repository';
 import { FileEntity } from '../entities/files';
 import { UploadBlogMainUseCase } from './use-cases/upload-blog-main.use-case';
+import { UploadPostMainUseCase } from './use-cases/upload-post-main.use-case';
+import { ResizeImagePostMainUseCase } from './use-cases/resize-image-post-main.use-case';
 
 const useCases = [
   UploadWallpaperUseCase,
-  UploadBlogMainUseCase
+  UploadBlogMainUseCase,
+  UploadPostMainUseCase,
+  ResizeImagePostMainUseCase,
 ]
 
 @Module({

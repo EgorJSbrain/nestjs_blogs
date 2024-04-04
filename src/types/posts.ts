@@ -1,3 +1,6 @@
+import { Image } from './files'
+import { IExtendedLikesForPostInfo } from './likes'
+
 export interface IPost {
   id: string
   blogId: string
@@ -7,9 +10,12 @@ export interface IPost {
   createdAt: string
 }
 
-export interface IExtendedPost extends IPost{
+export interface IExtendedPost extends IPost {
   blogName: string
-  extendedLikesInfo?: any
+  extendedLikesInfo?: IExtendedLikesForPostInfo
+  images?: {
+    main: Image[]
+  }
 }
 
 export interface ICreatePostType {
