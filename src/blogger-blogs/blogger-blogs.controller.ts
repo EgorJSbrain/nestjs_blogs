@@ -52,6 +52,11 @@ import { FileValidationPipe } from './pipes/file-validation.pipe'
 import { UploadBlogMainUseCase } from './use-cases/upload-blog-main.use-case'
 import { prepareFile } from '../utils/prepareFile'
 import { FileEntity } from '../entities/files'
+import { ResizeImagePostMainUseCase } from './use-cases/resize-image-post-main.use-case'
+import { UploadPostMainUseCase } from './use-cases/upload-post-main.use-case'
+import { FilePostMainValidationPipe } from './pipes/file-post-main-validation.pipe'
+import sharp from 'sharp'
+import { Image } from 'src/types/files'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogger)
@@ -66,6 +71,8 @@ export class BlogsController {
     private JWTService: JWTService,
     private uploadWallpaperUseCase: UploadWallpaperUseCase,
     private uploadBlogMainUseCase: UploadBlogMainUseCase,
+    private uploadPostMainUseCase: UploadPostMainUseCase,
+    private resizeImagePostMainUseCase: ResizeImagePostMainUseCase,
     private filesRepository: FilesRepository,
   ) {}
 
@@ -291,6 +298,104 @@ export class BlogsController {
     const post = await this.postsRepository.getByIdWithLikes(newPost.id)
 
     return post
+  }
+
+  @Post('/blogs/:blogId/posts/:postId/images/main')
+  @UseGuards(JWTAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadImageForPost(
+    @UploadedFile(FileValidationPipe, FilePostMainValidationPipe) file: Express.Multer.File,
+    @Param() params: { blogId: string, postId: string },
+    @CurrentUserId() userId: string
+  ): Promise<{ main: Image[] } | null> {
+    const queryRunner = this.dataSource.createQueryRunner()
+
+    try {
+      await queryRunner.connect()
+      await queryRunner.startTransaction()
+      const manager = queryRunner.manager
+
+      const { blogId, postId } = params
+      const blog = await this.blogsRepository.getById(blogId)
+
+      if (!blog) {
+        throw new HttpException(
+          { message: appMessages(appMessages().blog).errors.notFound, field: '' },
+          HttpStatus.NOT_FOUND
+        )
+      }
+
+      const blogOfUser = await this.blogsRepository.getByIdAndOwnerId(
+        blogId,
+        userId
+      )
+
+      if (!blogOfUser) {
+        throw new HttpException(
+          { message: appMessages(appMessages().blog).errors.notFound },
+          HttpStatus.FORBIDDEN
+        )
+      }
+
+      const post = await this.postsRepository.getById(postId)
+
+      if (!post) {
+        throw new HttpException(
+          { message: appMessages(appMessages().post).errors.notFound, field: '' },
+          HttpStatus.NOT_FOUND
+        )
+      }
+
+      const resizedFiles = await this.resizeImagePostMainUseCase.execute(file.buffer)
+      const uploaded = resizedFiles?.map((resizedFile) =>
+        this.uploadPostMainUseCase.execute(userId, file.originalname, resizedFile)
+      )
+
+      if (!uploaded) {
+        return null
+      }
+
+      const uploadedFiles = await Promise.all(uploaded)
+
+      const createdFiles = uploadedFiles.map(async(uploadedFile) => {
+        if (uploadedFile) {
+          return await this.filesRepository.createFile({
+            url: uploadedFile.url,
+            blogId,
+            userId,
+            width: uploadedFile.width,
+            height: uploadedFile.height,
+            fileSize: uploadedFile.fileSize ?? 0,
+            size: uploadedFile.size ? uploadedFile.size : null,
+            type: FileTypeEnum.main,
+            postId
+          },
+          manager
+          )
+        }
+      })
+
+      await Promise.all(createdFiles)
+
+      const mains = await this.filesRepository.getMainByPostId(postId, manager)
+
+      await queryRunner.commitTransaction()
+
+      return { main: mains.map(main => prepareFile(main)) }
+    } catch(err) {
+      await queryRunner.rollbackTransaction()
+
+      throw new HttpException(
+        {
+          message: err.message || appMessages().errors.somethingIsWrong,
+          field: ''
+        },
+        err.status || HttpStatus.BAD_REQUEST
+      )
+    } finally {
+      await queryRunner.release()
+    }
   }
 
   @Put('/blogs/:blogId/posts/:postId')

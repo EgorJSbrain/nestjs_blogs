@@ -12,6 +12,7 @@ import { BlogEntity } from './blog'
 import { IPost } from '../types/posts'
 import { PostLikeEntity } from './post-like'
 import { CommentEntity } from './comment'
+import { FileEntity } from './files'
 
 @Entity({
   name: 'posts'
@@ -43,4 +44,7 @@ export class PostEntity extends BaseEntity implements IPost {
 
   @OneToMany(() => CommentEntity, comment => comment.post)
   comments: CommentEntity[]
+
+  @OneToMany(() => FileEntity, file => file.post)
+  main: FileEntity[]
 }

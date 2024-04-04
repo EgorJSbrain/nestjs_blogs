@@ -17,6 +17,8 @@ import { BlogEntity } from '../entities/blog';
 import { PostLikeEntity } from '../entities/post-like';
 import { formatLikes } from '../utils/formatLikes';
 import { appMessages } from '../constants/messages';
+import { FileEntity } from 'src/entities/files';
+import { prepareFile } from 'src/utils/prepareFile';
 
 @Injectable()
 export class PostsRepository {
@@ -90,6 +92,12 @@ export class PostsRepository {
               userId: userId
             })
         }, 'myStatus')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('json_agg(files)', 'main')
+            .from(FileEntity, 'files')
+            .where("files.postId = post.id AND files.type = 'main'")
+        }, 'main')
         .addOrderBy(
           sortBy === 'blogName' ? 'blogname' : `post.${sortBy}`,
           sortDirection?.toLocaleUpperCase() as SortType
@@ -111,6 +119,9 @@ export class PostsRepository {
           likesCount: Number(post.likesCount ?? 0),
           dislikesCount: Number(post.dislikesCount ?? 0),
           myStatus: post.myStatus ? post.myStatus : LikeStatusEnum.none
+        },
+        images: {
+          main: post.main ? post.main.map(main => prepareFile(main)) : []
         }
       }))
 
@@ -199,8 +210,6 @@ export class PostsRepository {
         .createQueryBuilder()
         .select('post.*')
         .where('post.id = :id', { id })
-        // .leftJoinAndSelect('post.user', 'user')
-        // .andWhere('post.authorId = user.id AND user.isBanned = NOT(true)')
         .addSelect((subQuery) => {
           return subQuery
             .select('blog.name', 'blogname')
@@ -232,6 +241,12 @@ export class PostsRepository {
               userId
             })
         }, 'myStatus')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('json_agg(files)', 'main')
+            .from(FileEntity, 'files')
+            .where("files.postId = post.id AND files.type = 'main'")
+        }, 'main')
         .getRawOne()
 
     const likeQuery = this.postLikesRepo.createQueryBuilder(
@@ -262,6 +277,9 @@ export class PostsRepository {
         dislikesCount: Number(post.dislikesCount),
         myStatus: post.myStatus ? post.myStatus : LikeStatusEnum.none,
         newestLikes: formatLikes(newestLikes) || []
+      },
+      images: {
+        main: post.main ? post.main.map(main => prepareFile(main)) : []
       }
     }
     } catch(e) {
