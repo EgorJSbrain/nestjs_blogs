@@ -23,7 +23,10 @@
     "migration:create": "yarn run typeorm migration:create",
     "migrate": "yarn run typeorm migration:run -d ./typeOrm.config.ts",
     "migrate:revert": "yarn run typeorm migration:revert -d ./typeOrm.config.ts",
-    "seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed"
+    "seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
+    "start:docker": "docker-compose up",
+    "stop:docker": "docker-compose down",
+    "docker:build": "docker build -t nk_api ."
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.540.0",
