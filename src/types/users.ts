@@ -22,6 +22,7 @@ export interface IUser {
   email: string
   createdAt: string
   banInfo?: UserBanInfo
+  telegramId?: string | null
 }
 
 export interface IExtendedUser extends IUser {

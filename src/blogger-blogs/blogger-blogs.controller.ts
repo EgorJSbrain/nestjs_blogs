@@ -55,8 +55,7 @@ import { FileEntity } from '../entities/files'
 import { ResizeImagePostMainUseCase } from './use-cases/resize-image-post-main.use-case'
 import { UploadPostMainUseCase } from './use-cases/upload-post-main.use-case'
 import { FilePostMainValidationPipe } from './pipes/file-post-main-validation.pipe'
-import sharp from 'sharp'
-import { Image } from 'src/types/files'
+import { Image } from '../types/files'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogger)

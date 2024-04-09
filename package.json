@@ -26,7 +26,8 @@
     "seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
     "start:docker": "docker-compose up",
     "stop:docker": "docker-compose down",
-    "docker:build": "docker build -t nk_api ."
+    "docker:build": "docker build -t nk_api .",
+    "ngrok:dev": "ngrok http 5000"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.540.0",
@@ -40,6 +41,8 @@
     "@nestjs/schedule": "^4.0.1",
     "@nestjs/throttler": "^5.1.1",
     "@nestjs/typeorm": "^10.0.1",
+    "@ngrok/ngrok": "^1.2.0",
+    "axios": "^1.6.8",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
@@ -48,6 +51,7 @@
     "date-fns": "^2.30.0",
     "mongoose": "^8.0.0",
     "mysql2": "^3.6.5",
+    "ngrok": "^5.0.0-beta.2",
     "nodemailer": "^6.9.7",
     "passport": "^0.7.0",
     "passport-http": "^0.3.0",

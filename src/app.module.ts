@@ -40,6 +40,9 @@ import { GameEntity } from './entities/game'
 import { BanUsersBlogsEntity } from './entities/ban-users-blogs'
 import { FilesModule } from './files/files.module'
 import { FileEntity } from './entities/files'
+import { TelegramAdapter } from './adapters/telegram.adapter'
+import { IntegrationsModule } from './integrations/integrations.module'
+import { UsersBlogsEntity } from './entities/users-blogs'
 
 @Module({
   imports: [
@@ -67,6 +70,7 @@ import { FileEntity } from './entities/files'
           GameQuestionEntity,
           BanUsersBlogsEntity,
           FileEntity,
+          UsersBlogsEntity,
         ],
         autoLoadEntities: true,
         synchronize: false
@@ -106,13 +110,15 @@ import { FileEntity } from './entities/files'
     CronModule,
     BloggerBlogsModule,
     FilesModule,
+    IntegrationsModule
   ],
   controllers: [],
   providers: [
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard
-    }
+    },
+    TelegramAdapter
   ]
 })
 export class AppModule {}
