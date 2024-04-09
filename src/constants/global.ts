@@ -29,7 +29,8 @@ export enum RoutesEnum {
   users = 'users',
   comments = 'comments',
   devices = 'security/devices',
-  testing_all_data = 'testing/all-data'
+  testing_all_data = 'testing/all-data',
+  integrations = 'integrations'
 }
 
 export enum SortDirectionsEnum {

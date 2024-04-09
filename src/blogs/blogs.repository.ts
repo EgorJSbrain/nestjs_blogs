@@ -17,6 +17,7 @@ import { UserEntity } from '../entities/user'
 import { appMessages } from '../constants/messages'
 import { prepareFile } from '../utils/prepareFile'
 import { FileEntity } from '../entities/files'
+import { UsersBlogsEntity } from '../entities/users-blogs'
 
 @Injectable()
 export class BlogsRepository {
@@ -24,7 +25,10 @@ export class BlogsRepository {
     @InjectDataSource() protected dataSource: DataSource,
 
     @InjectRepository(BlogEntity)
-    private readonly blogsRepo: Repository<BlogEntity>
+    private readonly blogsRepo: Repository<BlogEntity>,
+
+    @InjectRepository(UsersBlogsEntity)
+    private readonly usersBlogsRepo: Repository<UsersBlogsEntity>
   ) {}
 
   async getAll(
@@ -321,6 +325,25 @@ export class BlogsRepository {
     } catch {
       return null
     }
+  }
+
+  async subscribeBlog(
+    blogId: string,
+    userId: string
+  ) {
+    const newSubscription = this.usersBlogsRepo.create()
+
+    newSubscription.blogId = blogId
+    newSubscription.userId = userId
+
+    return await newSubscription.save()
+  }
+
+  async unsubscribeBlog(
+    blogId: string,
+    userId: string
+  ) {
+    return this.usersBlogsRepo.softDelete({ blogId, userId })
   }
 
   async updateBlog(

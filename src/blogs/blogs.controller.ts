@@ -1,12 +1,16 @@
 import { SkipThrottle } from '@nestjs/throttler'
 import {
   Controller,
+  Delete,
   Get,
+  HttpCode,
   HttpException,
   HttpStatus,
   Param,
+  Post,
   Query,
-  Req
+  Req,
+  UseGuards
 } from '@nestjs/common'
 import { Request } from 'express'
 
@@ -19,6 +23,8 @@ import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
 import { BlogsRepository } from './blogs.repository'
 import { PostsRepository } from '../posts/posts.repository'
+import { JWTAuthGuard } from 'src/auth/guards/jwt-auth.guard'
+import { CurrentUserId } from 'src/auth/current-user-id.param.decorator'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogs)
@@ -26,7 +32,7 @@ export class BlogsController {
   constructor(
     private blogsRepository: BlogsRepository,
     private postsRepository: PostsRepository,
-    private JWTService: JWTService,
+    private JWTService: JWTService
   ) {}
 
   @Get()
@@ -39,7 +45,9 @@ export class BlogsController {
   }
 
   @Get(':id')
-  async getBlogById(@Param() params: { id: string }): Promise<IBlogWithImages | null> {
+  async getBlogById(
+    @Param() params: { id: string }
+  ): Promise<IBlogWithImages | null> {
     const blog = await this.blogsRepository.getByIdWithImages(params.id)
 
     if (!blog) {
@@ -90,8 +98,76 @@ export class BlogsController {
       }
     }
 
-    const posts = await this.postsRepository.getAll(query, currentUserId, blog.id)
+    const posts = await this.postsRepository.getAll(
+      query,
+      currentUserId,
+      blog.id
+    )
 
     return posts
+  }
+
+  @Post(':blogId/subscription')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JWTAuthGuard)
+  async subscribeToBlog(
+    @CurrentUserId() userId: string,
+    @Param() params: { blogId: string }
+  ) {
+    const { blogId } = params
+
+    if (!params.blogId) {
+      throw new HttpException(
+        {
+          message: appMessages(appMessages().blogId).errors.isRequiredParameter,
+          field: ''
+        },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const blog = await this.blogsRepository.getById(params.blogId)
+
+    if (!blog) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    await this.blogsRepository.subscribeBlog(blogId, userId)
+
+    return
+  }
+
+  @Delete(':blogId/subscription')
+  @UseGuards(JWTAuthGuard)
+  async unsubscribeToBlog(
+    @CurrentUserId() userId: string,
+    @Param() params: { blogId: string }
+  ) {
+    const { blogId } = params
+
+    if (!params.blogId) {
+      throw new HttpException(
+        {
+          message: appMessages(appMessages().blogId).errors.isRequiredParameter,
+          field: ''
+        },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    const blog = await this.blogsRepository.getById(params.blogId)
+
+    if (!blog) {
+      throw new HttpException(
+        { message: appMessages(appMessages().blog).errors.notFound },
+        HttpStatus.NOT_FOUND
+      )
+    }
+
+    await this.blogsRepository.unsubscribeBlog(blogId, userId)
+    return
   }
 }

@@ -19,6 +19,7 @@ import { CommentsRepository } from '../comments/comments.repository';
 import { HashService } from '../hash/hash.service';
 import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
 import { CommentEntity } from '../entities/comment';
+import { UsersBlogsEntity } from '../entities/users-blogs';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { CommentEntity } from '../entities/comment';
       UserEntity,
       BanUsersBlogsEntity,
       CommentEntity,
+      UsersBlogsEntity,
     ]),
     LikesModule
   ],
