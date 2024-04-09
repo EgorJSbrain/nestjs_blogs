@@ -3,6 +3,8 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   OneToOne,
@@ -60,4 +62,16 @@ export class BlogEntity extends BaseEntity implements IBlog {
 
   @OneToMany(() => FileEntity, file => file.blog, { eager: true })
   main: FileEntity[]
+
+  // @ManyToMany(() => UserEntity, (user) => user.blogs)
+  // @JoinTable({
+  //   name: 'users_blogs',
+  //   joinColumn: {
+  //     name: 'blogId',
+  //   },
+  //   inverseJoinColumn: {
+  //     name: 'userId',
+  //   },
+  // })
+  // categories: UserEntity[];
 }

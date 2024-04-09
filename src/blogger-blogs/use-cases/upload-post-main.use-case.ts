@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { S3StorageAdapter } from '../adapters/s3-storage-adapter.service'
+import { S3StorageAdapter } from '../../adapters/s3-storage.adapter'
 import { ImageSizeEnum } from 'src/enums/ImageSizeEnum'
 import { IImageMainForPost, Image } from 'src/types/files'
 

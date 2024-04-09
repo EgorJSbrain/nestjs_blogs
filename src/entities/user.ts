@@ -2,6 +2,8 @@ import {
   BaseEntity,
   Column,
   Entity,
+  JoinTable,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn
 } from 'typeorm'
@@ -47,6 +49,9 @@ export class UserEntity extends BaseEntity implements IExtendedUser {
   @Column()
   passwordSalt: string
 
+  @Column({ nullable: true })
+  telegramId?: string
+
   @Column({ default: false })
   isConfirmed: boolean
 
@@ -70,4 +75,16 @@ export class UserEntity extends BaseEntity implements IExtendedUser {
 
   @OneToMany(() => AnswerEntity, answer => answer.user)
   answers: AnswerEntity[]
+
+  // @ManyToMany(() => BlogEntity, (blog) => blog.user)
+  // @JoinTable({
+  //   name: 'users_blogs',
+  //   joinColumn: {
+  //     name: 'blogId',
+  //   },
+  //   inverseJoinColumn: {
+  //     name: 'userId',
+  //   },
+  // })
+  // blogs: BlogEntity[];
 }
