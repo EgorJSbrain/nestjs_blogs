@@ -33,6 +33,7 @@ import { PostsRepository } from './posts.repository'
 import { UsersRepository } from '../users/users.repository'
 import { CommentsRepository } from '../comments/comments.repository'
 import { BlogsRepository } from '../blogs/blogs.repository'
+import { GetUserIdFromTokenUserUseCase } from '../use-cases/get-user_id-from-token.use-case'
 
 @SkipThrottle()
 @Controller(RoutesEnum.posts)
@@ -40,7 +41,7 @@ export class PostsController {
   constructor(
     private postsRepository: PostsRepository,
     private usersRepository: UsersRepository,
-    private JWTService: JWTService,
+    private getUserIdFromTokenUserUseCase: GetUserIdFromTokenUserUseCase,
     private CommentsRepository: CommentsRepository,
     private blogssRepository: BlogsRepository,
   ) {}
@@ -50,13 +51,7 @@ export class PostsController {
     @Query() query: RequestParams,
     @Req() req: Request,
   ): Promise<ResponseBody<IExtendedPost> | []> {
-    let currentUserId: string | null = null
-
-    if (req.headers.authorization) {
-      const token = req.headers.authorization.split(' ')[1]
-      const { userId } = this.JWTService.verifyAccessToken(token)
-      currentUserId = userId || null
-    }
+    const currentUserId = this.getUserIdFromTokenUserUseCase.execute(req)
 
     const posts = await this.postsRepository.getAll(query, currentUserId)
 
@@ -87,13 +82,7 @@ export class PostsController {
       )
     }
 
-    let currentUserId: string | null = null
-
-    if (req.headers.authorization) {
-      const token = req.headers.authorization.split(' ')[1]
-      const { userId } = this.JWTService.verifyAccessToken(token)
-      currentUserId = userId || null
-    }
+    const currentUserId = this.getUserIdFromTokenUserUseCase.execute(req)
 
     const comments = await this.CommentsRepository.getAll(query, postId, currentUserId)
 
@@ -105,13 +94,7 @@ export class PostsController {
     @Param() params: { id: string },
     @Req() req: Request,
   ): Promise<IExtendedPost | null> {
-    let currentUserId: string | undefined
-
-    if (req.headers.authorization) {
-      const token = req.headers.authorization.split(' ')[1]
-      const { userId } = this.JWTService.verifyAccessToken(token)
-      currentUserId = userId
-    }
+    const currentUserId = this.getUserIdFromTokenUserUseCase.execute(req)
 
     const post = await this.postsRepository.getByIdWithLikes(
       params.id,
