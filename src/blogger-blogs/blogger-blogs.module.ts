@@ -29,6 +29,7 @@ import { UploadBlogMainUseCase } from './use-cases/upload-blog-main.use-case';
 import { UploadPostMainUseCase } from './use-cases/upload-post-main.use-case';
 import { ResizeImagePostMainUseCase } from './use-cases/resize-image-post-main.use-case';
 import { UsersBlogsEntity } from '../entities/users-blogs';
+import { TelegramAdapter } from 'src/adapters/telegram.adapter';
 
 const useCases = [
   UploadWallpaperUseCase,
@@ -67,6 +68,7 @@ const useCases = [
     CommentsRepository,
     S3StorageAdapter,
     FilesRepository,
+    TelegramAdapter,
     ...useCases
   ]
 })

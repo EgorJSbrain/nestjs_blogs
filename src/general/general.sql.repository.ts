@@ -13,30 +13,32 @@ export class GeneralSqlRepository {
     const queryDevices = `DELETE FROM public.devices`
     const queryPosts = `DELETE FROM public.posts`
     const queryPostsLikes = `DELETE FROM public.posts_likes`
-    const queryCommentsLikes = `DELETE FROM public.comments_likes`
-    const queryComments = `DELETE FROM public.comments`
+    // const queryCommentsLikes = `DELETE FROM public.comments_likes`
+    // const queryComments = `DELETE FROM public.comments`
     const queryBlogs = `DELETE FROM public.blogs`
-    const queryQuestions = `DELETE FROM public.questions`
-    const queryProgresses = `DELETE FROM public.progresses`
-    const queryGames = `DELETE FROM public.games`
-    const queryGameQuestions = `DELETE FROM public.game_questions`
-    const queryAnswers = `DELETE FROM public.answers`
-    const queryBanUsersBlogs = `DELETE FROM public.ban_users_blogs`
+    // const queryQuestions = `DELETE FROM public.questions`
+    // const queryProgresses = `DELETE FROM public.progresses`
+    // const queryGames = `DELETE FROM public.games`
+    // const queryGameQuestions = `DELETE FROM public.game_questions`
+    // const queryAnswers = `DELETE FROM public.answers`
+    // const queryBanUsersBlogs = `DELETE FROM public.ban_users_blogs`
     const queryFiles = `DELETE FROM public.files`
-    await this.dataSource.query(queryCommentsLikes)
+    const queryUsersBlogs = `DELETE FROM public.users_blogs`
+    // await this.dataSource.query(queryCommentsLikes)
     await this.dataSource.query(queryFiles)
-    await this.dataSource.query(queryBanUsersBlogs)
-    await this.dataSource.query(queryAnswers)
-    await this.dataSource.query(queryGameQuestions)
-    await this.dataSource.query(queryGames)
-    await this.dataSource.query(queryProgresses)
-    await this.dataSource.query(queryComments)
+    // await this.dataSource.query(queryBanUsersBlogs)
+    // await this.dataSource.query(queryAnswers)
+    // await this.dataSource.query(queryGameQuestions)
+    // await this.dataSource.query(queryGames)
+    // await this.dataSource.query(queryProgresses)
+    // await this.dataSource.query(queryComments)
     await this.dataSource.query(queryPostsLikes)
     await this.dataSource.query(queryDevices)
     await this.dataSource.query(queryPosts)
+    await this.dataSource.query(queryUsersBlogs)
     await this.dataSource.query(queryBlogs)
     await this.dataSource.query(queryUsers)
-    await this.dataSource.query(queryQuestions)
+    // await this.dataSource.query(queryQuestions)
     return true
   }
 }

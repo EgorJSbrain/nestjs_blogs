@@ -15,6 +15,7 @@ import {
 import { UserEntity } from '../entities/user'
 import { UserBanStatusEnum } from '../enums/UserBanStatusEnum'
 import { BanUsersBlogsEntity } from '../entities/ban-users-blogs'
+import { UpdateUserDto } from '../dtos/users/update-user.dto'
 
 @Injectable()
 export class UsersRepository {
@@ -119,6 +120,19 @@ export class UsersRepository {
     return user
   }
 
+  async getUserByConfirmationTelegramCode(code: string): Promise<UserEntity | null> {
+    const user = this.usersRepo
+      .createQueryBuilder('user')
+      .where('user.confirmationTelegramCode = :code', { code })
+      .getOne()
+
+    if (!user) {
+      return null
+    }
+
+    return user
+  }
+
   async getUserByLoginOrEmail(
     loginOrEmail: string
   ): Promise<IExtendedUser | null> {
@@ -190,6 +204,25 @@ export class UsersRepository {
     }
 
     return user
+  }
+
+  async updateUser(
+    userId: string,
+    data: UpdateUserDto,
+  ): Promise<boolean> {
+
+    const updatedBlog = await this.usersRepo
+      .createQueryBuilder('user')
+      .update()
+      .set(data)
+      .where('id = :id', { id: userId })
+      .execute()
+
+    if (!updatedBlog.affected) {
+      return false
+    }
+
+    return true
   }
 
   async getUserByVerificationCode(code: string): Promise<IExtendedUser | null> {

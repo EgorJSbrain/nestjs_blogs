@@ -4,11 +4,15 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm'
 
 import { IUsersBlogs } from '../types/users-blogs'
+import { SubscriptionStatusEnum } from '../enums/SubscriptionStatusEnum'
+import { UserEntity } from './user'
 
 @Entity({
   name: 'users_blogs'
@@ -22,6 +26,15 @@ export class UsersBlogsEntity extends BaseEntity implements IUsersBlogs {
 
   @Column()
   blogId: string
+
+  @Column({ type: 'enum', enum: SubscriptionStatusEnum })
+  status: SubscriptionStatusEnum | null
+
+  @ManyToOne(() => UserEntity, { eager: true })
+  @JoinColumn({
+    name: 'userId'
+  })
+  user: UserEntity
 
   @CreateDateColumn({
     type: 'timestamp',

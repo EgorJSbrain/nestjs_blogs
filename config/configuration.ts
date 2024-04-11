@@ -8,6 +8,7 @@ export default () => ({
   ACCESS_SECRET_KEY: process.env.ACCESS_SECRET_KEY ?? '',
   REFRESH_SECRET_KEY: process.env.REFRESH_SECRET_KEY ?? '',
   TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN ?? '',
+  TELEGRAM_BOT_LINK: process.env.TELEGRAM_BOT_LINK ?? '',
   DB: {
     DIALECT: process.env.DB_DIALECT,
     HOST: process.env.DB_HOST,

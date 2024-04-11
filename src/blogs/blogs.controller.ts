@@ -23,8 +23,9 @@ import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
 import { BlogsRepository } from './blogs.repository'
 import { PostsRepository } from '../posts/posts.repository'
-import { JWTAuthGuard } from 'src/auth/guards/jwt-auth.guard'
-import { CurrentUserId } from 'src/auth/current-user-id.param.decorator'
+import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { CurrentUserId } from '../auth/current-user-id.param.decorator'
+import { SubscriptionStatusEnum } from '../enums/SubscriptionStatusEnum'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogs)
@@ -37,18 +38,50 @@ export class BlogsController {
 
   @Get()
   async getAll(
-    @Query() query: BlogsRequestParams
+    @Query() query: BlogsRequestParams,
+    @Req() req: Request
   ): Promise<ResponseBody<IBlog> | []> {
-    const blogs = await this.blogsRepository.getAll(query)
+    let currentUserId: string | null = null
+
+    if (req.headers.authorization) {
+      const token = req.headers.authorization.split(' ')[1]
+      try {
+        const { userId } = this.JWTService.verifyAccessToken(token)
+
+        currentUserId = userId || null
+      } catch {
+        currentUserId = null
+      }
+    }
+
+    const blogs = await this.blogsRepository.getAll({
+      params: query,
+      ownerId: undefined,
+      userId: currentUserId
+    })
 
     return blogs
   }
 
   @Get(':id')
   async getBlogById(
-    @Param() params: { id: string }
+    @Param() params: { id: string },
+    @Req() req: Request
   ): Promise<IBlogWithImages | null> {
-    const blog = await this.blogsRepository.getByIdWithImages(params.id)
+    let currentUserId: string | null = null
+
+    if (req.headers.authorization) {
+      const token = req.headers.authorization.split(' ')[1]
+      try {
+        const { userId } = this.JWTService.verifyAccessToken(token)
+
+        currentUserId = userId || null
+      } catch {
+        currentUserId = null
+      }
+    }
+
+    const blog = await this.blogsRepository.getByIdWithImages(params.id, currentUserId)
 
     if (!blog) {
       throw new HttpException(
@@ -126,7 +159,7 @@ export class BlogsController {
       )
     }
 
-    const blog = await this.blogsRepository.getById(params.blogId)
+    const blog = await this.blogsRepository.getByIdWithSubscriptionInfo(params.blogId, userId)
 
     if (!blog) {
       throw new HttpException(
@@ -135,7 +168,19 @@ export class BlogsController {
       )
     }
 
-    await this.blogsRepository.subscribeBlog(blogId, userId)
+    if (blog.status === SubscriptionStatusEnum.Subscribed) {
+      return
+    } else if (blog.status === SubscriptionStatusEnum.Unsubscribed) {
+      await this.blogsRepository.updateSubscribscriptionBlog(
+        blogId,
+        userId,
+        SubscriptionStatusEnum.Subscribed
+      )
+
+      return
+    }
+
+    await this.blogsRepository.createSubscribscriptionBlog(blogId, userId)
 
     return
   }
@@ -167,7 +212,11 @@ export class BlogsController {
       )
     }
 
-    await this.blogsRepository.unsubscribeBlog(blogId, userId)
+    await this.blogsRepository.updateSubscribscriptionBlog(
+      blogId,
+      userId,
+      SubscriptionStatusEnum.Unsubscribed
+    )
     return
   }
 }
