@@ -18,7 +18,14 @@ import { appMessages } from '../constants/messages'
 import { prepareFile } from '../utils/prepareFile'
 import { FileEntity } from '../entities/files'
 import { UsersBlogsEntity } from '../entities/users-blogs'
+import { SubscriptionStatusEnum } from '../enums/SubscriptionStatusEnum'
 
+
+type Params = {
+  params: BlogsRequestParams,
+  ownerId?: string
+  userId?: string | null
+}
 @Injectable()
 export class BlogsRepository {
   constructor(
@@ -31,10 +38,11 @@ export class BlogsRepository {
     private readonly usersBlogsRepo: Repository<UsersBlogsEntity>
   ) {}
 
-  async getAll(
-    params: BlogsRequestParams,
-    ownerId?: string
-  ): Promise<ResponseBody<IBlogWithImages> | []> {
+  async getAll({
+    params,
+    ownerId,
+    userId
+  }: Params): Promise<ResponseBody<IBlogWithImages> | []> {
     try {
       const {
         sortBy = 'createdAt',
@@ -89,22 +97,62 @@ export class BlogsRepository {
         .skip(skip)
         .take(pageSizeNumber)
 
-      const blogs = await searchObject.getRawMany<BlogEntity>()
+      if (userId) {
+        searchObject.addSelect((subQuery) => {
+          return subQuery
+            .select('count(*)', 'subscribersCount')
+            .from(UsersBlogsEntity, 'users_blogs')
+            .where(
+              'users_blogs.blogId = blog.id AND users_blogs.userId = :userId',
+              { userId }
+            )
+        }, 'subscribersCount')
+      }
+
+      if (userId) {
+        query.addSelect((subQuery) => {
+          return subQuery
+            .select('users_blogs.status', 'subscriptionStatus')
+            .from(UsersBlogsEntity, 'users_blogs')
+            .where(
+              'users_blogs.userId = :userId AND users_blogs.blogId = blog.id',
+              { userId }
+            )
+        }, 'subscriptionStatus')
+      }
+
+      const blogs = await searchObject.getRawMany()
       const count = await searchObject.getCount()
       const pagesCount = Math.ceil(count / pageSizeNumber)
 
-      const preparedBlogs = blogs.map((blog) => ({
-        id: blog.id,
-        name: blog.name,
-        description: blog.description,
-        websiteUrl: blog.websiteUrl,
-        isMembership: blog.isMembership,
-        createdAt: blog.createdAt,
-        images: {
-          wallpaper: blog.wallpaper ? prepareFile(blog.wallpaper[0]) : null,
-          main: blog.main ? blog.main.map(main => prepareFile(main)) : []
+      const preparedBlogs = blogs.map((blog) => {
+        const subscibersCount =
+          Number(blog.subscribersCount) === 0
+            ? null
+            : Number(blog.subscribersCount)
+        const preparedBlog = {
+          id: blog.id,
+          name: blog.name,
+          description: blog.description,
+          websiteUrl: blog.websiteUrl,
+          isMembership: blog.isMembership,
+          createdAt: blog.createdAt,
+          images: {
+            wallpaper: blog.wallpaper ? prepareFile(blog.wallpaper[0]) : null,
+            main: blog.main ? blog.main.map((main) => prepareFile(main)) : []
+          },
+          subscribersCount: null
+          // subscribersCount: subscibersCount,
+          // currentUserSubscriptionStatus: blog.subscriptionStatus
+        } as any
+
+        // TO DO
+        if (blog.subscriptionStatus) {
+          preparedBlog.currentUserSubscriptionStatus = blog.subscriptionStatus
         }
-      }))
+
+        return preparedBlog
+      })
 
       return {
         pagesCount,
@@ -215,8 +263,42 @@ export class BlogsRepository {
     return blog
   }
 
-  async getByIdWithImages(id: string) {
-    const blog = await this.blogsRepo
+  async getByIdWithSubscriptionInfo(
+    id: string,
+    userId: string
+  ): Promise<any | null> {
+    const query = this.blogsRepo
+      .createQueryBuilder('blog')
+      .select([
+        'blog.id',
+        'blog.name',
+        'blog.description',
+        'blog.websiteUrl',
+        'blog.createdAt',
+        'blog.isMembership'
+      ])
+      .where('blog.id = :id AND blog.isBanned = NOT(true)', { id })
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('users_blogs.status', 'status')
+          .from(UsersBlogsEntity, 'users_blogs')
+          .where('users_blogs.userId = :userId AND users_blogs.blogId = :id', {
+            userId,
+            id
+          })
+      }, 'status')
+
+    const blog = await query.getRawOne()
+
+    if (!blog) {
+      return null
+    }
+
+    return blog
+  }
+
+  async getByIdWithImages(id: string, userId: string | null) {
+    const query = this.blogsRepo
       .createQueryBuilder('blog')
       .select([
         'blog.id',
@@ -239,7 +321,29 @@ export class BlogsRepository {
           .from(FileEntity, 'files')
           .where("files.blogId = blog.id AND files.type = 'main'")
       }, 'main')
-      .getRawOne()
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('count(*)', 'subscribersCount')
+          .from(UsersBlogsEntity, 'users_blogs')
+          .where(
+            "users_blogs.blogId = :id AND users_blogs.status = 'Subscribed'",
+            { id }
+          )
+      }, 'subscribersCount')
+
+    if (userId) {
+      query.addSelect((subQuery) => {
+        return subQuery
+          .select('users_blogs.status', 'status')
+          .from(UsersBlogsEntity, 'users_blogs')
+          .where('users_blogs.userId = :userId AND users_blogs.blogId = :id', {
+            userId,
+            id
+          })
+      }, 'status')
+    }
+
+    const blog = await query.getRawOne()
 
     if (!blog) {
       return null
@@ -254,8 +358,12 @@ export class BlogsRepository {
       isMembership: blog.blog_isMembership,
       images: {
         wallpaper: blog.wallpaper ? prepareFile(blog.wallpaper[0]) : null,
-        main: blog.main ? blog.main.map(main => prepareFile(main)) : []
-      }
+        main: blog.main ? blog.main.map((main) => prepareFile(main)) : []
+      },
+      currentUserSubscriptionStatus: blog.status
+        ? blog.status
+        : SubscriptionStatusEnum.None,
+      subscribersCount: Number(blog.subscribersCount)
     }
   }
 
@@ -327,23 +435,36 @@ export class BlogsRepository {
     }
   }
 
-  async subscribeBlog(
-    blogId: string,
-    userId: string
-  ) {
+  async createSubscribscriptionBlog(blogId: string, userId: string) {
     const newSubscription = this.usersBlogsRepo.create()
 
     newSubscription.blogId = blogId
     newSubscription.userId = userId
+    newSubscription.status = SubscriptionStatusEnum.Subscribed
 
     return await newSubscription.save()
   }
 
-  async unsubscribeBlog(
+  async updateSubscribscriptionBlog(
     blogId: string,
-    userId: string
+    userId: string,
+    status: SubscriptionStatusEnum
   ) {
-    return this.usersBlogsRepo.softDelete({ blogId, userId })
+    return this.usersBlogsRepo.update({ blogId, userId }, { status })
+  }
+
+  async getSubscribscriptionsByBlogId(blogId: string) {
+    const subscriptions = await this.usersBlogsRepo.find({
+      where: {
+        blogId,
+        status: SubscriptionStatusEnum.Subscribed
+      },
+      relations: {
+        user: true
+      }
+    })
+
+    return subscriptions
   }
 
   async updateBlog(

@@ -19,6 +19,7 @@ import { PostLikeEntity } from '../entities/post-like';
 import { CommentLikeEntity } from '../entities/comment-like';
 import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
 import { UsersBlogsEntity } from '../entities/users-blogs';
+import { TelegramAdapter } from 'src/adapters/telegram.adapter';
 
 @Module({
   imports: [
@@ -43,7 +44,8 @@ import { UsersBlogsEntity } from '../entities/users-blogs';
     BlogIdValidator,
     BlogsRepository,
     CommentsRepository,
-    HashService
+    HashService,
+    TelegramAdapter
   ]
 })
 export class PostsModule {}

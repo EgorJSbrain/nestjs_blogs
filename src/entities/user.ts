@@ -41,6 +41,9 @@ export class UserEntity extends BaseEntity implements IExtendedUser {
   confirmationCode: string
 
   @Column()
+  confirmationTelegramCode: string
+
+  @Column()
   expirationDate: string
 
   @Column()
