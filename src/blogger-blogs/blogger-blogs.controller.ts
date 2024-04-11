@@ -56,6 +56,7 @@ import { ResizeImagePostMainUseCase } from './use-cases/resize-image-post-main.u
 import { UploadPostMainUseCase } from './use-cases/upload-post-main.use-case'
 import { FilePostMainValidationPipe } from './pipes/file-post-main-validation.pipe'
 import { Image } from '../types/files'
+import { TelegramAdapter } from 'src/adapters/telegram.adapter'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogger)
@@ -73,6 +74,7 @@ export class BlogsController {
     private uploadPostMainUseCase: UploadPostMainUseCase,
     private resizeImagePostMainUseCase: ResizeImagePostMainUseCase,
     private filesRepository: FilesRepository,
+    private telegramAdapter: TelegramAdapter,
   ) {}
 
   @Get('/blogs')
@@ -81,7 +83,7 @@ export class BlogsController {
     @Query() query: BlogsRequestParams,
     @CurrentUserId() userId: string
   ): Promise<ResponseBody<IBlog> | []> {
-    return await this.blogsRepository.getAll(query, userId)
+    return await this.blogsRepository.getAll({params: query, ownerId: userId })
   }
 
   @Get('/blogs/comments')
@@ -292,6 +294,16 @@ export class BlogsController {
         { message: appMessages().errors.somethingIsWrong, field: '' },
         HttpStatus.NOT_FOUND
       )
+    }
+
+    const subscriptions = await this.blogsRepository.getSubscribscriptionsByBlogId(blog.id)
+
+    if (!!subscriptions.length) {
+      subscriptions.forEach(subscription => {
+        if (subscription.user.telegramId) {
+          this.telegramAdapter.sendMessage(subscription.user.telegramId, blog.name)
+        }
+      })
     }
 
     const post = await this.postsRepository.getByIdWithLikes(newPost.id)
