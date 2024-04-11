@@ -56,7 +56,8 @@ import { ResizeImagePostMainUseCase } from './use-cases/resize-image-post-main.u
 import { UploadPostMainUseCase } from './use-cases/upload-post-main.use-case'
 import { FilePostMainValidationPipe } from './pipes/file-post-main-validation.pipe'
 import { Image } from '../types/files'
-import { TelegramAdapter } from 'src/adapters/telegram.adapter'
+import { TelegramAdapter } from '../adapters/telegram.adapter'
+import { GetUserIdFromTokenUserUseCase } from '../use-cases/get-user_id-from-token.use-case'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogger)
@@ -68,7 +69,7 @@ export class BlogsController {
     private usersRepository: UsersRepository,
     private commentsRepository: CommentsRepository,
     private usersService: UsersService,
-    private JWTService: JWTService,
+    private getUserIdFromTokenUserUseCase: GetUserIdFromTokenUserUseCase,
     private uploadWallpaperUseCase: UploadWallpaperUseCase,
     private uploadBlogMainUseCase: UploadBlogMainUseCase,
     private uploadPostMainUseCase: UploadPostMainUseCase,
@@ -175,7 +176,7 @@ export class BlogsController {
     @Param() params: { blogId: string },
     @Req() req: Request
   ): Promise<ResponseBody<IExtendedPost> | []> {
-    let currentUserId: string | null = null
+    const currentUserId = this.getUserIdFromTokenUserUseCase.execute(req)
 
     if (!params.blogId) {
       throw new HttpException(
@@ -194,17 +195,6 @@ export class BlogsController {
         { message: appMessages(appMessages().blog).errors.notFound },
         HttpStatus.NOT_FOUND
       )
-    }
-
-    if (req.headers.authorization) {
-      const token = req.headers.authorization.split(' ')[1]
-      try {
-        const { userId } = this.JWTService.verifyAccessToken(token)
-
-        currentUserId = userId || null
-      } catch {
-        currentUserId = null
-      }
     }
 
     const posts = await this.postsRepository.getAll(

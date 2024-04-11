@@ -27,13 +27,13 @@ import { UpdateBlogDto } from '../dtos/blogs/update-blog.dto'
 import { BasicAuthGuard } from '../auth/guards/basic-auth.guard'
 import { appMessages } from '../constants/messages'
 import { IExtendedPost } from '../types/posts'
-import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
 import { UpdatePostDto } from '../dtos/posts/update-post.dto'
 import { BlogsRepository } from './blogs.repository'
 import { PostsRepository } from '../posts/posts.repository'
 import { UsersRepository } from '../users/users.repository'
-import { BanBlogSADto } from 'src/dtos/blogs/ban-blog.dto'
+import { BanBlogSADto } from '../dtos/blogs/ban-blog.dto'
+import { GetUserIdFromTokenUserUseCase } from '../use-cases/get-user_id-from-token.use-case'
 
 @SkipThrottle()
 @Controller(RoutesEnum.saBlogs)
@@ -43,7 +43,7 @@ export class BlogsSAController {
     private blogsRepository: BlogsRepository,
     private postsRepository: PostsRepository,
     private usersRepository: UsersRepository,
-    private JWTService: JWTService
+    private getUserIdFromTokenUserUseCase: GetUserIdFromTokenUserUseCase
   ) {}
 
   @Get()
@@ -152,8 +152,6 @@ export class BlogsSAController {
     @Param() params: { blogId: string },
     @Req() req: Request
   ): Promise<ResponseBody<IExtendedPost> | []> {
-    let currentUserId: string | null = null
-
     if (!params.blogId) {
       throw new HttpException(
         {
@@ -177,15 +175,7 @@ export class BlogsSAController {
       return []
     }
 
-    if (req.headers.authorization) {
-      const token = req.headers.authorization.split(' ')[1]
-      try {
-        const { userId } = this.JWTService.verifyAccessToken(token)
-        currentUserId = userId || null
-      } catch {
-        currentUserId = null
-      }
-    }
+    const currentUserId = this.getUserIdFromTokenUserUseCase.execute(req)
 
     const posts = await this.postsRepository.getAll(
       query,
