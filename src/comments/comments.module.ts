@@ -13,6 +13,9 @@ import { CommentEntity } from '../entities/comment';
 import { CommentLikeEntity } from '../entities/comment-like';
 import { PostLikeEntity } from '../entities/post-like';
 import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
+import { GetUserIdFromTokenUserUseCase } from '../use-cases/get-user_id-from-token.use-case';
+
+const useCases = [GetUserIdFromTokenUserUseCase]
 
 @Module({
   imports: [
@@ -31,7 +34,8 @@ import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
     CommentsRepository,
     JwtService,
     UsersRepository,
-    HashService
+    HashService,
+    ...useCases
   ]
 })
 export class CommentsModule {}

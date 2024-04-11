@@ -197,7 +197,7 @@ export class PostsRepository {
 
   async getByIdWithLikes(
     id: string,
-    userId?: string
+    userId?: string | null
   ): Promise<IExtendedPost | null> {
     try {
       let filter = ''

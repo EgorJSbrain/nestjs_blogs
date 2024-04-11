@@ -24,13 +24,14 @@ import { LikeDto } from '../dtos/like/like.dto'
 import { CommentDto } from '../dtos/comments/create-comment.dto'
 import { CommentsRepository } from './comments.repository'
 import { UsersRepository } from '../users/users.repository'
+import { GetUserIdFromTokenUserUseCase } from 'src/use-cases/get-user_id-from-token.use-case'
 
 @SkipThrottle()
 @Controller(RoutesEnum.comments)
 export class CommentsController {
   constructor(
     private commentsRepository: CommentsRepository,
-    private JWTService: JWTService,
+    private getUserIdFromTokenUserUseCase: GetUserIdFromTokenUserUseCase,
     private usersRepository: UsersRepository,
   ) {}
 
@@ -40,7 +41,6 @@ export class CommentsController {
     @Req() req: Request
   ): Promise<IExtendedComment | null> {
     const commentId = params.commentId
-    let currentUserId: string | null = null
 
     if (!commentId) {
       throw new HttpException(
@@ -49,11 +49,7 @@ export class CommentsController {
       )
     }
 
-    if (req.headers.authorization) {
-      const token = req.headers.authorization.split(' ')[1]
-      const { userId } = this.JWTService.verifyAccessToken(token)
-      currentUserId = userId || null
-    }
+    const currentUserId = this.getUserIdFromTokenUserUseCase.execute(req)
 
     const comment = await this.commentsRepository.getById(
       commentId,

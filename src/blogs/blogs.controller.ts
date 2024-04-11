@@ -19,13 +19,13 @@ import { RequestParams, ResponseBody } from '../types/request'
 import { IBlog } from '../types/blogs'
 import { appMessages } from '../constants/messages'
 import { IExtendedPost } from '../types/posts'
-import { JWTService } from '../jwt/jwt.service'
 import { RoutesEnum } from '../constants/global'
 import { BlogsRepository } from './blogs.repository'
 import { PostsRepository } from '../posts/posts.repository'
 import { JWTAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUserId } from '../auth/current-user-id.param.decorator'
 import { SubscriptionStatusEnum } from '../enums/SubscriptionStatusEnum'
+import { GetUserIdFromTokenUserUseCase } from 'src/use-cases/get-user_id-from-token.use-case'
 
 @SkipThrottle()
 @Controller(RoutesEnum.blogs)
@@ -33,7 +33,7 @@ export class BlogsController {
   constructor(
     private blogsRepository: BlogsRepository,
     private postsRepository: PostsRepository,
-    private JWTService: JWTService
+    private getUserIdFromTokenUserUseCase: GetUserIdFromTokenUserUseCase
   ) {}
 
   @Get()
@@ -41,18 +41,7 @@ export class BlogsController {
     @Query() query: BlogsRequestParams,
     @Req() req: Request
   ): Promise<ResponseBody<IBlog> | []> {
-    let currentUserId: string | null = null
-
-    if (req.headers.authorization) {
-      const token = req.headers.authorization.split(' ')[1]
-      try {
-        const { userId } = this.JWTService.verifyAccessToken(token)
-
-        currentUserId = userId || null
-      } catch {
-        currentUserId = null
-      }
-    }
+    const currentUserId = this.getUserIdFromTokenUserUseCase.execute(req)
 
     const blogs = await this.blogsRepository.getAll({
       params: query,
@@ -68,18 +57,7 @@ export class BlogsController {
     @Param() params: { id: string },
     @Req() req: Request
   ): Promise<IBlogWithImages | null> {
-    let currentUserId: string | null = null
-
-    if (req.headers.authorization) {
-      const token = req.headers.authorization.split(' ')[1]
-      try {
-        const { userId } = this.JWTService.verifyAccessToken(token)
-
-        currentUserId = userId || null
-      } catch {
-        currentUserId = null
-      }
-    }
+    const currentUserId = this.getUserIdFromTokenUserUseCase.execute(req)
 
     const blog = await this.blogsRepository.getByIdWithImages(params.id, currentUserId)
 
@@ -99,8 +77,6 @@ export class BlogsController {
     @Param() params: { blogId: string },
     @Req() req: Request
   ): Promise<ResponseBody<IExtendedPost> | []> {
-    let currentUserId: string | null = null
-
     if (!params.blogId) {
       throw new HttpException(
         {
@@ -120,16 +96,7 @@ export class BlogsController {
       )
     }
 
-    if (req.headers.authorization) {
-      const token = req.headers.authorization.split(' ')[1]
-      try {
-        const { userId } = this.JWTService.verifyAccessToken(token)
-
-        currentUserId = userId || null
-      } catch {
-        currentUserId = null
-      }
-    }
+    const currentUserId = this.getUserIdFromTokenUserUseCase.execute(req)
 
     const posts = await this.postsRepository.getAll(
       query,

@@ -9,7 +9,6 @@ import { UserEntity } from '../entities/user';
 import { CommentLikeEntity } from '../entities/comment-like';
 import { LikesModule } from '../likes/likes.module';
 import { BlogsController } from './blogs.controller';
-import { JWTService } from '../jwt/jwt.service';
 import { BlogsSAController } from './blogs.controller.sa';
 import { BlogsRepository } from './blogs.repository';
 import { PostsRepository } from '../posts/posts.repository';
@@ -20,6 +19,10 @@ import { HashService } from '../hash/hash.service';
 import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
 import { CommentEntity } from '../entities/comment';
 import { UsersBlogsEntity } from '../entities/users-blogs';
+import { GetUserIdFromTokenUserUseCase } from '../use-cases/get-user_id-from-token.use-case';
+import { JWTService } from '../jwt/jwt.service';
+
+const useCases = [GetUserIdFromTokenUserUseCase]
 
 @Module({
   imports: [
@@ -38,13 +41,14 @@ import { UsersBlogsEntity } from '../entities/users-blogs';
   controllers: [BlogsController, BlogsSAController],
   providers: [
     JwtService,
-    PostsRepository,
     JWTService,
+    PostsRepository,
     BlogsRepository,
     LikesRepository,
     UsersRepository,
     CommentsRepository,
-    HashService
+    HashService,
+    ...useCases
   ]
 })
 export class BlogsModule {}

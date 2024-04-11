@@ -19,7 +19,10 @@ import { PostLikeEntity } from '../entities/post-like';
 import { CommentLikeEntity } from '../entities/comment-like';
 import { BanUsersBlogsEntity } from '../entities/ban-users-blogs';
 import { UsersBlogsEntity } from '../entities/users-blogs';
-import { TelegramAdapter } from 'src/adapters/telegram.adapter';
+import { TelegramAdapter } from '../adapters/telegram.adapter';
+import { GetUserIdFromTokenUserUseCase } from '../use-cases/get-user_id-from-token.use-case';
+
+const useCases = [GetUserIdFromTokenUserUseCase]
 
 @Module({
   imports: [
@@ -45,7 +48,8 @@ import { TelegramAdapter } from 'src/adapters/telegram.adapter';
     BlogsRepository,
     CommentsRepository,
     HashService,
-    TelegramAdapter
+    TelegramAdapter,
+    ...useCases
   ]
 })
 export class PostsModule {}
