@@ -29,13 +29,15 @@ import { UploadBlogMainUseCase } from './use-cases/upload-blog-main.use-case';
 import { UploadPostMainUseCase } from './use-cases/upload-post-main.use-case';
 import { ResizeImagePostMainUseCase } from './use-cases/resize-image-post-main.use-case';
 import { UsersBlogsEntity } from '../entities/users-blogs';
-import { TelegramAdapter } from 'src/adapters/telegram.adapter';
+import { TelegramAdapter } from '../adapters/telegram.adapter';
+import { GetUserIdFromTokenUserUseCase } from '../use-cases/get-user_id-from-token.use-case';
 
 const useCases = [
   UploadWallpaperUseCase,
   UploadBlogMainUseCase,
   UploadPostMainUseCase,
   ResizeImagePostMainUseCase,
+  GetUserIdFromTokenUserUseCase,
 ]
 
 @Module({
