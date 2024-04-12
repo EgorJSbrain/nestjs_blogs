@@ -94,23 +94,28 @@ export class BlogsRepository {
           `blog.${sortBy}`,
           sortDirection?.toLocaleUpperCase() as SortType
         )
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('count(*)', 'allSubscriptionsCount')
+            .from(UsersBlogsEntity, 'users_blogs')
+            .where(
+              "users_blogs.blogId = blog.id AND (users_blogs.status = 'Subscribed' OR users_blogs.status = 'Unsubscribed')"
+            )
+        }, 'allSubscriptionsCount')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('count(*)', 'subscribersCount')
+            .from(UsersBlogsEntity, 'users_blogs')
+            .where(
+              "users_blogs.blogId = blog.id AND users_blogs.status = 'Subscribed'",
+              { userId }
+            )
+        }, 'subscribersCount')
         .skip(skip)
         .take(pageSizeNumber)
 
       if (userId) {
         searchObject.addSelect((subQuery) => {
-          return subQuery
-            .select('count(*)', 'subscribersCount')
-            .from(UsersBlogsEntity, 'users_blogs')
-            .where(
-              'users_blogs.blogId = blog.id AND users_blogs.userId = :userId',
-              { userId }
-            )
-        }, 'subscribersCount')
-      }
-
-      if (userId) {
-        query.addSelect((subQuery) => {
           return subQuery
             .select('users_blogs.status', 'subscriptionStatus')
             .from(UsersBlogsEntity, 'users_blogs')
@@ -126,10 +131,12 @@ export class BlogsRepository {
       const pagesCount = Math.ceil(count / pageSizeNumber)
 
       const preparedBlogs = blogs.map((blog) => {
-        const subscibersCount =
-          Number(blog.subscribersCount) === 0
+        const subscibersCount = Number(blog.subscribersCount)
+        const allSubscibersCount =
+          Number(blog.allSubscriptionsCount) === 0
             ? null
-            : Number(blog.subscribersCount)
+            : Number(blog.allSubscriptionsCount)
+
         const preparedBlog = {
           id: blog.id,
           name: blog.name,
@@ -141,14 +148,12 @@ export class BlogsRepository {
             wallpaper: blog.wallpaper ? prepareFile(blog.wallpaper[0]) : null,
             main: blog.main ? blog.main.map((main) => prepareFile(main)) : []
           },
-          subscribersCount: null
-          // subscribersCount: subscibersCount,
-          // currentUserSubscriptionStatus: blog.subscriptionStatus
-        } as any
+          subscribersCount: subscibersCount,
+          currentUserSubscriptionStatus: blog.subscriptionStatus
+        }
 
-        // TO DO
-        if (blog.subscriptionStatus) {
-          preparedBlog.currentUserSubscriptionStatus = blog.subscriptionStatus
+        if (allSubscibersCount) {
+          preparedBlog.subscribersCount = subscibersCount
         }
 
         return preparedBlog
@@ -162,6 +167,7 @@ export class BlogsRepository {
         items: preparedBlogs
       }
     } catch (e) {
+      console.log("🚀 ~ BlogsRepository ~ e:", e)
       throw new HttpException(
         { message: e.message || appMessages().errors.somethingIsWrong },
         HttpStatus.BAD_REQUEST
@@ -401,7 +407,8 @@ export class BlogsRepository {
   async createBlog(
     data: CreateBlogDto,
     ownerId?: string
-  ): Promise<IBlogWithImages | null> {
+    // TO DO add type
+  ): Promise<any | null> {
     try {
       const query = this.blogsRepo.createQueryBuilder('blog')
 
@@ -427,8 +434,10 @@ export class BlogsRepository {
         ...blog,
         images: {
           wallpaper: null,
-          main: []
-        }
+          main: [],
+        },
+        currentUserSubscriptionStatus: null,
+        subscribersCount: 0
       }
     } catch {
       return null
@@ -436,6 +445,8 @@ export class BlogsRepository {
   }
 
   async createSubscribscriptionBlog(blogId: string, userId: string) {
+    console.log("---0----blogId:", blogId)
+    console.log("---1---userId:", userId)
     const newSubscription = this.usersBlogsRepo.create()
 
     newSubscription.blogId = blogId
