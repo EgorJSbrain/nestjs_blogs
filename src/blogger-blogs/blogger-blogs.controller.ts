@@ -163,6 +163,7 @@ export class BlogsController {
 
   @Post('/blogs')
   @UseGuards(JWTAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
   async creatBlog(
     @Body() data: CreateBlogDto,
     @CurrentUserId() userId: string
